@@ -52,7 +52,7 @@ export default function LoginPage() {
           <div className="mb-4 rounded-full bg-primary p-3 text-white">
             <MapPin size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-text-main">SNS Project</h1>
+          <h1 className="text-2xl font-bold text-text-main">HANS</h1>
           <p className="mt-2 text-text-sub">여행의 순간을 기록해보세요</p>
         </div>
 

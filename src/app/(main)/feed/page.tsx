@@ -45,7 +45,7 @@ export default function FeedPage() {
     <div className="flex flex-col min-h-screen bg-[#F8F9FA]">
       {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between bg-white/80 p-4 backdrop-blur-md border-b border-[#F1F3F5]">
-        <h1 className="text-xl font-bold text-[#2A9D8F]">SNS Project</h1>
+        <h1 className="text-xl font-bold text-[#2A9D8F]">HANS</h1>
         <div className="flex items-center space-x-5">
           <Link href="/search" className="text-[#212529] hover:text-[#2A9D8F] transition-colors block">
             <Search size={24} />

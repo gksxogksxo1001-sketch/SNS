@@ -12,20 +12,20 @@ export async function POST(request: Request) {
       );
     }
 
-    let subject = "[SNS Project] 이메일 인증 안내";
+    let subject = "[HANS] 이메일 인증 안내";
     let title = "이메일 인증 안내";
-    let description = "안녕하세요! SNS Project 가입을 위한 인증번호입니다.";
+    let description = "안녕하세요! HANS 가입을 위한 인증번호입니다.";
 
     if (type === "findId") {
-      subject = "[SNS Project] 아이디 찾기 인증번호";
+      subject = "[HANS] 아이디 찾기 인증번호";
       title = "아이디 찾기 인증";
       description = "안녕하세요! 아이디 분실로 인한 인증번호 안내드립니다.";
     } else if (type === "resetPw") {
-      subject = "[SNS Project] 비밀번호 재설정 인증번호";
+      subject = "[HANS] 비밀번호 재설정 인증번호";
       title = "비밀번호 재설정 인증";
       description = "안녕하세요! 비밀번호 재설정을 위한 인증번호 안내드립니다.";
     } else if (nickname) {
-      description = `반갑습니다, ${nickname}님! SNS Project 가입을 위한 인증번호입니다.`;
+      description = `반갑습니다, ${nickname}님! HANS 가입을 위한 인증번호입니다.`;
     }
 
     // 이메일 전송을 위한 설정 (Gmail 기준)
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     });
 
     const mailOptions = {
-      from: `"SNS Project" <${process.env.EMAIL_USER}>`,
+      from: `"HANS" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: subject,
       html: `
