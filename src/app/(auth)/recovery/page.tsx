@@ -357,8 +357,8 @@ export default function RecoveryPage() {
                           label="새 비밀번호 확인" 
                           placeholder="••••••••" 
                           type={showPassword ? "text" : "password"} 
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
                           required
                         />
                         <Button className="w-full mt-2" type="submit" isLoading={isLoading}>
