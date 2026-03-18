@@ -4,7 +4,8 @@ import {
   signOut, 
   GoogleAuthProvider, 
   signInWithPopup,
-  updateProfile
+  updateProfile,
+  sendPasswordResetEmail
 } from "firebase/auth";
 import { auth, db } from "@/core/firebase/config";
 import { doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
@@ -141,6 +142,52 @@ export const AuthService = {
     } catch (error: any) {
       console.error("[AuthService] Google Login Error Trace:", error);
       throw this.handleError(error);
+    }
+  },
+
+  // Find ID by Email
+  async findIdByEmail(email: string) {
+    console.log("[AuthService] Finding loginId for email:", email);
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", email), limit(1));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        throw new Error("해당 이메일로 가입된 계정이 없습니다.");
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      return userDoc.data().loginId;
+    } catch (error: any) {
+      console.error("[AuthService] Find ID Error:", error);
+      throw error instanceof Error ? error : this.handleError(error);
+    }
+  },
+
+  // Send Password Reset Email (Custom handling for ID)
+  async sendPasswordResetEmailById(loginId: string, email: string) {
+    console.log("[AuthService] Initiating password reset for ID:", loginId);
+    try {
+      // First verify that the ID and Email match
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, 
+        where("loginId", "==", loginId), 
+        where("email", "==", email), 
+        limit(1)
+      );
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        throw new Error("아이디와 이메일 정보가 일치하는 회원을 찾을 수 없습니다.");
+      }
+
+      // If match, use standard Firebase password reset
+      await sendPasswordResetEmail(auth, email);
+      console.log("[AuthService] Password reset email sent to:", email);
+    } catch (error: any) {
+      console.error("[AuthService] Password Reset Error:", error);
+      throw error instanceof Error ? error : this.handleError(error);
     }
   },
 

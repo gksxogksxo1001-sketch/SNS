@@ -90,7 +90,7 @@ export default function LoginPage() {
 
         {/* Links */}
         <div className="flex justify-between text-sm text-text-sub">
-          <Link href="#" className="hover:text-primary">아이디/비밀번호 찾기</Link>
+          <Link href="/recovery" className="hover:text-primary">아이디/비밀번호 찾기</Link>
           <Link href="/signup" className="font-semibold text-primary hover:underline">
             간편 회원가입
           </Link>
