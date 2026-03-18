@@ -7,11 +7,11 @@ import {
   updateProfile
 } from "firebase/auth";
 import { auth, db } from "@/core/firebase/config";
-import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
 
 export const AuthService = {
   // Email Signup
-  async signUp(email: string, password: string, nickname: string) {
+  async signUp(email: string, password: string, nickname: string, loginId: string) {
     console.log("[AuthService] Starting signUp for:", email);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -27,6 +27,7 @@ export const AuthService = {
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         email: user.email,
+        loginId: loginId, // Add loginId
         nickname: nickname,
         avatarUrl: null,
         identityVerified: false,
@@ -56,6 +57,42 @@ export const AuthService = {
       return userCredential.user;
     } catch (error: any) {
       console.error("[AuthService] Sign-in Error Trace:", error);
+      throw this.handleError(error);
+    }
+  },
+
+  // ID Login
+  async signInWithId(loginId: string, password: string) {
+    console.log("[AuthService] Starting signInWithId for:", loginId);
+    try {
+      // Find email associated with loginId
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("loginId", "==", loginId), limit(1));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        throw new Error("존재하지 않는 아이디입니다.");
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const email = userDoc.data().email;
+
+      return await this.signIn(email, password);
+    } catch (error: any) {
+      console.error("[AuthService] ID Sign-in Error:", error);
+      throw error instanceof Error ? error : this.handleError(error);
+    }
+  },
+
+  // Check ID Duplication
+  async checkIdDuplication(loginId: string) {
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("loginId", "==", loginId), limit(1));
+      const querySnapshot = await getDocs(q);
+      return !querySnapshot.empty; // Returns true if duplicated
+    } catch (error: any) {
+      console.error("[AuthService] ID Check Error:", error);
       throw this.handleError(error);
     }
   },

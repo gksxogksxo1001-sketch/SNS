@@ -10,7 +10,7 @@ import { AuthService } from "@/core/services/AuthService";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -21,7 +21,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await AuthService.signIn(email, password);
+      await AuthService.signInWithId(loginId, password);
       router.push("/");
     } catch (err: any) {
       setError(err.message);
@@ -59,11 +59,10 @@ export default function LoginPage() {
         <form className="mt-8 space-y-4" onSubmit={handleLogin}>
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
           <Input 
-            label="이메일" 
-            placeholder="example@email.com" 
-            type="email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            label="아이디" 
+            placeholder="아이디를 입력하세요" 
+            value={loginId}
+            onChange={(e) => setLoginId(e.target.value)}
             required
           />
           <Input 
