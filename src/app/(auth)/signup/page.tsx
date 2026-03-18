@@ -7,6 +7,7 @@ import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
+import { cn } from "@/lib/utils";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -22,11 +23,11 @@ export default function SignupPage() {
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [nicknameMessage, setNicknameMessage] = useState("");
-  const [idMessage, setIdMessage] = useState("");
+  const [nicknameMessage, setNicknameMessage] = useState({ text: "", isError: false });
+  const [idMessage, setIdMessage] = useState({ text: "", isError: false });
+  const [emailMessage, setEmailMessage] = useState({ text: "", isError: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
 
   const handleIdCheck = async () => {
     if (!loginId) {
@@ -36,50 +37,45 @@ export default function SignupPage() {
     try {
       const isDuplicated = await AuthService.checkIdDuplication(loginId);
       if (isDuplicated) {
-        setError("이미 사용 중인 아이디입니다.");
-        setIdMessage("");
+        setIdMessage({ text: "이미 사용 중인 아이디입니다.", isError: true });
         setIsIdChecked(false);
       } else {
-        setIdMessage("사용 가능한 아이디입니다.");
-        setError("");
+        setIdMessage({ text: "사용 가능한 아이디입니다.", isError: false });
         setIsIdChecked(true);
       }
     } catch (err: any) {
-      setError(err.message);
+      setIdMessage({ text: err.message, isError: true });
     }
   };
 
   const handleNicknameCheck = async () => {
     if (!nickname) {
-      setError("닉네임을 입력해주세요.");
+      setNicknameMessage({ text: "닉네임을 입력해주세요.", isError: true });
       return;
     }
     // Simple check for now, can be expanded to AuthService
-    setNicknameMessage("사용 가능한 닉네임입니다.");
-    setError("");
+    setNicknameMessage({ text: "사용 가능한 닉네임입니다.", isError: false });
     setIsNicknameChecked(true);
   };
 
   const handleSendVerificationCode = () => {
     if (!email) {
-      setError("이메일을 입력해주세요.");
+      setEmailMessage({ text: "이메일을 입력해주세요.", isError: true });
       return;
     }
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setSentCode(code);
     // Mock sending email
     alert(`인증번호가 발송되었습니다: ${code}`);
-    setSuccessMessage("인증번호가 발송되었습니다.");
-    setError("");
+    setEmailMessage({ text: "인증번호가 발송되었습니다.", isError: false });
   };
 
   const handleVerifyCode = () => {
     if (verificationCode === sentCode && sentCode !== "") {
       setIsEmailVerified(true);
-      setSuccessMessage("이메일 인증이 완료되었습니다.");
-      setError("");
+      setEmailMessage({ text: "이메일 인증이 완료되었습니다.", isError: false });
     } else {
-      setError("인증번호가 일치하지 않습니다.");
+      setEmailMessage({ text: "인증번호가 일치하지 않습니다.", isError: true });
     }
   };
 
@@ -153,7 +149,7 @@ export default function SignupPage() {
                   onChange={(e) => {
                     setNickname(e.target.value);
                     setIsNicknameChecked(false);
-                    setNicknameMessage("");
+                    setNicknameMessage({ text: "", isError: false });
                   }}
                   required
                 />
@@ -167,8 +163,13 @@ export default function SignupPage() {
                   중복 확인
                 </Button>
               </div>
-              {nicknameMessage && (
-                <p className="text-xs text-green-600 px-1">{nicknameMessage}</p>
+              {nicknameMessage.text && (
+                <p className={cn(
+                  "text-xs px-1",
+                  nicknameMessage.isError ? "text-red-500" : "text-green-600"
+                )}>
+                  {nicknameMessage.text}
+                </p>
               )}
             </div>
 
@@ -182,7 +183,7 @@ export default function SignupPage() {
                   onChange={(e) => {
                     setLoginId(e.target.value);
                     setIsIdChecked(false);
-                    setIdMessage("");
+                    setIdMessage({ text: "", isError: false });
                   }}
                   required
                 />
@@ -196,8 +197,13 @@ export default function SignupPage() {
                   중복 확인
                 </Button>
               </div>
-              {idMessage && (
-                <p className="text-xs text-green-600 px-1">{idMessage}</p>
+              {idMessage.text && (
+                <p className={cn(
+                  "text-xs px-1",
+                  idMessage.isError ? "text-red-500" : "text-green-600"
+                )}>
+                  {idMessage.text}
+                </p>
               )}
             </div>
 
@@ -254,6 +260,7 @@ export default function SignupPage() {
                   onChange={(e) => {
                     setEmail(e.target.value);
                     setIsEmailVerified(false);
+                    setEmailMessage({ text: "", isError: false });
                   }}
                   required
                 />
@@ -287,8 +294,13 @@ export default function SignupPage() {
                   </Button>
                 </div>
               )}
-              {isEmailVerified && (
-                <p className="text-xs text-green-600 px-1">이메일 인증이 완료되었습니다.</p>
+              {emailMessage.text && (
+                <p className={cn(
+                  "text-xs px-1",
+                  emailMessage.isError ? "text-red-500" : "text-green-600"
+                )}>
+                  {emailMessage.text}
+                </p>
               )}
             </div>
 
