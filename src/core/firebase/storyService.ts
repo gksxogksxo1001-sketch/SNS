@@ -9,12 +9,16 @@ import {
   serverTimestamp,
   Timestamp,
   doc,
-  getDoc
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  increment,
+  deleteDoc
 } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { Story, UserStoryGroup } from "@/types/story";
 import { messageService } from "./messageService";
-import { updateDoc, arrayUnion, arrayRemove, increment } from "firebase/firestore";
 
 export const storyService = {
   // Upload a story image
@@ -58,6 +62,24 @@ export const storyService = {
         likedBy: arrayUnion(userId),
         likesCount: increment(1)
       });
+    }
+  },
+
+  // Delete a story
+  async deleteStory(storyId: string, mediaUrl?: string): Promise<void> {
+    // 1. Delete Firestore document
+    await deleteDoc(doc(db, "stories", storyId));
+
+    // 2. Delete media from storage if URL provided
+    if (mediaUrl) {
+      try {
+        // storage Url contains gs:// or https://, we need to extract the path if it's a full URL
+        // But Firebase ref() can handle full URLs if they are download URLs
+        const storageRef = ref(storage, mediaUrl);
+        await deleteObject(storageRef);
+      } catch (error) {
+        console.error("[StoryService] Failed to delete storage object:", error);
+      }
     }
   },
 

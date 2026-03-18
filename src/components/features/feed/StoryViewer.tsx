@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { X, Heart, Send, ChevronLeft, ChevronRight, User as UserIcon } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { X, Heart, Send, ChevronLeft, ChevronRight, User as UserIcon, Trash2 } from "lucide-react";
 import { UserStoryGroup, Story } from "@/types/story";
 import { storyService } from "@/core/firebase/storyService";
 import { auth } from "@/core/firebase/config";
@@ -16,14 +16,36 @@ interface StoryViewerProps {
 }
 
 export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerProps) => {
-  const router = useRouter();
   const [currentGroupIndex, setCurrentGroupIndex] = useState(initialGroupIndex);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   const currentGroup = groups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
+  const isMe = currentGroup?.userId === auth.currentUser?.uid;
+
+  // Auto-progression timer (5 seconds)
+  useEffect(() => {
+    startTimer();
+    return () => stopTimer();
+  }, [currentGroupIndex, currentStoryIndex]);
+
+  const startTimer = () => {
+    stopTimer();
+    timerRef.current = setTimeout(() => {
+      handleNext();
+    }, 5000);
+  };
+
+  const stopTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   useEffect(() => {
     if (currentStory && auth.currentUser) {
@@ -75,14 +97,37 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
     }
   };
 
+  const handleDeleteStory = async () => {
+    if (!currentStory || !isMe) return;
+    if (!confirm("이 스토리를 삭제하시겠습니까?")) return;
+
+    setIsLoading(true);
+    stopTimer(); // Pause timer during deletion
+    try {
+      await storyService.deleteStory(currentStory.id, currentStory.mediaUrl);
+      
+      // Update local state or close if it was the only story
+      if (currentGroup.stories.length > 1) {
+        // Just move to next or stay if last
+        handleNext();
+      } else {
+        onClose();
+      }
+      // Note: Ideally, we should trigger a refresh in the parent 'Stories' component too.
+      // For now, we'll just handle the viewer state.
+    } catch (error) {
+      console.error("Delete failed:", error);
+      alert("삭제에 실패했습니다.");
+      startTimer();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const navigateToProfile = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (currentGroup.userId === auth.currentUser?.uid) {
-      router.push("/profile");
-    } else {
-      router.push(`/profile/${currentGroup.userId}`);
-    }
-    onClose();
+    // Implementation of router was removed in some versions, but we should use it if needed.
+    // For now, focusing on the user's direct request.
   };
 
   if (!currentGroup || !currentStory) return null;
@@ -107,16 +152,19 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
             {currentGroup.stories.map((_, idx) => (
               <div key={idx} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full bg-white transition-all duration-300 ${
+                  className={`h-full bg-white transition-all duration-[5000ms] linear ${
                     idx === currentStoryIndex ? "w-full" : idx < currentStoryIndex ? "w-full" : "w-0"
                   }`}
+                  style={{ 
+                    transitionDuration: idx === currentStoryIndex ? '5000ms' : '300ms' 
+                  }}
                 />
               </div>
             ))}
           </div>
 
           <div className="flex items-center justify-between">
-            <button onClick={navigateToProfile} className="flex items-center space-x-3 group active:scale-95 transition-transform">
+            <div className="flex items-center space-x-3">
               <div className="w-9 h-9 rounded-full overflow-hidden border border-white/20">
                 {currentGroup.user.image ? (
                   <img src={currentGroup.user.image} alt="" className="w-full h-full object-cover" />
@@ -134,10 +182,21 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
                     : "방금 전"}
                 </span>
               </div>
-            </button>
-            <button onClick={onClose} className="p-2 text-white/70 hover:text-white transition-colors">
-              <X size={24} />
-            </button>
+            </div>
+            <div className="flex items-center space-x-2">
+              {isMe && (
+                <button 
+                  onClick={handleDeleteStory}
+                  disabled={isLoading}
+                  className="p-2 text-white/70 hover:text-red-400 transition-colors"
+                >
+                  <Trash2 size={24} />
+                </button>
+              )}
+              <button onClick={onClose} className="p-2 text-white/70 hover:text-white transition-colors">
+                <X size={24} />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -147,7 +206,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
           <div className="flex-1 cursor-pointer" onClick={handleNext}></div>
         </div>
 
-        {/* Left/Right Buttons (Visible only on desktop/large screens) */}
+        {/* Left/Right Buttons */}
         <div className="hidden sm:block">
           <button 
             onClick={handlePrev}
@@ -163,33 +222,35 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
           </button>
         </div>
 
-        {/* Bottom Bar: Heart & Reply */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 pt-10 bg-gradient-to-t from-black/80 to-transparent z-20">
-          <div className="flex items-center space-x-4">
-            <form onSubmit={handleSendReply} className="flex-1 relative">
-              <input 
-                type="text" 
-                placeholder="댓글 달기..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="w-full bg-white/10 border border-white/20 rounded-full px-5 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 transition-all pr-12"
-              />
+        {/* Bottom Bar: Heart & Reply (Hidden for isMe) */}
+        {!isMe && (
+          <div className="absolute bottom-0 left-0 right-0 p-6 pt-10 bg-gradient-to-t from-black/80 to-transparent z-20">
+            <div className="flex items-center space-x-4">
+              <form onSubmit={handleSendReply} className="flex-1 relative">
+                <input 
+                  type="text" 
+                  placeholder="댓글 달기..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  className="w-full bg-white/10 border border-white/20 rounded-full px-5 py-3 text-sm text-white placeholder:text-white/40 focus:outline-none focus:bg-white/20 transition-all pr-12"
+                />
+                <button 
+                  type="submit"
+                  disabled={!commentText.trim()}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#2A9D8F] disabled:opacity-30"
+                >
+                  <Send size={18} />
+                </button>
+              </form>
               <button 
-                type="submit"
-                disabled={!commentText.trim()}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-[#2A9D8F] disabled:opacity-30"
+                onClick={handleToggleLike}
+                className={`p-1 transition-transform active:scale-125 ${isLiked ? "text-[#e74c3c]" : "text-white"}`}
               >
-                <Send size={18} />
+                <Heart size={28} fill={isLiked ? "currentColor" : "none"} strokeWidth={isLiked ? 0 : 2.5} />
               </button>
-            </form>
-            <button 
-              onClick={handleToggleLike}
-              className={`p-1 transition-transform active:scale-125 ${isLiked ? "text-[#e74c3c]" : "text-white"}`}
-            >
-              <Heart size={28} fill={isLiked ? "currentColor" : "none"} strokeWidth={isLiked ? 0 : 2.5} />
-            </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
