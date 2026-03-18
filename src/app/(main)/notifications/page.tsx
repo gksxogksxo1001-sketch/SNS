@@ -91,6 +91,7 @@ export default function NotificationsPage() {
       case "comment": return <MessageCircle size={12} className="fill-current text-white" />;
       case "friend_request": return <UserPlus size={12} className="fill-current text-white" />;
       case "friend_accept": return <Check size={12} className="text-white" />;
+      case "story_like": return <Heart size={12} className="fill-current text-white" />;
     }
   };
 
@@ -100,6 +101,7 @@ export default function NotificationsPage() {
       case "comment": return "bg-[#2A9D8F]";
       case "friend_request": return "bg-blue-500";
       case "friend_accept": return "bg-purple-500";
+      case "story_like": return "bg-pink-500";
     }
   };
 
@@ -109,6 +111,7 @@ export default function NotificationsPage() {
       case "comment": return `님이 댓글을 남겼습니다: "${notif.content}"`;
       case "friend_request": return "님이 친구 요청을 보냈습니다.";
       case "friend_accept": return "님이 친구 요청을 수락했습니다.";
+      case "story_like": return "님이 회원님의 스토리를 좋아합니다.";
     }
   };
 
@@ -138,8 +141,13 @@ export default function NotificationsPage() {
                   !notif.isRead && "bg-blue-50/50"
                 )}
                 onClick={() => {
-                  if (notif.postId) router.push(`/post/${notif.postId}`);
-                  else if (notif.fromUid) router.push(`/profile/${notif.fromUid}`);
+                  if (notif.type === "story_like") {
+                    router.push(`/profile/${notif.fromUid}`);
+                  } else if (notif.postId) {
+                    router.push(`/post/${notif.postId}`);
+                  } else if (notif.fromUid) {
+                    router.push(`/profile/${notif.fromUid}`);
+                  }
                 }}
               >
                 {/* User Avatar & Type Icon */}

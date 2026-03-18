@@ -19,6 +19,8 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { Story, UserStoryGroup } from "@/types/story";
 import { messageService } from "./messageService";
+import { notificationService } from "./notificationService";
+import { userService } from "./userService";
 
 export const storyService = {
   // Upload a story image
@@ -62,6 +64,29 @@ export const storyService = {
         likedBy: arrayUnion(userId),
         likesCount: increment(1)
       });
+
+      // Trigger Notification
+      try {
+        const storySnap = await getDoc(storyRef);
+        if (storySnap.exists()) {
+          const storyData = storySnap.data();
+          const fromProfile = await userService.getUserProfile(userId);
+          
+          if (fromProfile) {
+            await notificationService.createNotification({
+              uid: storyData.userId, // recipient (story owner)
+              type: "story_like",
+              fromUid: userId,
+              fromNickname: fromProfile.nickname,
+              fromAvatarUrl: fromProfile.avatarUrl,
+              postImage: storyData.mediaUrl, // use as thumbnail
+              postId: storyId // keep for reference, though navigation might differ
+            });
+          }
+        }
+      } catch (error) {
+        console.error("[storyService] Failed to send like notification:", error);
+      }
     }
   },
 
