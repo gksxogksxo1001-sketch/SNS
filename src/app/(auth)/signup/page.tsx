@@ -8,6 +8,8 @@ import { Input } from "@/components/common/Input";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
 import { cn } from "@/lib/utils";
+import { WelcomeView } from "@/components/auth/WelcomeView";
+import { CheckCircle2 } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function SignupPage() {
   const [passwordMessage, setPasswordMessage] = useState({ text: "", isError: false });
   const [emailMessage, setEmailMessage] = useState({ text: "", isError: false });
   const [isLoading, setIsLoading] = useState(false);
+  const [isJoined, setIsJoined] = useState(false);
 
   const handleIdCheck = async () => {
     if (!loginId) {
@@ -73,9 +76,24 @@ export default function SignupPage() {
     }
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setSentCode(code);
-    // Mock sending email
-    alert(`인증번호가 발송되었습니다: ${code}`);
-    setEmailMessage({ text: "인증번호가 발송되었습니다.", isError: false });
+    
+    // Call real email sending API
+    fetch("/api/auth/send-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        setEmailMessage({ text: "인증번호가 발송되었습니다.", isError: false });
+      } else {
+        setEmailMessage({ text: data.error || "메일 발송에 실패했습니다.", isError: true });
+      }
+    })
+    .catch(() => {
+      setEmailMessage({ text: "메일 발송 중 오류가 발생했습니다.", isError: true });
+    });
   };
 
   const handleVerifyCode = () => {
@@ -121,7 +139,11 @@ export default function SignupPage() {
 
     try {
       await AuthService.signUp(email, password, nickname, loginId);
-      router.push("/");
+      setIsJoined(true);
+      // Wait a bit then redirect
+      setTimeout(() => {
+        router.push("/");
+      }, 3000);
     } catch (err: any) {
       // General signup error (e.g., Firebase error)
       alert(`가입 중 오류가 발생했습니다: ${err.message}`);
@@ -132,6 +154,12 @@ export default function SignupPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
+      {isJoined && (
+        <WelcomeView 
+          nickname={nickname} 
+          onConfirm={() => router.push("/")} 
+        />
+      )}
       {/* Header */}
       <header className="flex h-14 items-center border-b px-4">
         <button 
