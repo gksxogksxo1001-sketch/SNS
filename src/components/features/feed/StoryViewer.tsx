@@ -13,25 +13,25 @@ interface StoryViewerProps {
   groups: UserStoryGroup[];
   initialGroupIndex: number;
   onClose: () => void;
+  onRefresh?: () => void;
 }
 
-export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerProps) => {
-  const router = useRouter();
+export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: StoryViewerProps) => {
   const [currentGroupIndex, setCurrentGroupIndex] = useState(initialGroupIndex);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(auth.currentUser?.uid || null);
+  const [progress, setProgress] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   const currentGroup = groups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
-  
-  // Robust owner check
   const isMe = currentGroup?.userId === currentUserId;
 
-  // Track auth state to ensure isMe is accurate
+  // Track auth state
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
       setCurrentUserId(user?.uid || null);
@@ -39,25 +39,40 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
     return () => unsubscribe();
   }, []);
 
-  // Auto-progression timer (5 seconds)
+  // Auto-progression logic with manual progress state for smooth animation
   useEffect(() => {
     if (!currentGroup || !currentStory) return;
     
+    // Reset and start
+    setProgress(0);
     startTimer();
-    return () => stopTimer();
+    
+    return () => {
+      stopTimer();
+    };
   }, [currentGroupIndex, currentStoryIndex]);
 
   const startTimer = () => {
     stopTimer();
-    timerRef.current = setTimeout(() => {
-      handleNext();
-    }, 5000);
+    
+    const startTime = Date.now();
+    const duration = 5000;
+
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const nextProgress = Math.min((elapsed / duration) * 100, 100);
+      setProgress(nextProgress);
+      
+      if (elapsed >= duration) {
+        handleNext();
+      }
+    }, 50); // Update every 50ms for smoothness
   };
 
   const stopTimer = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
   };
 
@@ -120,12 +135,14 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
     try {
       await storyService.deleteStory(currentStory.id, currentStory.mediaUrl);
       
+      // Refresh parent data
+      if (onRefresh) onRefresh();
+
       if (currentGroup.stories.length > 1) {
         handleNext();
       } else {
         onClose();
       }
-      // UI refresh is handled by the group disappearing or currentGroup logic
     } catch (error) {
       console.error("Delete failed:", error);
       alert("삭제에 실패했습니다.");
@@ -150,16 +167,13 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
 
         {/* Top Overlay */}
         <div className="absolute top-0 left-0 right-0 p-4 pt-6 z-20 space-y-4">
-          {/* Progress Indicators */}
           <div className="flex space-x-1.5 px-0.5">
             {currentGroup.stories.map((_, idx) => (
               <div key={idx} className="flex-1 h-0.5 bg-white/30 rounded-full overflow-hidden">
                 <div 
-                  className={`h-full bg-white transition-all ease-linear ${
-                    idx === currentStoryIndex ? "w-full" : idx < currentStoryIndex ? "w-full" : "w-0"
-                  }`}
+                  className="h-full bg-white transition-all duration-75 ease-linear"
                   style={{ 
-                    transitionDuration: idx === currentStoryIndex ? '5000ms' : '300ms' 
+                    width: idx === currentStoryIndex ? `${progress}%` : idx < currentStoryIndex ? "100%" : "0%" 
                   }}
                 />
               </div>
@@ -206,10 +220,9 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose }: StoryViewerP
         {/* Interaction Areas */}
         <div className="absolute inset-0 flex z-10">
           <div className="flex-1 cursor-pointer" onClick={handlePrev}></div>
-          <div className="flex-2 cursor-pointer" onClick={handleNext}></div>
+          <div className="flex-[2] cursor-pointer" onClick={handleNext}></div>
         </div>
 
-        {/* Bottom Bar: Heart & Reply (Hidden for Owner) */}
         {!isMe && (
           <div className="absolute bottom-0 left-0 right-0 p-6 pt-10 bg-gradient-to-t from-black/80 to-transparent z-20">
             <div className="flex items-center space-x-4">

@@ -24,25 +24,26 @@ export const Stories = () => {
   const [selectedGroupIndex, setSelectedGroupIndex] = React.useState<number | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    const fetchStories = async () => {
-      try {
-        const groups = await storyService.getActiveStories();
-        // 내 스토리가 있다면 가장 앞으로 정렬
-        const sortedGroups = [...groups].sort((a, b) => {
-          if (a.userId === auth.currentUser?.uid) return -1;
-          if (b.userId === auth.currentUser?.uid) return 1;
-          return 0;
-        });
-        setStoryGroups(sortedGroups);
-      } catch (error) {
-        console.error("Failed to fetch stories:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchStories();
+  const fetchStories = React.useCallback(async () => {
+    try {
+      const groups = await storyService.getActiveStories();
+      // 내 스토리가 있다면 가장 앞으로 정렬
+      const sortedGroups = [...groups].sort((a, b) => {
+        if (a.userId === auth.currentUser?.uid) return -1;
+        if (b.userId === auth.currentUser?.uid) return 1;
+        return 0;
+      });
+      setStoryGroups(sortedGroups);
+    } catch (error) {
+      console.error("Failed to fetch stories:", error);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  React.useEffect(() => {
+    fetchStories();
+  }, [fetchStories]);
 
   const myGroup = storyGroups.find(g => g.userId === auth.currentUser?.uid);
   const otherGroups = storyGroups.filter(g => g.userId !== auth.currentUser?.uid);
@@ -138,6 +139,7 @@ export const Stories = () => {
           groups={storyGroups}
           initialGroupIndex={selectedGroupIndex}
           onClose={() => setSelectedGroupIndex(null)}
+          onRefresh={fetchStories}
         />
       )}
     </div>
