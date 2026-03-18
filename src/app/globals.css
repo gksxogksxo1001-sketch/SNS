@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2a9d8f;
+  --color-secondary: #e9c46a;
+  --color-point: #f4a261;
+  --color-bg-base: #ffffff;
+  --color-bg-alt: #f8f9fa;
+  --color-text-main: #212529;
+  --color-text-sub: #6c757d;
+
+  --font-sans: "Pretendard", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --background: var(--color-bg-base);
+  --foreground: var(--color-text-main);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #121212;
+    --foreground: #f8f9fa;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+/* Typography Utility */
+@layer base {
+  h1 { @apply text-2xl font-bold; }
+  h2 { @apply text-lg font-semibold; }
+  p { @apply text-base font-normal; }
+  span.caption { @apply text-xs font-normal; }
+}
