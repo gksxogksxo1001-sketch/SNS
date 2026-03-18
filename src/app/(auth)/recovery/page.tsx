@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
 import { cn } from "@/lib/utils";
 
@@ -26,8 +26,14 @@ export default function RecoveryPage() {
   // States for Reset Password
   const [loginIdForPw, setLoginIdForPw] = useState("");
   const [emailForPw, setEmailForPw] = useState("");
+  const [pwVerificationCode, setPwVerificationCode] = useState("");
+  const [pwSentCode, setPwSentCode] = useState("");
+  const [isPwEmailVerified, setIsPwEmailVerified] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [pwMessage, setPwMessage] = useState({ text: "", isError: false });
-  const [isPwEmailSent, setIsPwEmailSent] = useState(false);
+  const [isPwResetSuccess, setIsPwResetSuccess] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -80,20 +86,77 @@ export default function RecoveryPage() {
   };
 
   // --- Reset Password Logic ---
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendPwCode = async () => {
     if (!loginIdForPw || !emailForPw) {
       setPwMessage({ text: "아이디와 이메일을 모두 입력해주세요.", isError: true });
       return;
     }
     
     setIsLoading(true);
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    
     try {
-      await AuthService.sendPasswordResetEmailById(loginIdForPw, emailForPw);
-      setIsPwEmailSent(true);
-      setPwMessage({ text: "비밀번호 재설정 이메일이 발송되었습니다.", isError: false });
+      const res = await fetch("/api/auth/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailForPw, code, type: "resetPw" }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setPwSentCode(code);
+        setPwMessage({ text: "인증번호가 발송되었습니다.", isError: false });
+      } else {
+        setPwMessage({ text: data.error || "메일 발송에 실패했습니다.", isError: true });
+      }
+    } catch (err) {
+      setPwMessage({ text: "메일 발송 중 오류가 발생했습니다.", isError: true });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyPwCode = () => {
+    if (pwVerificationCode === pwSentCode && pwSentCode !== "") {
+      setIsPwEmailVerified(true);
+      setPwMessage({ text: "인증이 완료되었습니다. 새 비밀번호를 입력해 주세요.", isError: false });
+    } else {
+      setPwMessage({ text: "인증번호가 일치하지 않습니다.", isError: true });
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmNewPassword) {
+      setPwMessage({ text: "비밀번호가 일치하지 않습니다.", isError: true });
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPwMessage({ text: "비밀번호는 8자 이상이어야 합니다.", isError: true });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          loginId: loginIdForPw, 
+          email: emailForPw, 
+          newPassword 
+        }),
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setIsPwResetSuccess(true);
+        setPwMessage({ text: "비밀번호가 성공적으로 변경되었습니다.", isError: false });
+      } else {
+        setPwMessage({ text: data.error || "비밀번호 변경에 실패했습니다.", isError: true });
+      }
     } catch (err: any) {
-      setPwMessage({ text: err.message, isError: true });
+      setPwMessage({ text: "오류가 발생했습니다. 다시 시도해 주세요.", isError: true });
     } finally {
       setIsLoading(false);
     }
@@ -217,53 +280,112 @@ export default function RecoveryPage() {
                 )}
               </div>
             ) : (
-              <form onSubmit={handleResetPassword} className="space-y-6">
-                {!isPwEmailSent ? (
-                  <>
-                    <p className="text-sm text-text-sub">
-                      아이디와 가입 시 등록한 이메일을 입력하시면<br/>
-                      비밀번호 재설정 링크를 보내드립니다.
-                    </p>
-                    <div className="space-y-4">
-                      <Input 
-                        label="아이디" 
-                        placeholder="아이디를 입력하세요" 
-                        value={loginIdForPw}
-                        onChange={(e) => setLoginIdForPw(e.target.value)}
-                        required
-                      />
-                      <Input 
-                        label="이메일" 
-                        placeholder="example@email.com" 
-                        type="email" 
-                        value={emailForPw}
-                        onChange={(e) => setEmailForPw(e.target.value)}
-                        required
-                      />
-                      {pwMessage.text && (
-                        <p className={cn(
-                          "text-xs px-1",
-                          pwMessage.isError ? "text-red-500" : "text-green-600"
-                        )}>
-                          {pwMessage.text}
+              <div className="space-y-6">
+                {!isPwResetSuccess ? (
+                  <div className="space-y-4">
+                    {!isPwEmailVerified ? (
+                      <>
+                        <p className="text-sm text-text-sub">
+                          아이디와 가입 시 등록한 이메일을 입력하시면<br/>
+                          본인 확인을 위한 인증번호를 보내드립니다.
                         </p>
-                      )}
-                      <Button className="w-full mt-2" type="submit" isLoading={isLoading}>
-                        비밀번호 재설정 메일 보내기
-                      </Button>
-                    </div>
-                  </>
+                        <div className="space-y-4">
+                          <Input 
+                            label="아이디" 
+                            placeholder="아이디를 입력하세요" 
+                            value={loginIdForPw}
+                            onChange={(e) => setLoginIdForPw(e.target.value)}
+                            required
+                          />
+                          <div className="flex gap-2">
+                            <Input 
+                              label="이메일" 
+                              placeholder="example@email.com" 
+                              type="email" 
+                              value={emailForPw}
+                              onChange={(e) => setEmailForPw(e.target.value)}
+                              required
+                            />
+                            <Button 
+                              className="mt-7 shrink-0" 
+                              variant="outline" 
+                              onClick={handleSendPwCode}
+                              isLoading={isLoading && !pwSentCode}
+                            >
+                              인증 요청
+                            </Button>
+                          </div>
+
+                          {pwSentCode && (
+                            <div className="flex gap-2 animate-in fade-in slide-in-from-top-2">
+                              <Input 
+                                placeholder="인증번호 6자리" 
+                                value={pwVerificationCode}
+                                onChange={(e) => setPwVerificationCode(e.target.value)}
+                              />
+                              <Button 
+                                className="shrink-0" 
+                                onClick={handleVerifyPwCode}
+                                isLoading={isLoading && !!pwSentCode}
+                              >
+                                확인
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <form onSubmit={handleUpdatePassword} className="space-y-4 animate-in fade-in duration-500">
+                        <Input 
+                          label="새 비밀번호" 
+                          placeholder="••••••••" 
+                          type={showPassword ? "text" : "password"} 
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          required
+                          rightElement={
+                            <button 
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="text-text-sub hover:text-text-main"
+                            >
+                              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                          }
+                        />
+                        <Input 
+                          label="새 비밀번호 확인" 
+                          placeholder="••••••••" 
+                          type={showPassword ? "text" : "password"} 
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          required
+                        />
+                        <Button className="w-full mt-2" type="submit" isLoading={isLoading}>
+                          비밀번호 변경하기
+                        </Button>
+                      </form>
+                    )}
+                    
+                    {pwMessage.text && (
+                      <p className={cn(
+                        "text-xs px-1",
+                        pwMessage.isError ? "text-red-500" : "text-green-600"
+                      )}>
+                        {pwMessage.text}
+                      </p>
+                    )}
+                  </div>
                 ) : (
                   <div className="text-center space-y-6 py-8 animate-in zoom-in-95 duration-300">
                     <div className="flex justify-center text-primary">
                       <CheckCircle2 size={64} />
                     </div>
                     <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-text-main">메일 발송 완료</h3>
+                      <h3 className="text-xl font-bold text-text-main">비밀번호 변경 완료</h3>
                       <p className="text-sm text-text-sub leading-relaxed">
-                        <span className="font-semibold text-text-main">{emailForPw}</span> 로<br/>
-                        비밀번호 재설정 안내 메일을 보냈습니다.<br/>
-                        메일함(스팸함 포함)을 확인해 주세요.
+                        새로운 비밀번호로 가입 정보가 업데이트되었습니다.<br/>
+                        이제 새로운 비밀번호로 로그인해 주세요.
                       </p>
                     </div>
                     <Button className="w-full" onClick={() => router.push("/login")}>
@@ -271,7 +393,7 @@ export default function RecoveryPage() {
                     </Button>
                   </div>
                 )}
-              </form>
+              </div>
             )}
           </div>
         </div>
