@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
 
 export default function SignupPage() {
@@ -20,6 +20,10 @@ export default function SignupPage() {
   const [isEmailVerified, setIsEmailVerified] = useState(false);
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [nicknameMessage, setNicknameMessage] = useState("");
+  const [idMessage, setIdMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -33,9 +37,10 @@ export default function SignupPage() {
       const isDuplicated = await AuthService.checkIdDuplication(loginId);
       if (isDuplicated) {
         setError("이미 사용 중인 아이디입니다.");
+        setIdMessage("");
         setIsIdChecked(false);
       } else {
-        setSuccessMessage("사용 가능한 아이디입니다.");
+        setIdMessage("사용 가능한 아이디입니다.");
         setError("");
         setIsIdChecked(true);
       }
@@ -50,7 +55,7 @@ export default function SignupPage() {
       return;
     }
     // Simple check for now, can be expanded to AuthService
-    setSuccessMessage("사용 가능한 닉네임입니다.");
+    setNicknameMessage("사용 가능한 닉네임입니다.");
     setError("");
     setIsNicknameChecked(true);
   };
@@ -137,52 +142,63 @@ export default function SignupPage() {
         <div className="mx-auto max-w-sm space-y-6">
           <form className="space-y-4" onSubmit={handleSignup}>
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
-            {successMessage && <p className="text-sm text-green-500 text-center">{successMessage}</p>}
             
             {/* 1. 닉네임 */}
-            <div className="flex gap-2">
-              <Input 
-                label="닉네임" 
-                placeholder="여행매니아" 
-                value={nickname}
-                onChange={(e) => {
-                  setNickname(e.target.value);
-                  setIsNicknameChecked(false);
-                }}
-                required
-              />
-              <Button 
-                className="mt-7 shrink-0" 
-                variant="outline" 
-                size="md" 
-                type="button"
-                onClick={handleNicknameCheck}
-              >
-                중복 확인
-              </Button>
+            <div className="space-y-1">
+              <div className="flex gap-2">
+                <Input 
+                  label="닉네임" 
+                  placeholder="여행매니아" 
+                  value={nickname}
+                  onChange={(e) => {
+                    setNickname(e.target.value);
+                    setIsNicknameChecked(false);
+                    setNicknameMessage("");
+                  }}
+                  required
+                />
+                <Button 
+                  className="mt-7 shrink-0" 
+                  variant="outline" 
+                  size="md" 
+                  type="button"
+                  onClick={handleNicknameCheck}
+                >
+                  중복 확인
+                </Button>
+              </div>
+              {nicknameMessage && (
+                <p className="text-xs text-green-600 px-1">{nicknameMessage}</p>
+              )}
             </div>
 
             {/* 2. 로그인할 때 쓸 아이디 */}
-            <div className="flex gap-2">
-              <Input 
-                label="아이디" 
-                placeholder="아이디를 입력하세요" 
-                value={loginId}
-                onChange={(e) => {
-                  setLoginId(e.target.value);
-                  setIsIdChecked(false);
-                }}
-                required
-              />
-              <Button 
-                className="mt-7 shrink-0" 
-                variant="outline" 
-                size="md" 
-                type="button"
-                onClick={handleIdCheck}
-              >
-                중복 확인
-              </Button>
+            <div className="space-y-1">
+              <div className="flex gap-2">
+                <Input 
+                  label="아이디" 
+                  placeholder="아이디를 입력하세요" 
+                  value={loginId}
+                  onChange={(e) => {
+                    setLoginId(e.target.value);
+                    setIsIdChecked(false);
+                    setIdMessage("");
+                  }}
+                  required
+                />
+                <Button 
+                  className="mt-7 shrink-0" 
+                  variant="outline" 
+                  size="md" 
+                  type="button"
+                  onClick={handleIdCheck}
+                >
+                  중복 확인
+                </Button>
+              </div>
+              {idMessage && (
+                <p className="text-xs text-green-600 px-1">{idMessage}</p>
+              )}
             </div>
 
             {/* 3. 비밀번호 */}
@@ -190,10 +206,19 @@ export default function SignupPage() {
               <Input 
                 label="비밀번호" 
                 placeholder="••••••••" 
-                type="password" 
+                type={showPassword ? "text" : "password"} 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                rightElement={
+                  <button 
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="text-text-sub hover:text-text-main"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                }
               />
               <p className="text-[11px] text-text-sub px-1">
                 * 8자 이상, 영문과 숫자를 혼합하여 설정해주세요.
@@ -203,10 +228,19 @@ export default function SignupPage() {
             <Input 
               label="비밀번호 확인" 
               placeholder="••••••••" 
-              type="password" 
+              type={showConfirmPassword ? "text" : "password"} 
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
+              rightElement={
+                <button 
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="text-text-sub hover:text-text-main"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              }
             />
 
             {/* 4. 이메일 및 인증 */}

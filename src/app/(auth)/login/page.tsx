@@ -5,13 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
-import { Chrome, MessageCircle, MapPin } from "lucide-react";
+import { Chrome, MessageCircle, MapPin, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -68,10 +69,19 @@ export default function LoginPage() {
           <Input 
             label="비밀번호" 
             placeholder="••••••••" 
-            type="password" 
+            type={showPassword ? "text" : "password"} 
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            rightElement={
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="text-text-sub hover:text-text-main"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            }
           />
           <Button className="w-full mt-2" size="lg" isLoading={isLoading} type="submit">
             로그인
