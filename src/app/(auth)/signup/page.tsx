@@ -27,7 +27,6 @@ export default function SignupPage() {
   const [passwordMessage, setPasswordMessage] = useState({ text: "", isError: false });
   const [emailMessage, setEmailMessage] = useState({ text: "", isError: false });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleIdCheck = async () => {
     if (!loginId) {
@@ -90,7 +89,7 @@ export default function SignupPage() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setPasswordMessage({ text: "", isError: false });
 
     if (!isIdChecked) {
       setIdMessage({ text: "아이디 중복 확인이 필요합니다.", isError: true });
@@ -124,8 +123,8 @@ export default function SignupPage() {
       await AuthService.signUp(email, password, nickname, loginId);
       router.push("/");
     } catch (err: any) {
-      // General signup error (unlikely but possible)
-      setError(err.message);
+      // General signup error (e.g., Firebase error)
+      alert(`가입 중 오류가 발생했습니다: ${err.message}`);
     } finally {
       setIsLoading(false);
     }
