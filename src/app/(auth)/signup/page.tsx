@@ -31,7 +31,7 @@ export default function SignupPage() {
 
   const handleIdCheck = async () => {
     if (!loginId) {
-      setError("아이디를 입력해주세요.");
+      setIdMessage({ text: "아이디를 입력해주세요.", isError: true });
       return;
     }
     try {
@@ -84,17 +84,17 @@ export default function SignupPage() {
     setError("");
 
     if (!isIdChecked) {
-      setError("아이디 중복 확인이 필요합니다.");
+      setIdMessage({ text: "아이디 중복 확인이 필요합니다.", isError: true });
       return;
     }
 
     if (!isNicknameChecked) {
-      setError("닉네임 중복 확인이 필요합니다.");
+      setNicknameMessage({ text: "닉네임 중복 확인이 필요합니다.", isError: true });
       return;
     }
 
     if (!isEmailVerified) {
-      setError("이메일 인증이 필요합니다.");
+      setEmailMessage({ text: "이메일 인증이 필요합니다.", isError: true });
       return;
     }
 
