@@ -81,7 +81,7 @@ export default function SignupPage() {
     fetch("/api/auth/send-code", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code, type: "signup", nickname }),
     })
     .then(res => res.json())
     .then(data => {

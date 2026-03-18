@@ -44,7 +44,7 @@ export default function RecoveryPage() {
       const res = await fetch("/api/auth/send-code", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailForId, code }),
+        body: JSON.stringify({ email: emailForId, code, type: "findId" }),
       });
       const data = await res.json();
       

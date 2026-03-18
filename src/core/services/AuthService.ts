@@ -182,6 +182,9 @@ export const AuthService = {
         throw new Error("아이디와 이메일 정보가 일치하는 회원을 찾을 수 없습니다.");
       }
 
+      // Set language to Korean for the system email
+      auth.languageCode = "ko";
+      
       // If match, use standard Firebase password reset
       await sendPasswordResetEmail(auth, email);
       console.log("[AuthService] Password reset email sent to:", email);
