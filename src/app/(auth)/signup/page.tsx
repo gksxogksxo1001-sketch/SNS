@@ -22,9 +22,9 @@ export default function SignupPage() {
   const [isIdChecked, setIsIdChecked] = useState(false);
   const [isNicknameChecked, setIsNicknameChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [nicknameMessage, setNicknameMessage] = useState({ text: "", isError: false });
   const [idMessage, setIdMessage] = useState({ text: "", isError: false });
+  const [passwordMessage, setPasswordMessage] = useState({ text: "", isError: false });
   const [emailMessage, setEmailMessage] = useState({ text: "", isError: false });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -32,6 +32,15 @@ export default function SignupPage() {
   const handleIdCheck = async () => {
     if (!loginId) {
       setIdMessage({ text: "아이디를 입력해주세요.", isError: true });
+      return;
+    }
+    // 10 characters or more, alphanumeric (at least one letter and one number)
+    const idRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{10,}$/;
+    if (!idRegex.test(loginId)) {
+      setIdMessage({ 
+        text: "아이디는 10자 이상이며 영문과 숫자를 모두 포함해야 합니다.", 
+        isError: true 
+      });
       return;
     }
     try {
@@ -99,21 +108,23 @@ export default function SignupPage() {
     }
 
     if (password !== confirmPassword) {
-      setError("비밀번호가 일치하지 않습니다.");
+      setPasswordMessage({ text: "비밀번호가 일치하지 않습니다.", isError: true });
       return;
     }
 
     if (password.length < 8) {
-      setError("비밀번호는 8자 이상이어야 합니다.");
+      setPasswordMessage({ text: "비밀번호는 8자 이상이어야 합니다.", isError: true });
       return;
     }
 
+    setPasswordMessage({ text: "", isError: false });
     setIsLoading(true);
 
     try {
       await AuthService.signUp(email, password, nickname, loginId);
       router.push("/");
     } catch (err: any) {
+      // General signup error (unlikely but possible)
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -137,7 +148,6 @@ export default function SignupPage() {
       <main className="flex-grow overflow-y-auto px-6 py-8">
         <div className="mx-auto max-w-sm space-y-6">
           <form className="space-y-4" onSubmit={handleSignup}>
-            {error && <p className="text-sm text-red-500 text-center">{error}</p>}
             
             {/* 1. 닉네임 */}
             <div className="space-y-1">
@@ -229,24 +239,23 @@ export default function SignupPage() {
               <p className="text-[11px] text-text-sub px-1">
                 * 8자 이상, 영문과 숫자를 혼합하여 설정해주세요.
               </p>
+              {passwordMessage.text && (
+                <p className={cn(
+                  "text-xs px-1",
+                  passwordMessage.isError ? "text-red-500" : "text-green-600"
+                )}>
+                  {passwordMessage.text}
+                </p>
+              )}
             </div>
 
             <Input 
               label="비밀번호 확인" 
               placeholder="••••••••" 
-              type={showConfirmPassword ? "text" : "password"} 
+              type={showPassword ? "text" : "password"} 
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
-              rightElement={
-                <button 
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="text-text-sub hover:text-text-main"
-                >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                </button>
-              }
             />
 
             {/* 4. 이메일 및 인증 */}
