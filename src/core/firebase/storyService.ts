@@ -127,8 +127,16 @@ export const storyService = {
     );
   },
 
+  // Mark story as viewed
+  async markStoryAsViewed(storyId: string, userId: string): Promise<void> {
+    const storyRef = doc(db, "stories", storyId);
+    await updateDoc(storyRef, {
+      viewedBy: arrayUnion(userId)
+    });
+  },
+
   // Get all active stories (not expired)
-  async getActiveStories(): Promise<UserStoryGroup[]> {
+  async getActiveStories(currentUserId?: string): Promise<UserStoryGroup[]> {
     const now = new Date();
     const storiesRef = collection(db, "stories");
     const q = query(
@@ -152,12 +160,21 @@ export const storyService = {
           userId: story.userId,
           user: story.user,
           stories: [],
-          hasUnread: false // Logic for unread could be implemented based on viewedBy
+          hasUnread: false
         };
       }
       userGroups[story.userId].stories.push(story);
     });
 
-    return Object.values(userGroups);
+    // Calculate hasUnread for each group
+    const groups = Object.values(userGroups);
+    if (currentUserId) {
+      groups.forEach(group => {
+        // Group has unread stories if at least one story hasn't been viewed by current user
+        group.hasUnread = group.stories.some(story => !story.viewedBy.includes(currentUserId));
+      });
+    }
+
+    return groups;
   }
 };

@@ -26,11 +26,23 @@ export const Stories = () => {
 
   const fetchStories = React.useCallback(async () => {
     try {
-      const groups = await storyService.getActiveStories();
-      // 내 스토리가 있다면 가장 앞으로 정렬
+      const currentUserId = auth.currentUser?.uid;
+      const groups = await storyService.getActiveStories(currentUserId || undefined);
+      
+      // 정렬 로직: 
+      // 1. 읽지 않은 스토리(hasUnread) 우선
+      // 2. 같은 읽음 상태 내에서는 내 스토리가 우선
       const sortedGroups = [...groups].sort((a, b) => {
-        if (a.userId === auth.currentUser?.uid) return -1;
-        if (b.userId === auth.currentUser?.uid) return 1;
+        // 1. 읽지 않은 스토리 우선
+        if (a.hasUnread && !b.hasUnread) return -1;
+        if (!a.hasUnread && b.hasUnread) return 1;
+        
+        // 2. 같은 상태라면 내 스토리 우선
+        const isAMe = a.userId === currentUserId;
+        const isBMe = b.userId === currentUserId;
+        if (isAMe) return -1;
+        if (isBMe) return 1;
+        
         return 0;
       });
       setStoryGroups(sortedGroups);
@@ -67,7 +79,9 @@ export const Stories = () => {
               className={cn(
                 "w-[68px] h-[68px] rounded-[26px] flex items-center justify-center transition-all duration-300 group-hover:scale-105",
                 myGroup 
-                  ? "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10" 
+                  ? (myGroup.hasUnread 
+                      ? "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10" 
+                      : "bg-slate-200 p-[1.5px]") // 읽음 상태일 때 회색 링
                   : "bg-slate-100 p-[1.5px]"
               )}
             >
@@ -109,7 +123,7 @@ export const Stories = () => {
                 "w-[68px] h-[68px] rounded-[26px] flex items-center justify-center transition-all duration-300 group-hover:scale-105",
                 group.hasUnread 
                   ? "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10" 
-                  : "bg-slate-100 p-[1.5px]"
+                  : "bg-slate-200 p-[1.5px]"
               )}>
                 {/* Avatar Container */}
                 <div className="w-full h-full rounded-[23px] bg-white p-[2px]">

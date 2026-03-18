@@ -43,6 +43,12 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   useEffect(() => {
     if (!currentGroup || !currentStory) return;
     
+    // Mark as viewed
+    if (currentUserId && !currentStory.viewedBy.includes(currentUserId)) {
+      storyService.markStoryAsViewed(currentStory.id, currentUserId)
+        .catch(err => console.error("Failed to mark story as viewed:", err));
+    }
+
     // Reset and start
     setProgress(0);
     startTimer();
@@ -50,7 +56,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
     return () => {
       stopTimer();
     };
-  }, [currentGroupIndex, currentStoryIndex]);
+  }, [currentGroupIndex, currentStoryIndex, currentUserId]);
 
   const startTimer = () => {
     stopTimer();
