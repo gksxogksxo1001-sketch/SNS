@@ -1,54 +1,74 @@
-# 하이레벨 아키텍처 설계 (HLD) - Firebase 기반
+# [HLD] HANS SNS 하이레벨 아키텍처 설계서
 
-## 1. 개요
-본 문서는 2030 여행자를 위한 SNS 커뮤니티의 전체적인 시스템 구조와 기술 스택을 정의합니다. 사용자의 요구사항에 따라 **비용 최적화(Firebase 무료 티어 활용)**와 **웹 기반 반응형 디자인**에 초점을 맞추었습니다.
+## 1. 시스템 아키텍처 개요
+본 시스템은 **Serverless 기반의 이벤트 중심 아키텍처**를 채택하여 초기 개발 속도를 극대화하고, 트래픽 확장에 유연하게 대응합니다. Next.js를 프론트엔드로, Firebase를 백엔드 및 실시간 인프라로 활용합니다.
 
-## 2. 기술 스택 (Tech Stack) 및 선정 근거
-
-| 레이어 | 기술 | 선정 근거 (Trade-off) |
-| :--- | :--- | :--- |
-| **Frontend** | **Next.js (React)** | SSR/SSG 지원으로 SEO에 최적화, 반응형 웹 구현 용이, Vercel 무료 배포 가능 |
-| **Backend/DB** | **Firebase** | Google에서 제공하는 NoSQL DB(Firestore), 인증(Auth), 파일 저장소(Storage), 푸시 알림(FCM) 통합 제공 |
-| **API** | **Next.js API Routes** | 별도의 서버 구축 없이 배포 가능 (Serverless), 비용 절감 |
-| **Mapping** | **Mapbox/Google Maps** | 풍부한 SDK와 지리 정보 제공 (일정 트래픽까지 무료) |
-| **Deployment** | **Vercel** | Next.js와 최상의 호환성, 무료 SSL 및 호스팅 제공 |
-
-## 3. 시스템 구성도 (System Architecture)
+## 2. 시스템 구성 요소 (Mermaid)
 
 ```mermaid
 graph TD
     User((사용자))
+    LB[Next.js App / Vercel]
     
-    subgraph Vercel_Cloud [Vercel Cloud]
-        App[Next.js Responsive Web]
-        APIRoutes[Serverless API Routes]
+    subgraph "Frontend Layer"
+        Next[Next.js Framework]
+        Zustand[Zustand State Management]
+        GMap[Google Maps SDK]
     end
-    
-    subgraph Firebase_Platform [Firebase Platform]
+
+    subgraph "Backend Services (Firebase)"
         Auth[Firebase Authentication]
-        DB[(Cloud Firestore - NoSQL)]
+        DB[(Firestore NoSQL)]
         Storage[Firebase Storage]
         FCM[Firebase Cloud Messaging]
-    end
-    
-    subgraph External_APIs [External Services]
-        Maps[Map Service API]
+        Functions[Cloud Functions / API Routes]
     end
 
-    User <--> App
-    App <--> APIRoutes
-    APIRoutes <--> Auth
-    APIRoutes <--> DB
-    APIRoutes <--> Storage
-    APIRoutes <--> FCM
-    App <--> Maps
+    subgraph "External APIs"
+        PlaceAPI[Google Places API]
+        DistAPI[Distance Matrix API]
+        Exchange[Exchange Rate API]
+        Mail[Nodemailer/SMTP]
+    end
+
+    User --> LB
+    LB --> Next
+    Next --> Auth
+    Next --> DB
+    Next --> Storage
+    Next --> GMap
+    
+    DB -.-> Functions
+    Functions --> FCM
+    Functions --> Mail
+    Functions --> DistAPI
+    Functions --> Exchange
+    Next -- Place Search --> PlaceAPI
 ```
 
-## 4. 데이터 흐름
-1. **게시물 작성**: 사용자가 이미지를 업로드하면 Firebase Storage에 저장되고, 텍스트와 비용 정보는 Firestore(NoSQL)에 문서 단위로 저장됩니다.
-2. **지도 표시**: Firestore의 위치 정보를 실시간으로 가져와 Map SDK를 통해 지도 위에 경로를 연결합니다.
-3. **정산 알림**: FCM(Cloud Messaging)을 통해 그룹 멤버들에게 즉각적인 정산 상태를 푸시 알림으로 공유합니다.
+## 3. 기술 스택 및 선택 근거
 
-## 5. 비용 절감 전략
-- **Spark Plan (Free)**: Firebase의 무료 티어(Spark 요금제)를 활용하여 초기 비용 부담 없이 시작합니다.
-- **NoSQL 최적화**: 읽기/쓰기 횟수에 따라 비용이 발생하는 Firestore의 특성에 맞춰 쿼리 최적화 및 인덱싱 전략을 수립합니다.
+| 분류 | 기술 스택 | 선택 근거 (Trade-off) |
+| :--- | :--- | :--- |
+| **Framework** | Next.js 15+ | SSR/ISR을 통한 SEO 최적화 및 빠른 초기 로딩 속도 확보. API Routes를 통해 서버 로직 통합 관리 가능. |
+| **Backend** | Firebase | 인프라 관리 비용 최소화. Firestore의 리얼타임 리스너를 통한 그룹 동시 편집 및 정산 상태의 실시간 동기화 용이. |
+| **Database** | Firestore (NoSQL) | 여행 데이터(게시물, 경로, 지출 등)의 비정형적이고 잦은 스키마 변경에 유연하게 대응 가능. |
+| **State Management** | Zustand | Redux 대비 가볍고 설정이 간편하며, Next.js의 Client Component에서 전역 상태(사용자 정보, 그룹 정보) 관리에 적합. |
+| **Map Engine** | Google Maps | 전 세계적인 장소 데이터 정확도 및 경로 탐색 API(Distance Matrix)와의 높은 시너지. |
+
+## 4. 데이터 흐름 디자인
+
+### 4.1 실시간 그룹 협업 및 정산
+- 사용자가 게시물을 작성하거나 지출 내역을 입력하면 Firestore의 해당 그룹 문서가 업데이트됩니다.
+- 같은 그룹에 속한 멤버들의 앱은 Firestore의 `onSnapshot` 리스너를 통해 실시간으로 변경 사항을 감지하고 UI를 갱신합니다.
+
+### 4.2 경로 최적화 및 시각화
+- 본문에 포함된 `#장소` 태그는 Google Places API를 통해 위/경도로 변환됩니다.
+- Cloud Functions에서 방문 순서에 따른 총 이동 거리와 소요 시간을 계산하여 효율적인 동선 피드백을 제공합니다.
+
+### 4.3 푸시 알림 및 외부 연동
+- 특정 이벤트(태깅, 정산 요청) 발생 시 Cloud Functions 트리거가 실행됩니다.
+- FCM을 통해 브라우저 푸시 알림을 발송하고, 중요도가 높은 내용은 Nodemailer를 통해 메일로 전송합니다.
+
+---
+**이 설계안이 프로젝트 방향과 일치한다면, 다음 단계인 [상세 설계(LLD): 데이터베이스 스키마 및 API 명세]를 작성하겠습니다.**

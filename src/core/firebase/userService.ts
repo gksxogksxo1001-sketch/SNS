@@ -64,6 +64,15 @@ export const userService = {
     }
   },
 
+  // Update travel style
+  async updateTravelStyle(uid: string, style: string): Promise<void> {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      travelStyle: style,
+      updatedAt: serverTimestamp()
+    });
+  },
+
   // Remove visited country
   async removeVisitedCountry(uid: string, country: string): Promise<void> {
     const userRef = doc(db, "users", uid);

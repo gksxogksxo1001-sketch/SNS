@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
 
 export default function ProfilePage() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -25,7 +26,7 @@ export default function ProfilePage() {
   const [friendProfiles, setFriendProfiles] = useState<UserProfile[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "liked">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "liked" | "stories" | "bookmarks">("posts");
   
   // Modals state
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
@@ -34,6 +35,7 @@ export default function ProfilePage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false);
   const [userToUnfollow, setUserToUnfollow] = useState<UserProfile | null>(null);
+  const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -179,17 +181,35 @@ export default function ProfilePage() {
                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">설정 및 관리</p>
                 </div>
                 
-                <button className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                <button 
+                  onClick={() => {
+                    setActiveTab("bookmarks");
+                    setIsSettingsOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                >
                   <Bookmark size={18} className="text-[#2A9D8F]" />
                   <span className="text-sm font-bold text-gray-700">북마크</span>
                 </button>
 
-                <button className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                <button 
+                  onClick={() => {
+                    setIsFriendsModalOpen(true);
+                    setIsSettingsOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                >
                   <Users size={18} className="text-[#E9C46A]" />
                   <span className="text-sm font-bold text-gray-700">친한친구</span>
                 </button>
 
-                <button className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group">
+                <button 
+                  onClick={() => {
+                    setIsAccountSwitcherOpen(true);
+                    setIsSettingsOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                >
                   <UserCog size={18} className="text-[#F4A261]" />
                   <span className="text-sm font-bold text-gray-700">계정 관리</span>
                 </button>
@@ -297,6 +317,28 @@ export default function ProfilePage() {
               <span className="text-sm">좋아요</span>
               {activeTab === "liked" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
             </button>
+            <button
+              onClick={() => setActiveTab("stories")}
+              className={cn(
+                "flex-1 py-3 flex items-center justify-center space-x-2 transition-colors relative",
+                activeTab === "stories" ? "text-primary font-bold" : "text-text-sub hover:text-text-main"
+              )}
+            >
+              <MapPin size={18} />
+              <span className="text-sm">보관</span>
+              {activeTab === "stories" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+            </button>
+            <button
+              onClick={() => setActiveTab("bookmarks")}
+              className={cn(
+                "flex-1 py-3 flex items-center justify-center space-x-2 transition-colors relative",
+                activeTab === "bookmarks" ? "text-primary font-bold" : "text-text-sub hover:text-text-main"
+              )}
+            >
+              <Bookmark size={18} />
+              <span className="text-sm">북마크</span>
+              {activeTab === "bookmarks" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
+            </button>
           </div>
 
           {/* Content */}
@@ -305,7 +347,7 @@ export default function ProfilePage() {
               <div className="flex justify-center py-10">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
               </div>
-            ) : userPosts.length > 0 ? (
+            ) : activeTab === "posts" && userPosts.length > 0 ? (
               <div className="grid grid-cols-3 gap-[2px]">
                 {userPosts.map((post) => (
                   <div 
@@ -318,32 +360,25 @@ export default function ProfilePage() {
                       alt="Post" 
                       className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
                     />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-4">
-                      <div className="flex items-center text-white font-bold text-sm">
-                        <Heart size={16} className="mr-1 fill-white" />
-                        {post.likes}
-                      </div>
-                    </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-20 space-y-4">
                 <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
-                  <Grid size={32} />
+                  {activeTab === "posts" ? <Grid size={32} /> : 
+                   activeTab === "stories" ? <MapPin size={32} /> : <Bookmark size={32} />}
                 </div>
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-text-main">아직 게시물이 없습니다.</p>
-                  <p className="text-xs text-text-sub">당신의 첫 번째 여행기를 공유해 보세요!</p>
+                  <p className="text-sm font-medium text-text-main">
+                    {activeTab === "posts" ? "아직 게시물이 없습니다." : 
+                     activeTab === "stories" ? "보관된 스토리가 없습니다." : "북마크한 게시물이 없습니다."}
+                  </p>
+                  <p className="text-xs text-text-sub opacity-70">
+                    {activeTab === "posts" ? "당신의 첫 번째 여행기를 공유해 보세요!" : 
+                     activeTab === "stories" ? "설정에서 '스토리 보관'을 활성화하면 여기에 표시됩니다." : "관심 있는 게시물을 저장해 보세요!"}
+                  </p>
                 </div>
-                <Button 
-                  onClick={() => router.push("/post/create")}
-                  variant="outline" 
-                  size="sm"
-                  className="rounded-full"
-                >
-                  게시물 작성하기
-                </Button>
               </div>
             )}
           </div>
@@ -514,6 +549,12 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+      {/* Account Switcher Modal */}
+      <AccountSwitcher 
+        isOpen={isAccountSwitcherOpen} 
+        onClose={() => setIsAccountSwitcherOpen(false)} 
+        currentUid={user.uid}
+      />
     </div>
   );
 }

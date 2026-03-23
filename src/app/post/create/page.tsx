@@ -8,6 +8,9 @@ import { ExpenseInput } from "@/components/features/post/ExpenseInput";
 import { postService } from "@/core/firebase/postService";
 import { auth } from "@/core/firebase/config";
 import { useAuth } from "@/core/hooks/useAuth";
+import { groupService } from "@/core/firebase/groupService";
+import { Group } from "@/types/group";
+import { cn } from "@/lib/utils";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -128,14 +131,52 @@ export default function CreatePostPage() {
   const [selectedLocation, setSelectedLocation] = useState<{ name: string; address: string; lat: number; lng: number } | null>(null);
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [expenses, setExpenses] = useState({
-    flight: "",
-    hotel: "",
+    plane: "",
+    stay: "",
+    transport: "",
     food: "",
     other: "",
   });
   const [visibility, setVisibility] = useState<"public" | "friends" | "group">("public");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [userGroups, setUserGroups] = useState<Group[]>([]);
   const { user: currentUser, isLoading: isAuthLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const fetchGroups = async () => {
+      if (currentUser) {
+        try {
+          const groups = await groupService.getUserGroups(currentUser.uid);
+          setUserGroups(groups);
+        } catch (error) {
+          console.error("[CreatePost] Failed to fetch groups:", error);
+        }
+      }
+    };
+    fetchGroups();
+  }, [currentUser]);
+
+  // Handle auto location tagging from content or tags
+  useEffect(() => {
+    const triggerAutoTag = async () => {
+      if (!selectedLocation && (content.includes("#") || tags.includes("#"))) {
+        const fullText = `${content} ${tags}`;
+        const extracted = await postService.extractLocationFromTags(fullText);
+        if (extracted) {
+          setSelectedLocation({
+            name: extracted.name,
+            address: "태그에서 자동 추출됨",
+            lat: extracted.lat || 0,
+            lng: extracted.lng || 0
+          });
+        }
+      }
+    };
+    
+    const timeoutId = setTimeout(triggerAutoTag, 1000);
+    return () => clearTimeout(timeoutId);
+  }, [content, tags, selectedLocation]);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -229,9 +270,11 @@ export default function CreatePostPage() {
           tags: tagList,
           images: imageUrls,
           location: selectedLocation || null, // undefined 대신 null 사용
+          groupId: visibility === "group" ? selectedGroupId : null,
           expenses: {
-            flight: Number(expenses.flight) || 0,
-            hotel: Number(expenses.hotel) || 0,
+            plane: Number(expenses.plane) || 0,
+            stay: Number(expenses.stay) || 0,
+            transport: Number(expenses.transport) || 0,
             food: Number(expenses.food) || 0,
             other: Number(expenses.other) || 0,
           },
@@ -398,6 +441,7 @@ export default function CreatePostPage() {
               ].map((item) => (
                 <button
                   key={item.id}
+                  type="button"
                   onClick={() => setVisibility(item.id as any)}
                   className={`flex flex-1 items-center justify-center space-x-2 rounded-xl py-3 transition-all ${
                     visibility === item.id
@@ -411,6 +455,29 @@ export default function CreatePostPage() {
               ))}
             </div>
           </div>
+
+          {visibility === "group" && userGroups.length > 0 && (
+            <div className="flex w-full flex-col space-y-3 py-4 animate-in slide-in-from-top-2">
+              <span className="text-xs font-bold text-[#6C757D] ml-1">나의 여행 그룹 선택</span>
+              <div className="flex flex-wrap gap-2">
+                {userGroups.map((group) => (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => setSelectedGroupId(group.id)}
+                    className={cn(
+                      "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                      selectedGroupId === group.id
+                        ? "bg-[#2A9D8F]/10 border-[#2A9D8F] text-[#2A9D8F]"
+                        : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                    )}
+                  >
+                    {group.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Location Search Modal */}

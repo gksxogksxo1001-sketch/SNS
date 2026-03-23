@@ -1,104 +1,141 @@
-import { db } from "./config";
 import { 
   collection, 
-  doc, 
-  addDoc,
-  getDocs,
   query, 
-  where,
-  orderBy, 
-  onSnapshot,
-  serverTimestamp
+  where, 
+  getDocs, 
+  Timestamp 
 } from "firebase/firestore";
-import { Expense, SettlementGroup, SettlementSplit } from "@/types/settlement";
+import { db } from "./config";
+import { Post } from "@/types/post";
+import { Group } from "@/types/group";
+import { groupService } from "./groupService";
+import { SettlementGroup, SettlementSplit } from "@/types/settlement";
 
 export const settlementService = {
-  // Add a new expense
-  async addExpense(expenseData: Omit<Expense, "id" | "date">): Promise<string> {
-    const expensesRef = collection(db, "expenses");
+  /**
+   * Calculate settlement balances for a specific group based on posts
+   */
+  async calculateGroupSettlement(groupId: string): Promise<{
+    totalAmount: number;
+    balances: Record<string, number>;
+    splits: SettlementSplit[];
+    memberCount: number;
+  }> {
+    // 1. Get Group info to know members
+    const group = await groupService.getGroup(groupId);
+    if (!group) throw new Error("Group not found");
     
-    const newDoc = await addDoc(expensesRef, {
-      ...expenseData,
-      date: serverTimestamp(),
+    const members = group.members;
+    const memberCount = members.length;
+    
+    // 2. Fetch all posts associated with this groupId
+    const postsRef = collection(db, "posts");
+    const q = query(postsRef, where("groupId", "==", groupId));
+    const querySnapshot = await getDocs(q);
+    
+    const posts: Post[] = [];
+    querySnapshot.forEach((doc) => {
+      posts.push({ id: doc.id, ...doc.data() } as Post);
     });
     
-    return newDoc.id;
-  },
-
-  // Listen to expenses for a specific group/trip
-  subscribeToGroupExpenses(groupId: string, callback: (expenses: Expense[]) => void) {
-    const expensesRef = collection(db, "expenses");
-    const q = query(
-      expensesRef,
-      where("groupId", "==", groupId),
-      orderBy("date", "desc")
-    );
-
-    return onSnapshot(q, (snapshot) => {
-      const expenses = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Expense[];
-      callback(expenses);
-    });
-  },
-
-  // Calculate Dutch Pay splits based on a list of expenses
-  calculateSplits(expenses: Expense[]): SettlementSplit[] {
-    const balances: { [userId: string]: number } = {};
-
-    // Calculate net balance for each user
-    expenses.forEach(exp => {
-      const splitAmount = exp.amount / exp.participants.length;
-
-      // The person who paid getting money BACK (+)
-      balances[exp.paidBy] = (balances[exp.paidBy] || 0) + exp.amount;
-
-      // Everyone who participated owes money (-)
-      exp.participants.forEach(participant => {
-        balances[participant] = (balances[participant] || 0) - splitAmount;
-      });
-    });
-
-    const debtors: { userId: string; amount: number }[] = [];
-    const creditors: { userId: string; amount: number }[] = [];
-
-    // Separate into who owes (debtors) and who is owed (creditors)
-    Object.keys(balances).forEach(userId => {
-      const balance = Math.round(balances[userId]); // Deal with floating point issues
-      if (balance < 0) {
-        debtors.push({ userId, amount: Math.abs(balance) });
-      } else if (balance > 0) {
-        creditors.push({ userId, amount: balance });
+    // 3. Aggregate expenses
+    let totalAmount = 0;
+    const paidAmounts: Record<string, number> = {}; // amount each member paid
+    
+    // Initialize paidAmounts for all members
+    members.forEach((uid: string) => paidAmounts[uid] = 0);
+    
+    posts.forEach(post => {
+      const amount = post.totalExpense || 0;
+      totalAmount += amount;
+      
+      const paidBy = post.user.uid;
+      if (members.includes(paidBy)) {
+        paidAmounts[paidBy] += amount;
+      } else {
+        // If the payer is not in the group anymore, or somehow different
+        // We might need a special logic, but for now just skip or assign to first member
+        console.warn(`[settlementService] Post by ${paidBy} found in group ${groupId} but user not in members list.`);
       }
     });
-
+    
+    // 4. Calculate individual balances (amount paid - amount should pay)
+    const shouldPay = totalAmount / (memberCount || 1);
+    const balances: Record<string, number> = {};
+    
+    members.forEach((uid: string) => {
+      balances[uid] = paidAmounts[uid] - shouldPay;
+    });
+    
+    // 5. Generate splits (who owes whom)
     const splits: SettlementSplit[] = [];
-    let i = 0; // debtors index
-    let j = 0; // creditors index
-
-    // Greedy algorithm to settle debts
-    while (i < debtors.length && j < creditors.length) {
-      const debtor = debtors[i];
-      const creditor = creditors[j];
-
-      const settleAmount = Math.min(debtor.amount, creditor.amount);
-
-      if (settleAmount > 0) {
+    const debtors = members
+      .filter((uid: string) => balances[uid] < 0)
+      .sort((a: string, b: string) => balances[a] - balances[b]); // Most negative first
+    
+    const creditors = members
+      .filter((uid: string) => balances[uid] > 0)
+      .sort((a: string, b: string) => balances[b] - balances[a]); // Most positive first
+      
+    let dIdx = 0;
+    let cIdx = 0;
+    
+    // Temporary work arrays
+    const tempBalances = { ...balances };
+    
+    while (dIdx < debtors.length && cIdx < creditors.length) {
+      const debtor = debtors[dIdx];
+      const creditor = creditors[cIdx];
+      
+      const toPay = Math.min(Math.abs(tempBalances[debtor]), tempBalances[creditor]);
+      
+      if (toPay > 0.01) { // Skip tiny amounts
         splits.push({
-          fromUserId: debtor.userId,
-          toUserId: creditor.userId,
-          amount: settleAmount
+          fromUserId: debtor,
+          toUserId: creditor,
+          amount: toPay
         });
       }
-
-      debtor.amount -= settleAmount;
-      creditor.amount -= settleAmount;
-
-      if (debtor.amount === 0) i++;
-      if (creditor.amount === 0) j++;
+      
+      tempBalances[debtor] += toPay;
+      tempBalances[creditor] -= toPay;
+      
+      if (Math.abs(tempBalances[debtor]) < 0.01) dIdx++;
+      if (Math.abs(tempBalances[creditor]) < 0.01) cIdx++;
     }
+    
+    return {
+      totalAmount,
+      balances,
+      splits,
+      memberCount
+    };
+  },
 
-    return splits;
+  /**
+   * Get all groups for a user with calculated settlement summaries
+   */
+  async getUserSettlementOverview(userId: string): Promise<any[]> {
+    const userGroups = await groupService.getUserGroups(userId);
+    
+    const summaries = await Promise.all(userGroups.map(async (group) => {
+      try {
+        const settlement = await this.calculateGroupSettlement(group.id);
+        return {
+          id: group.id,
+          name: group.name,
+          date: "최근 여행", // In real app, get from group duration or last post
+          participants: group.members,
+          status: "ongoing", // Default to ongoing
+          totalAmount: settlement.totalAmount,
+          myBalance: settlement.balances[userId] || 0
+        };
+      } catch (err) {
+        console.error(`Failed to summarize group ${group.id}:`, err);
+        return null;
+      }
+    }));
+    
+    return summaries.filter(s => s !== null);
   }
 };

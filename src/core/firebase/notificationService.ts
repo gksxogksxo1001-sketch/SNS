@@ -130,5 +130,40 @@ export const notificationService = {
     } catch (error) {
       console.error("Failed to delete notification:", error);
     }
+  },
+
+  /**
+   * Send settlement request notifications to multiple users
+   */
+  async sendSettlementNotifications(
+    recipients: { uid: string; amount: number }[],
+    fromUser: { uid: string; nickname: string; avatarUrl: string | null },
+    groupName: string,
+    groupId: string
+  ): Promise<void> {
+    const batch = writeBatch(db);
+    const notificationsRef = collection(db, "notifications");
+
+    recipients.forEach((recipient) => {
+      const newDocRef = doc(notificationsRef);
+      batch.set(newDocRef, {
+        uid: recipient.uid,
+        type: "group_invite", // Reuse or add a new type if strictly needed, but let's use group_invite or content-based
+        fromUid: fromUser.uid,
+        fromNickname: fromUser.nickname,
+        fromAvatarUrl: fromUser.avatarUrl,
+        groupId: groupId,
+        content: `'${groupName}' 여행 정산 요청: ${recipient.amount.toLocaleString()}원을 확인해 주세요.`,
+        isRead: false,
+        createdAt: serverTimestamp(),
+      });
+    });
+
+    try {
+      await batch.commit();
+      console.log(`[notificationService] Sent ${recipients.length} settlement notifications`);
+    } catch (error) {
+      console.error("[notificationService] Failed to send settlement notifications:", error);
+    }
   }
 };

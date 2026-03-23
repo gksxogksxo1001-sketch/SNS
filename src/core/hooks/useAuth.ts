@@ -12,6 +12,13 @@ export const useAuth = () => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setIsLoading(false);
+      
+      // Save to recent accounts if logged in
+      if (user) {
+        import("@/core/auth/accountManager").then(({ accountManager }) => {
+          accountManager.saveAccount(user);
+        });
+      }
     });
 
     return () => unsubscribe();

@@ -16,8 +16,8 @@ export interface Post {
     uid: string;
     name: string;
     image?: string | null; // null 허용
-    group?: string | null;
   };
+  groupId?: string | null; // 소속 그룹 ID
   content: string;
   tags: string[];
   images: string[];
@@ -28,8 +28,9 @@ export interface Post {
     lng: number;
   } | null; // null 허용
   expenses: {
-    flight?: number;
-    hotel?: number;
+    plane?: number;
+    stay?: number;
+    transport?: number;
     food?: number;
     other?: number;
   };

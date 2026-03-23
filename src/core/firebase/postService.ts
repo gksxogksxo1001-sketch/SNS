@@ -22,6 +22,12 @@ import { Post, PostComment } from "@/types/post";
 import { notificationService } from "./notificationService";
 import { userService } from "./userService";
 
+export interface LocationTag {
+  name: string;
+  lat?: number;
+  lng?: number;
+}
+
 export const postService = {
   // Upload multiple images to Firebase Storage
   async uploadImages(files: File[], userId: string): Promise<string[]> {
@@ -66,11 +72,29 @@ export const postService = {
       return docRef.id;
     } catch (error: any) {
       console.error("[postService] Error in createPost:", error);
-      // 구체적인 에러 정보를 포함하여 throw
       const customError = new Error(error.message || "알 수 없는 데이터베이스 오류");
       (customError as any).code = error.code;
       throw customError;
     }
+  },
+
+  // Extract location from tags in content (#장소)
+  async extractLocationFromTags(content: string): Promise<LocationTag | null> {
+    const hashtagRegex = /#([^\s#@]+)/g;
+    const matches = Array.from(content.matchAll(hashtagRegex));
+    
+    if (matches.length > 0) {
+      // Simple logic: Use the first hashtag as the primary location
+      // In a real app, this would call Google Places API to get lat/lng
+      const locationName = matches[0][1];
+      console.log(`[postService] Extracted location tag: ${locationName}`);
+      
+      return {
+        name: locationName,
+        // lat, lng would come from Google Places API
+      };
+    }
+    return null;
   },
 
   // Delete a post from Firestore

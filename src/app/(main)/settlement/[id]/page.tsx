@@ -4,65 +4,78 @@ import React, { useState, useMemo, useEffect } from "react";
 import { ChevronLeft, Plus, Wallet, Receipt, ArrowRight, CheckCircle2, MoreVertical, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { settlementService } from "@/core/firebase/settlementService";
+import { groupService } from "@/core/firebase/groupService";
 import { messageService } from "@/core/firebase/messageService";
-import { useSettlementStore } from "@/store/useSettlementStore";
 import { userService } from "@/core/firebase/userService";
-import { Expense } from "@/types/settlement";
+import { notificationService } from "@/core/firebase/notificationService";
+import { useAuth } from "@/core/hooks/useAuth";
+import { Post } from "@/types/post";
+import { Group } from "@/types/group";
 import { UserProfile } from "@/types/user";
 
 export default function SettlementDetailPage() {
   const params = useParams();
   const groupId = params?.id as string;
   const router = useRouter();
+  const { user: currentUser } = useAuth();
   
-  // Use Global State
-  const { expenses, groups, addExpense } = useSettlementStore();
+  const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
+  const [settlementData, setSettlementData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
-
-  const currentGroup = useMemo(() => groups.find((g: any) => g.id === groupId), [groups, groupId]);
-  const groupExpenses = useMemo(() => expenses.filter((e: Expense) => e.groupId === groupId), [expenses, groupId]);
   
+  // States for Calculator and Add Expense (UI)
   const [showCalculator, setShowCalculator] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newAmount, setNewAmount] = useState("");
+  const [newCategory, setNewCategory] = useState<any>("식비");
 
   useEffect(() => {
     setIsHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (currentGroup) {
-      fetchUserProfiles(currentGroup.participants);
-    }
-  }, [currentGroup]);
+    const loadDetail = async () => {
+      if (groupId) {
+        setIsLoading(true);
+        try {
+          const settlement = await settlementService.calculateGroupSettlement(groupId);
+          const group = await groupService.getGroup(groupId);
+          
+          setSettlementData(settlement);
+          setCurrentGroup(group);
+          
+          if (group) {
+            await fetchUserProfiles(group.members);
+          }
+        } catch (error) {
+          console.error("Failed to load settlement detail:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadDetail();
+  }, [groupId]);
 
   const fetchUserProfiles = async (uids: string[]) => {
     const profiles: Record<string, UserProfile> = {};
     await Promise.all(uids.map(async (uid) => {
-      // In a real app we'd have a batch get
       const profile = await userService.getUserProfile(uid);
-      if (profile) {
-        profiles[uid] = profile;
-      }
+      if (profile) profiles[uid] = profile;
     }));
     setUserProfiles(profiles);
   };
 
-  // New Expense Form State
-  const [newTitle, setNewTitle] = useState("");
-  const [newAmount, setNewAmount] = useState("");
-  const [newCategory, setNewCategory] = useState<any>("식비");
-
-  // Group metrics
-  const totalGroupExpense = useMemo(() => groupExpenses.reduce((acc: number, exp: Expense) => acc + exp.amount, 0), [groupExpenses]);
+  const myNetBalance = useMemo(() => {
+    if (!settlementData || !currentUser) return 0;
+    return settlementData.balances[currentUser.uid] || 0;
+  }, [settlementData, currentUser]);
   
-  // My metrics (Assuming logged in as "me")
-  const myTotalPaid = useMemo(() => groupExpenses.filter((e: Expense) => e.paidBy === "me").reduce((acc: number, exp: Expense) => acc + exp.amount, 0), [groupExpenses]);
-  const myTotalShare = useMemo(() => groupExpenses.filter((e: Expense) => e.participants.includes("me")).reduce((acc: number, exp: Expense) => acc + (exp.amount / exp.participants.length), 0), [groupExpenses]);
-  const myNetBalance = myTotalPaid - myTotalShare; // + means I receive, - means I owe
-  
-  // Calculate Splits
-  const splits = useMemo(() => settlementService.calculateSplits(groupExpenses), [groupExpenses]);
+  const splits = useMemo(() => settlementData?.splits || [], [settlementData]);
+  const totalGroupExpense = settlementData?.totalAmount || 0;
 
   const formatMoney = (amount: number) => {
     return new Intl.NumberFormat('ko-KR').format(Math.round(amount)) + '원';
@@ -80,33 +93,8 @@ export default function SettlementDetailPage() {
 
   const handleAddExpense = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle || !newAmount) return;
-
-    const parsedAmount = parseInt(newAmount.replace(/[^0-9]/g, ''));
-    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
-
-    addExpense({
-      groupId: groupId,
-      title: newTitle,
-      amount: parsedAmount,
-      paidBy: "me",
-      participants: currentGroup?.participants || ["me"], 
-      category: newCategory,
-      date: new Date().toISOString()
-    });
-
-    // Send a message to the corresponding chat room
-    messageService.sendMessage(
-      groupId, 
-      "me", 
-      `${newCategory} 지출 '${newTitle}'(${parsedAmount.toLocaleString()}원)이 추가되었습니다.`,
-      "text"
-    ).catch(err => console.error("Failed to sync dashboard to chat:", err));
-
+    alert("지출 내역은 '게시물 작성'에서 그룹을 선택하여 등록해 주세요. 자동으로 정산에 반영됩니다.");
     setIsAddExpenseModalOpen(false);
-    setNewTitle("");
-    setNewAmount("");
-    setNewCategory("식비");
   };
 
   if (!isHydrated) {
@@ -123,7 +111,7 @@ export default function SettlementDetailPage() {
           </button>
           <div className="flex flex-col">
             <h1 className="text-lg font-bold text-[#212529] tracking-tight">{currentGroup?.name || "정산 상세"}</h1>
-            <span className="text-[11px] font-semibold text-[#2A9D8F]">참여자 {currentGroup?.participants.length || 0}명</span>
+            <span className="text-[11px] font-semibold text-[#2A9D8F]">참여자 {currentGroup?.members.length || 0}명</span>
           </div>
         </div>
         <button className="text-[#212529] hover:bg-slate-50 p-1.5 rounded-full transition-colors">
@@ -184,7 +172,7 @@ export default function SettlementDetailPage() {
             {splits.length === 0 ? (
               <p className="text-sm font-medium text-[#ADB5BD] text-center py-4">모든 정산이 완료되었습니다!</p>
             ) : (
-              splits.map((split, idx) => {
+              splits.map((split: any, idx: number) => {
                 const fromUser = userProfiles[split.fromUserId];
                 const toUser = userProfiles[split.toUserId];
                 
@@ -215,8 +203,21 @@ export default function SettlementDetailPage() {
                     <div className="flex items-center space-x-2">
                       <span className="text-[14px] font-black tracking-tight">{formatMoney(split.amount)}</span>
                       {isMyDebt && (
-                        <button className="h-6 px-2.5 bg-[#e74c3c] text-white text-[10px] items-center justify-center font-bold rounded-lg hover:bg-[#c0392b] transition-colors">
-                          송금
+                        <button 
+                          onClick={async () => {
+                            if (!currentUser || !currentGroup) return;
+                            const recipients = [{ uid: split.fromUserId, amount: split.amount }];
+                            await notificationService.sendSettlementNotifications(
+                              recipients,
+                              { uid: currentUser.uid, nickname: currentUser.displayName || "관리자", avatarUrl: currentUser.photoURL },
+                              currentGroup.name,
+                              currentGroup.id
+                            );
+                            alert(`${fromUserName}님에게 정산 요청 알림을 보냈습니다.`);
+                          }}
+                          className="h-6 px-2.5 bg-[#e74c3c] text-white text-[10px] items-center justify-center font-bold rounded-lg hover:bg-[#c0392b] transition-colors"
+                        >
+                          요청
                         </button>
                       )}
                     </div>
@@ -234,37 +235,14 @@ export default function SettlementDetailPage() {
               <Receipt size={18} className="mr-2 text-[#2A9D8F]" />
               상세 지출 내역
             </h3>
-            <span className="text-[12px] font-semibold text-[#868E96]">{groupExpenses.length}건</span>
+            <span className="text-[12px] font-semibold text-[#868E96]">집계 완료</span>
           </div>
 
           <div className="space-y-3">
-            {groupExpenses.map((expense) => {
-              const payerProfile = userProfiles[expense.paidBy];
-              const payer = payerProfile?.nickname || expense.paidBy;
-              return (
-                <div key={expense.id} className="bg-white p-4 rounded-3xl flex items-center justify-between shadow-sm border border-[#F1F3F5] hover:border-[#2A9D8F]/30 transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#F8F9FA] flex items-center justify-center text-xl shadow-inner">
-                      {getCategoryIcon(expense.category)}
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[15px] font-bold text-[#212529]">{expense.title}</span>
-                      <div className="flex items-center text-[12px] font-semibold text-[#868E96] mt-0.5">
-                        <span className="text-[#2A9D8F]">{payer} 결제</span>
-                        <span className="mx-1.5">•</span>
-                        <span>{expense.participants.length}명 참여</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[15px] font-black tracking-tight">{formatMoney(expense.amount)}</span>
-                    <span className="text-[11px] font-medium text-[#ADB5BD] mt-0.5">
-                      {new Date(expense.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            {/* Real-time posts list from settlementData if available, 
+                for now we only have aggregate data in settlementData. 
+                We might need to fetch posts here too if we want a timeline. */}
+            <p className="text-xs text-slate-400 text-center py-4 italic">그룹에 등록된 게시물에서 지출 정보를 가져옵니다.</p>
           </div>
         </div>
       </div>

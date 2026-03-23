@@ -5,14 +5,17 @@ import { Plus, Search, CheckCircle2, Wallet, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { useSettlementStore } from "@/store/useSettlementStore";
-import { userService } from "@/core/firebase/userService";
 import { UserProfile } from "@/types/user";
+import { useAuth } from "@/core/hooks/useAuth";
+import { settlementService } from "@/core/firebase/settlementService";
+import { userService } from "@/core/firebase/userService";
 
 // Mock Settlement Groups
 export default function SettlementListPage() {
   const router = useRouter();
-  const { expenses, groups, addGroup } = useSettlementStore();
+  const { user } = useAuth();
+  const [groups, setGroups] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [isHydrated, setIsHydrated] = React.useState(false);
   const [isModalOpen, setIsModalOpen] = React.useState(false);
   const [newGroupName, setNewGroupName] = React.useState("");
@@ -23,11 +26,24 @@ export default function SettlementListPage() {
   }, []);
 
   React.useEffect(() => {
-    if (groups.length > 0) {
-      const allParticipants = Array.from(new Set(groups.flatMap((g: any) => g.participants)));
-      fetchUserProfiles(allParticipants);
-    }
-  }, [groups]);
+    const loadOverview = async () => {
+      if (user) {
+        setIsLoading(true);
+        try {
+          const overview = await settlementService.getUserSettlementOverview(user.uid);
+          setGroups(overview);
+          
+          const allParticipants = Array.from(new Set(overview.flatMap((g: any) => g.participants)));
+          await fetchUserProfiles(allParticipants);
+        } catch (error) {
+          console.error("Failed to load settlement overview:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    loadOverview();
+  }, [user]);
 
   const fetchUserProfiles = async (uids: string[]) => {
     const profiles: Record<string, UserProfile> = {};
@@ -45,31 +61,13 @@ export default function SettlementListPage() {
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGroupName.trim()) return;
-
-    addGroup({
-      name: newGroupName,
-      status: 'ongoing',
-      date: new Date().toLocaleDateString('ko-KR'),
-      participants: ["me"] // Initial participant
-    });
-
-    setNewGroupName("");
-    setIsModalOpen(false);
+    
+    // Settlement groups are now derived from Travel Groups.
+    // So creating a new settlement group = creating a new travel group.
+    router.push("/groups"); // Redirect to groups management
   };
 
-  const displayGroups = groups.map((group: any) => {
-    const groupExpenses = expenses.filter(e => e.groupId === group.id);
-    const totalAmount = groupExpenses.reduce((acc, exp) => acc + exp.amount, 0);
-    const myTotalPaid = groupExpenses.filter(e => e.paidBy === "me").reduce((acc, exp) => acc + exp.amount, 0);
-    const myTotalShare = groupExpenses.filter(e => e.participants.includes("me")).reduce((acc, exp) => acc + (exp.amount / (exp.participants.length || 1)), 0);
-    const myBalance = myTotalPaid - myTotalShare;
-
-    return {
-      ...group,
-      totalAmount,
-      myBalance
-    };
-  });
+  const displayGroups = groups;
 
   if (!isHydrated) return null;
 

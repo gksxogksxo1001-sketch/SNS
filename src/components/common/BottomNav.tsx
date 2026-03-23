@@ -3,13 +3,14 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Map, PlusSquare, Wallet, User } from "lucide-react";
+import { Home, Map, PlusSquare, Wallet, User, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { icon: Home, label: "피드", href: "/feed" },
   { icon: Map, label: "지도", href: "/map" },
   { icon: PlusSquare, label: "작성", href: "/post/create" },
+  { icon: Users, label: "그룹", href: "/groups" },
   { icon: Wallet, label: "정산", href: "/settlement" },
   { icon: User, label: "프로필", href: "/profile" },
 ];

@@ -5,8 +5,9 @@ import { Plane, Hotel, Utensils, MoreHorizontal, X } from "lucide-react";
 
 interface ExpenseInputProps {
   expenses: {
-    flight: string;
-    hotel: string;
+    plane: string;
+    stay: string;
+    transport: string;
     food: string;
     other: string;
   };
@@ -15,8 +16,9 @@ interface ExpenseInputProps {
 
 export const ExpenseInput: React.FC<ExpenseInputProps> = ({ expenses, onExpenseChange }) => {
   const categories = [
-    { id: "flight", label: "항공", icon: Plane, color: "text-[#2A9D8F]", bgColor: "bg-[#2A9D8F]/10" },
-    { id: "hotel", label: "숙소", icon: Hotel, color: "text-[#F4A261]", bgColor: "bg-[#F4A261]/10" },
+    { id: "plane", label: "항공", icon: Plane, color: "text-[#2A9D8F]", bgColor: "bg-[#2A9D8F]/10" },
+    { id: "stay", label: "숙소", icon: Hotel, color: "text-[#F4A261]", bgColor: "bg-[#F4A261]/10" },
+    { id: "transport", label: "교통", icon: MoreHorizontal, color: "text-[#264653]", bgColor: "bg-[#264653]/10" },
     { id: "food", label: "식비", icon: Utensils, color: "text-[#E9C46A]", bgColor: "bg-[#E9C46A]/10" },
     { id: "other", label: "기타", icon: MoreHorizontal, color: "text-[#6C757D]", bgColor: "bg-[#6C757D]/10" },
   ];
