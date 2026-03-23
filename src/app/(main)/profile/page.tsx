@@ -356,15 +356,18 @@ export default function ProfilePage() {
               <div className="text-center py-20 space-y-4">
                 <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
                   {activeTab === "posts" ? <Grid size={32} /> : 
+                   activeTab === "liked" ? <Heart size={32} /> :
                    activeTab === "stories" ? <MapPin size={32} /> : <Bookmark size={32} />}
                 </div>
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-text-main">
                     {activeTab === "posts" ? "아직 게시물이 없습니다." : 
+                     activeTab === "liked" ? "좋아요 표시한 게시물이 없습니다." :
                      activeTab === "stories" ? "보관된 스토리가 없습니다." : "북마크한 게시물이 없습니다."}
                   </p>
                   <p className="text-xs text-text-sub opacity-70">
                     {activeTab === "posts" ? "당신의 첫 번째 여행기를 공유해 보세요!" : 
+                     activeTab === "liked" ? "관심 있는 게시물에 좋아요를 눌러보세요." :
                      activeTab === "stories" ? "설정에서 '스토리 보관'을 활성화하면 여기에 표시됩니다." : "관심 있는 게시물을 저장해 보세요!"}
                   </p>
                 </div>

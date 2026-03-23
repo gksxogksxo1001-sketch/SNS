@@ -99,6 +99,11 @@ function MapPageContent() {
       return;
     }
 
+    // IP 주소 접속 시 경고 (Chrome 등 최신 브라우저 제약)
+    if (window.location.hostname !== 'localhost' && window.location.protocol !== 'https:') {
+      alert("보안 정책상 'localhost' 또는 'https://' 주소에서만 위치 정보를 가져올 수 있습니다. 주소를 확인해 주세요!");
+    }
+
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
@@ -110,7 +115,15 @@ function MapPageContent() {
       },
       (error) => {
         console.error("Error getting location:", error);
-        alert("위치 정보를 가져올 수 없습니다.");
+        let message = "위치 정보를 가져올 수 없습니다.";
+        if (error.code === 1) message = "위치 정보 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해 주세요.";
+        else if (error.code === 3) message = "위치 측정 시간이 초과되었습니다. 다시 시도해 주세요.";
+        alert(message);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
       }
     );
   };
