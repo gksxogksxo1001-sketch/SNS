@@ -83,7 +83,16 @@ export default function ChatRoomPage() {
     // Subscribe to messages in this room
     const unsubscribe = messageService.subscribeToMessages(roomId, (newMessages) => {
       setMessages(newMessages);
+      // Mark as read when new messages are received while in the room
+      if (user?.uid) {
+        messageService.markRoomAsRead(roomId, user.uid);
+      }
     });
+
+    // Mark as read immediately on entry
+    if (user?.uid) {
+      messageService.markRoomAsRead(roomId, user.uid);
+    }
 
     // Fetch other user profile
     const fetchOtherProfile = async () => {

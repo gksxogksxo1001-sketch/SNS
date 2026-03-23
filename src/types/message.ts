@@ -40,5 +40,6 @@ export interface ChatRoom {
     createdAt: Timestamp | Date;
     senderId: string;
   };
+  unreadCount?: Record<string, number>; // { [userId]: count }
   updatedAt: Timestamp | Date;
 }

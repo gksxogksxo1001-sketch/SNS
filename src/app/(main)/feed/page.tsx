@@ -6,6 +6,7 @@ import { PostCard } from "@/components/features/feed/PostCard";
 import { Stories } from "@/components/features/feed/Stories";
 import { postService } from "@/core/firebase/postService";
 import { notificationService } from "@/core/firebase/notificationService";
+import { messageService } from "@/core/firebase/messageService";
 import { useAuth } from "@/core/hooks/useAuth";
 import { Post } from "@/types/post";
 import Link from "next/link";
@@ -14,7 +15,8 @@ export default function FeedPage() {
   const { user } = useAuth();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [unreadMsgCount, setUnreadMsgCount] = useState(0);
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -33,12 +35,19 @@ export default function FeedPage() {
   useEffect(() => {
     if (!user) return;
 
-    const unsubscribe = notificationService.subscribeToNotifications(user.uid, (notifications) => {
+    const unsubscribeNotif = notificationService.subscribeToNotifications(user.uid, (notifications) => {
       const count = notifications.filter(n => !n.isRead).length;
-      setUnreadCount(count);
+      setUnreadNotifCount(count);
     });
 
-    return () => unsubscribe();
+    const unsubscribeMsg = messageService.subscribeToTotalUnreadCount(user.uid, (count: number) => {
+      setUnreadMsgCount(count);
+    });
+
+    return () => {
+      unsubscribeNotif();
+      unsubscribeMsg();
+    };
   }, [user]);
 
   return (
@@ -55,9 +64,9 @@ export default function FeedPage() {
             <Link href="/notifications" className="text-[#212529] hover:text-[#2A9D8F] transition-colors block">
               <Bell size={24} />
             </Link>
-            {unreadCount > 0 && (
+            {unreadNotifCount > 0 && (
               <span className="absolute -right-1 -top-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-[#E76F51] text-[8px] font-bold text-white ring-2 ring-white">
-                {unreadCount > 9 ? "9+" : unreadCount}
+                {unreadNotifCount >= 10 ? "10+" : unreadNotifCount}
               </span>
             )}
           </div>
@@ -66,7 +75,11 @@ export default function FeedPage() {
             <Link href="/messages" className="text-[#212529] hover:text-[#2A9D8F] transition-colors block">
               <Send size={22} className="-rotate-12" />
             </Link>
-            <span className="absolute -right-1 -top-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-[#e74c3c] text-[8px] font-bold text-white ring-2 ring-white">1</span>
+            {unreadMsgCount > 0 && (
+              <span className="absolute -right-1.5 -top-1.5 px-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full bg-[#e74c3c] text-[8px] font-bold text-white ring-2 ring-white animate-in zoom-in duration-300">
+                {unreadMsgCount >= 10 ? "10+" : unreadMsgCount}
+              </span>
+            )}
           </div>
         </div>
       </header>

@@ -150,17 +150,33 @@ export const messageService = {
     }
 
     // Add message
-    await addDoc(messagesRef, messagePayload);
+    const messageDoc = await addDoc(messagesRef, messagePayload);
 
-    // Update room's last message and updatedAt
-    await updateDoc(roomRef, {
-      lastMessage: {
-        text: type === "settlement" ? "정산 요청이 도착했습니다." : (type === "storyReply" ? "스토리에 답장했습니다." : text),
-        senderId,
-        createdAt: timestamp
-      },
-      updatedAt: timestamp
-    });
+    // Update room's lastMessage and unread counts
+    const roomSnap = await getDoc(roomRef);
+    if (roomSnap.exists()) {
+      const roomData = roomSnap.data();
+      const participants = roomData.participants || [];
+      
+      const unreadUpdate: any = {};
+      participants.forEach((pId: string) => {
+        if (pId !== senderId) {
+          // Increment unread count for others
+          const currentCount = (roomData.unreadCount && roomData.unreadCount[pId]) || 0;
+          unreadUpdate[`unreadCount.${pId}`] = currentCount + 1;
+        }
+      });
+
+      await updateDoc(roomRef, {
+        lastMessage: {
+          text: type === "text" ? text : (type === "settlement" ? "정산 요청" : "스토리 답장"),
+          createdAt: serverTimestamp(),
+          senderId
+        },
+        updatedAt: serverTimestamp(),
+        ...unreadUpdate
+      });
+    }
   },
 
   // Listen to messages in a specific room
@@ -224,5 +240,34 @@ export const messageService = {
       isDeleted: true,
       text: "삭제된 메시지입니다."
     });
+  },
+
+  // Simplified: Sum up the individual unread counts for this user across all rooms
+  subscribeToTotalUnreadCount(userId: string, callback: (count: number) => void) {
+    const roomsRef = collection(db, "chatRooms");
+    const q = query(roomsRef, where("participants", "array-contains", userId));
+
+    return onSnapshot(q, (snapshot) => {
+      let totalUnread = 0;
+      snapshot.docs.forEach(doc => {
+        const data = doc.data() as ChatRoom;
+        if (data.unreadCount && data.unreadCount[userId]) {
+          totalUnread += data.unreadCount[userId];
+        }
+      });
+      callback(totalUnread);
+    });
+  },
+
+  // Mark all messages in a room as read for a specific user
+  async markRoomAsRead(roomId: string, userId: string) {
+    try {
+      const roomRef = doc(db, "chatRooms", roomId);
+      await updateDoc(roomRef, {
+        [`unreadCount.${userId}`]: 0
+      });
+    } catch (error) {
+      console.error("[messageService] Failed to mark room as read:", error);
+    }
   }
 };
