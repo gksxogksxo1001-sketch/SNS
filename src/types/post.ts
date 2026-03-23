@@ -5,6 +5,7 @@ export interface PostComment {
     uid: string;
     name: string;
     image?: string;
+    group?: string;
   };
   content: string;
   createdAt: any;
@@ -16,6 +17,7 @@ export interface Post {
     uid: string;
     name: string;
     image?: string | null; // null 허용
+    group?: string;
   };
   groupId?: string | null; // 소속 그룹 ID
   content: string;

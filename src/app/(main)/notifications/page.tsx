@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { notificationService } from "@/core/firebase/notificationService";
 import { userService } from "@/core/firebase/userService";
 import { Notification } from "@/types/notification";
+import { DEFAULT_AVATAR } from "@/core/constants";
 
 export default function NotificationsPage() {
   const router = useRouter();
@@ -153,13 +154,7 @@ export default function NotificationsPage() {
                 {/* User Avatar & Type Icon */}
                 <div className="relative flex-shrink-0 mt-0.5">
                   <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
-                    {notif.fromAvatarUrl ? (
-                      <img src={notif.fromAvatarUrl} alt={notif.fromNickname} className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-gray-400 bg-gray-50 font-bold text-lg">
-                        {notif.fromNickname[0]}
-                      </div>
-                    )}
+                    <img src={notif.fromAvatarUrl || DEFAULT_AVATAR} alt={notif.fromNickname} className="h-full w-full object-cover" />
                   </div>
                   <div className={cn(
                     "absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white flex items-center justify-center",

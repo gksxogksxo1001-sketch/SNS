@@ -9,6 +9,7 @@ import { storyService } from "@/core/firebase/storyService";
 import { UserStoryGroup } from "@/types/story";
 import { StoryViewer } from "./StoryViewer";
 import { useRouter } from "next/navigation";
+import { DEFAULT_AVATAR } from "@/core/constants";
 
 interface Story {
   id: string;
@@ -87,11 +88,7 @@ export const Stories = () => {
             >
               <div className="w-full h-full rounded-[23px] bg-white p-[2px]">
                 <div className="w-full h-full rounded-[21px] overflow-hidden bg-slate-50 flex items-center justify-center">
-                  {auth.currentUser?.photoURL ? (
-                    <img src={auth.currentUser.photoURL} alt="Me" className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={24} className="text-[#ADB5BD]" />
-                  )}
+                  <img src={auth.currentUser?.photoURL || DEFAULT_AVATAR} alt="Me" className="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
@@ -128,11 +125,7 @@ export const Stories = () => {
                 {/* Avatar Container */}
                 <div className="w-full h-full rounded-[23px] bg-white p-[2px]">
                   <div className="w-full h-full rounded-[21px] overflow-hidden bg-slate-50 flex items-center justify-center">
-                    {group.user.image ? (
-                      <img src={group.user.image} alt={group.user.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <User size={24} className="text-[#ADB5BD]" />
-                    )}
+                    <img src={group.user.image || DEFAULT_AVATAR} alt={group.user.name} className="w-full h-full object-cover" />
                   </div>
                 </div>
               </div>

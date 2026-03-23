@@ -10,6 +10,7 @@ import { messageService } from "@/core/firebase/messageService";
 import { useAuth } from "@/core/hooks/useAuth";
 import { Post } from "@/types/post";
 import Link from "next/link";
+import { DEFAULT_AVATAR } from "@/core/constants";
 
 export default function FeedPage() {
   const { user } = useAuth();

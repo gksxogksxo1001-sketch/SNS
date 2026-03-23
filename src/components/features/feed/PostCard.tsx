@@ -10,6 +10,7 @@ import { postService } from "@/core/firebase/postService";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
+import { DEFAULT_AVATAR } from "@/core/constants";
 
 interface PostCardProps {
   post: Post;
@@ -185,13 +186,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
           <div className="h-10 w-10 overflow-hidden rounded-full bg-[#F8F9FA] border border-[#F1F3F5]">
-            {post.user.image ? (
-              <img src={post.user.image} alt={post.user.name || "User"} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-slate-300">
-                <User size={20} />
-              </div>
-            )}
+            <img src={post.user.image || DEFAULT_AVATAR} alt={post.user.name || "User"} className="h-full w-full object-cover" />
           </div>
           <div className="text-left">
             <div className="flex items-center space-x-2">
@@ -400,13 +395,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
                     <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
-                      {comment.user.image ? (
-                        <img src={comment.user.image} alt={comment.user.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-gray-400">
-                          <User size={16} />
-                        </div>
-                      )}
+                      <img src={comment.user.image || DEFAULT_AVATAR} alt={comment.user.name} className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
@@ -428,13 +417,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {user ? (
               <form onSubmit={handleCommentSubmit} className="flex items-center space-x-2 pt-2">
                 <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt={user.displayName || ""} className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-gray-400">
-                      <User size={16} />
-                    </div>
-                  )}
+                  <img src={user.photoURL || DEFAULT_AVATAR} alt={user.displayName || ""} className="h-full w-full object-cover" />
                 </div>
                 <div className="relative flex-1">
                   <input

@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
+import { DEFAULT_AVATAR } from "@/core/constants";
 
 export default function ProfilePage() {
   const { user, isLoading: isAuthLoading } = useAuth();
@@ -247,14 +248,8 @@ export default function ProfilePage() {
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative group">
-            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-gray-100 relative">
-              {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt={user.displayName || ""} className="h-full w-full object-cover" />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center text-gray-400">
-                  <UserIcon size={40} />
-                </div>
-              )}
+            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-gray-100 relative flex items-center justify-center">
+              <img src={profile?.avatarUrl || DEFAULT_AVATAR} alt={user.displayName || ""} className="h-full w-full object-cover" />
               {isUpdatingPhoto && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <div className="h-5 w-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
@@ -470,11 +465,7 @@ export default function ProfilePage() {
                     >
                       <div className="flex items-center space-x-3">
                         <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 border flex items-center justify-center text-gray-400">
-                          {friend.avatarUrl ? (
-                            <img src={friend.avatarUrl} alt={friend.nickname} className="h-full w-full object-cover" />
-                          ) : (
-                            <UserIcon size={20} />
-                          )}
+                          <img src={friend.avatarUrl || DEFAULT_AVATAR} alt={friend.nickname} className="h-full w-full object-cover" />
                         </div>
                         <span className="text-sm font-bold">{friend.nickname}</span>
                       </div>
@@ -507,8 +498,8 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
           <div className="w-full max-w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100">
-                <img src={userToUnfollow.avatarUrl || ""} alt="" className="h-full w-full object-cover" />
+              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100 flex items-center justify-center">
+                <img src={userToUnfollow.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
               </div>
               <div className="space-y-1">
                 <p className="text-[15px] font-bold text-text-main">

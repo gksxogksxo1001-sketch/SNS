@@ -10,6 +10,7 @@ import { Post } from "@/types/post";
 import { PostCard } from "@/components/features/feed/PostCard";
 import { ChevronLeft, Grid, Heart, User as UserIcon, Globe, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEFAULT_AVATAR } from "@/core/constants";
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -156,14 +157,8 @@ export default function PublicProfilePage() {
       <main className="px-5 pt-6 space-y-8">
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-gray-100">
-            {profile.avatarUrl ? (
-              <img src={profile.avatarUrl} alt={profile.nickname} className="h-full w-full object-cover" />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center text-gray-400">
-                <UserIcon size={40} />
-              </div>
-            )}
+          <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-gray-100 flex items-center justify-center">
+            <img src={profile.avatarUrl || DEFAULT_AVATAR} alt={profile.nickname} className="h-full w-full object-cover" />
           </div>
           
           <div className="space-y-1">
@@ -348,14 +343,8 @@ export default function PublicProfilePage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
           <div className="w-full max-w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50">
-                {profile.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-gray-400">
-                    <UserIcon size={32} />
-                  </div>
-                )}
+              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
+                <img src={profile.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
               </div>
               <div className="space-y-1">
                 <p className="text-[15px] font-bold text-text-main">
