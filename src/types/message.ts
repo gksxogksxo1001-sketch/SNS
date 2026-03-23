@@ -31,7 +31,10 @@ export interface Message {
 
 export interface ChatRoom {
   id: string;
+  type: "direct" | "group";
   participants: string[]; // User IDs of people in the room
+  name?: string;          // Group name if type is "group"
+  groupImage?: string;    // Group avatar if type is "group"
   lastMessage?: {
     text: string;
     createdAt: Timestamp | Date;

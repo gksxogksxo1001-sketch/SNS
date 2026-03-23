@@ -44,11 +44,33 @@ export const messageService = {
 
     // Create new room if not found
     const newRoomRef = await addDoc(roomsRef, {
+      type: "direct",
       participants: [userId1, userId2],
       updatedAt: serverTimestamp(),
     });
     
     return newRoomRef.id;
+  },
+
+  // Create or get a group chat room
+  async createGroupRoom(groupId: string, name: string, participants: string[], image?: string): Promise<string> {
+    const roomsRef = collection(db, "chatRooms");
+    const roomRef = doc(db, "chatRooms", groupId); // Use groupId as roomId for easy lookup
+    
+    const docSnap = await getDoc(roomRef);
+    if (docSnap.exists()) {
+      return docSnap.id;
+    }
+
+    await setDoc(roomRef, {
+      type: "group",
+      name,
+      groupImage: image || "",
+      participants,
+      updatedAt: serverTimestamp(),
+    });
+    
+    return groupId;
   },
 
   // Listen to user's chat rooms

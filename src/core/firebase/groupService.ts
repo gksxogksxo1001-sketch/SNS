@@ -15,6 +15,7 @@ import {
 import { Group } from "@/types/group";
 import { notificationService } from "./notificationService";
 import { userService } from "./userService";
+import { messageService } from "./messageService";
 
 export const groupService = {
   // Create a new travel group
@@ -27,6 +28,9 @@ export const groupService = {
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+
+    // Automatically create a group chat room for this travel group
+    await messageService.createGroupRoom(groupRef.id, name, [ownerId]);
 
     return groupRef.id;
   },

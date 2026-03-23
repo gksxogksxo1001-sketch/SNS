@@ -9,6 +9,9 @@ import { ChatRoom } from "@/types/message";
 import { useAuth } from "@/core/hooks/useAuth";
 import { userService } from "@/core/firebase/userService";
 import { UserProfile } from "@/types/user";
+import { cn } from "@/lib/utils";
+import { groupService } from "@/core/firebase/groupService";
+import { Group } from "@/types/group";
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -17,6 +20,8 @@ export default function MessagesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
+  const [travelGroups, setTravelGroups] = useState<Group[]>([]);
+  const [activeTab, setActiveTab] = useState<"direct" | "group">("direct");
   
   const currentUserId = user?.uid || "";
 
@@ -39,6 +44,12 @@ export default function MessagesPage() {
           fetchProfiles(otherUids);
         }
       });
+
+      // Fetch travel groups
+      groupService.getUserGroups(user.uid).then(groups => {
+        setTravelGroups(groups);
+      });
+
       return () => unsubscribe();
     }
   }, [user, isAuthLoading]);
@@ -113,6 +124,30 @@ export default function MessagesPage() {
         </div>
       </div>
 
+      {/* Tabs */}
+      <div className="flex px-4 border-b border-[#F1F3F5]">
+        <button
+          onClick={() => setActiveTab("direct")}
+          className={cn(
+            "flex-1 py-3 text-sm font-bold transition-all relative",
+            activeTab === "direct" ? "text-[#2A9D8F]" : "text-[#ADB5BD] hover:text-[#868E96]"
+          )}
+        >
+          일반
+          {activeTab === "direct" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F] animate-in fade-in slide-in-from-bottom-1" />}
+        </button>
+        <button
+          onClick={() => setActiveTab("group")}
+          className={cn(
+            "flex-1 py-3 text-sm font-bold transition-all relative",
+            activeTab === "group" ? "text-[#2A9D8F]" : "text-[#ADB5BD] hover:text-[#868E96]"
+          )}
+        >
+          그룹
+          {activeTab === "group" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F] animate-in fade-in slide-in-from-bottom-1" />}
+        </button>
+      </div>
+
       {/* Chat List / Search Results */}
       <div className="flex-1 overflow-y-auto">
         {isSearching ? (
@@ -133,48 +168,84 @@ export default function MessagesPage() {
               ))
             )}
           </div>
-        ) : rooms.length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-[#ADB5BD]">
-            <span className="text-sm font-semibold">진행 중인 채팅이 없습니다.</span>
+        ) : (activeTab === "direct" ? rooms.filter(r => r.type === "direct" || !r.type) : travelGroups).length === 0 ? (
+          <div className="flex flex-col items-center justify-center p-12 text-[#ADB5BD] space-y-2">
+            <div className="w-16 h-16 bg-[#F8F9FA] rounded-full flex items-center justify-center">
+              <Search size={24} className="opacity-20" />
+            </div>
+            <span className="text-sm font-semibold">
+              {activeTab === "direct" ? "진행 중인 일반 대화가 없습니다." : "참여 중인 여행 그룹이 없습니다."}
+            </span>
           </div>
         ) : (
-          rooms.map((room) => {
-            const otherUserId = room.participants.find(p => p !== currentUserId) || "Unknown User";
-            const profile = userProfiles[otherUserId];
-            const otherUserName = profile?.nickname || otherUserId;
-            const fallbackImage = profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(otherUserName)}&background=2A9D8F&color=fff`;
+          (activeTab === "direct" 
+            ? rooms.filter(r => r.type === "direct" || !r.type)
+            : travelGroups
+          ).map((item: any) => {
+            let title = "";
+            let image = "";
+            let chatUrl = "";
+            let lastMsg = "최근 메시지가 없습니다.";
+            let lastTime = "";
+
+            if (activeTab === "group") {
+              const group = item as Group;
+              const room = rooms.find(r => r.id === group.id);
+              title = group.name;
+              image = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=E9C46A&color=fff`;
+              chatUrl = `/messages/${group.id}?name=${encodeURIComponent(title)}&image=${encodeURIComponent(image)}&type=group`;
+              if (room?.lastMessage) {
+                lastMsg = room.lastMessage.text;
+                lastTime = formatRoomTime(room.lastMessage.createdAt);
+              } else {
+                lastTime = formatRoomTime(group.updatedAt);
+              }
+            } else {
+              const room = item as ChatRoom;
+              const otherUserId = room.participants.find(p => p !== currentUserId) || "Unknown User";
+              const profile = userProfiles[otherUserId];
+              title = profile?.nickname || otherUserId;
+              image = profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=2A9D8F&color=fff`;
+              chatUrl = `/messages/${room.id}?userId=${encodeURIComponent(otherUserId)}&name=${encodeURIComponent(title)}&image=${encodeURIComponent(image)}&type=direct`;
+              if (room.lastMessage) {
+                lastMsg = room.lastMessage.text;
+                lastTime = formatRoomTime(room.lastMessage.createdAt);
+              } else {
+                lastTime = formatRoomTime(room.updatedAt);
+              }
+            }
 
             return (
               <Link 
-                key={room.id} 
-                href={`/messages/${room.id}?userId=${encodeURIComponent(otherUserId)}&name=${encodeURIComponent(otherUserName)}&image=${encodeURIComponent(fallbackImage)}`}
+                key={item.id} 
+                href={chatUrl}
                 className="flex items-center justify-between px-4 py-3 hover:bg-[#F8F9FA] transition-colors active:bg-[#F1F3F5]"
               >
                 <div className="flex items-center space-x-4">
-                  {/* Avatar */}
                   <div className="relative">
-                    <div className="w-14 h-14 rounded-full overflow-hidden border border-[#F1F3F5]">
-                      <img src={fallbackImage} alt={otherUserName} className="w-full h-full object-cover" />
+                    <div className={cn(
+                      "w-14 h-14 overflow-hidden border border-[#F1F3F5] shadow-sm",
+                      activeTab === "group" ? "rounded-2xl" : "rounded-full"
+                    )}>
+                      <img src={image} alt={title} className="w-full h-full object-cover" />
                     </div>
                   </div>
                   
-                  {/* Chat Info */}
                   <div className="flex flex-col">
-                    <span className="text-[15px] font-bold text-[#212529]">{otherUserName}</span>
+                    <span className="text-[15px] font-bold text-[#212529]">{title}</span>
                     <span className="text-[13px] mt-0.5 truncate max-w-[180px] text-[#868E96]">
-                      {room.lastMessage ? room.lastMessage.text : "최근 메시지가 없습니다."}
+                      {lastMsg}
                     </span>
                   </div>
                 </div>
 
-                {/* Time & Badge */}
                 <div className="flex flex-col items-end space-y-1">
                   <span className="text-[11px] font-semibold text-[#ADB5BD]">
-                    {room.lastMessage ? formatRoomTime(room.lastMessage.createdAt) : formatRoomTime(room.updatedAt)}
+                    {lastTime}
                   </span>
                 </div>
               </Link>
-            )
+            );
           })
         )}
       </div>

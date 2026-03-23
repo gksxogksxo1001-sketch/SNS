@@ -183,12 +183,23 @@ export default function ProfilePage() {
                 
                 <button 
                   onClick={() => {
+                    setActiveTab("stories");
+                    setIsSettingsOpen(false);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                >
+                  <MapPin size={18} className="text-[#2A9D8F]" />
+                  <span className="text-sm font-bold text-gray-700">보관</span>
+                </button>
+
+                <button 
+                  onClick={() => {
                     setActiveTab("bookmarks");
                     setIsSettingsOpen(false);
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                 >
-                  <Bookmark size={18} className="text-[#2A9D8F]" />
+                  <Bookmark size={18} className="text-[#2196F3]" />
                   <span className="text-sm font-bold text-gray-700">북마크</span>
                 </button>
 
@@ -316,28 +327,6 @@ export default function ProfilePage() {
               <Heart size={18} />
               <span className="text-sm">좋아요</span>
               {activeTab === "liked" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-            </button>
-            <button
-              onClick={() => setActiveTab("stories")}
-              className={cn(
-                "flex-1 py-3 flex items-center justify-center space-x-2 transition-colors relative",
-                activeTab === "stories" ? "text-primary font-bold" : "text-text-sub hover:text-text-main"
-              )}
-            >
-              <MapPin size={18} />
-              <span className="text-sm">보관</span>
-              {activeTab === "stories" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
-            </button>
-            <button
-              onClick={() => setActiveTab("bookmarks")}
-              className={cn(
-                "flex-1 py-3 flex items-center justify-center space-x-2 transition-colors relative",
-                activeTab === "bookmarks" ? "text-primary font-bold" : "text-text-sub hover:text-text-main"
-              )}
-            >
-              <Bookmark size={18} />
-              <span className="text-sm">북마크</span>
-              {activeTab === "bookmarks" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
             </button>
           </div>
 
