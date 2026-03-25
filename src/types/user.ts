@@ -5,6 +5,7 @@ export interface UserProfile {
   avatarUrl: string | null;
   visitedCountries: string[];
   friends: string[]; // array of uids
+  closeFriends: string[]; // array of uids for manual selection
   travelStyle?: string; // 배낭여행, 미식, 휴양 등
   stats: {
     totalPosts: number;

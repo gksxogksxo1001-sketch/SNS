@@ -12,22 +12,28 @@ import { PostCard } from "@/components/features/feed/PostCard";
 import { 
   Settings, LogOut, Grid, Heart, MapPin, Calendar, 
   User as UserIcon, Camera, Plus, Trash2, X, Globe, 
-  Bookmark, Users, UserCog, ChevronRight 
+  Bookmark, Users, UserCog, ChevronRight, History, Star,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import { PowerPopup } from "@/components/common/PowerPopup";
+import { storyService } from "@/core/firebase/storyService";
+import { Story } from "@/types/story";
 
 export default function ProfilePage() {
   const { user, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
+  const [bookmarkedPosts, setBookmarkedPosts] = useState<Post[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [friendProfiles, setFriendProfiles] = useState<UserProfile[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
-  const [activeTab, setActiveTab] = useState<"posts" | "liked" | "stories" | "bookmarks">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "liked">("posts");
   
   // Modals state
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
@@ -37,6 +43,12 @@ export default function ProfilePage() {
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false);
   const [userToUnfollow, setUserToUnfollow] = useState<UserProfile | null>(null);
   const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
+  const [isBookmarkPopupOpen, setIsBookmarkPopupOpen] = useState(false);
+  const [isStoryPopupOpen, setIsStoryPopupOpen] = useState(false);
+  const [archivedStories, setArchivedStories] = useState<Story[]>([]);
+  const [isLoadingStories, setIsLoadingStories] = useState(false);
+  const [storyError, setStoryError] = useState<string | null>(null);
+  const [friendsModalTab, setFriendsModalTab] = useState<"all" | "close">("all");
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -78,15 +90,38 @@ export default function ProfilePage() {
     }
   };
 
+  const toggleCloseFriend = async (targetUid: string) => {
+    if (!user || !profile) return;
+    const isClose = profile.closeFriends?.includes(targetUid) || false;
+    try {
+      await userService.toggleCloseFriend(user.uid, targetUid, isClose);
+      // Update local state for immediate feedback
+      setProfile(prev => {
+        if (!prev) return null;
+        const currentClose = prev.closeFriends || [];
+        return {
+          ...prev,
+          closeFriends: isClose 
+            ? currentClose.filter(id => id !== targetUid)
+            : [...currentClose, targetUid]
+        };
+      });
+    } catch (error) {
+      console.error("Failed to toggle close friend:", error);
+    }
+  };
+
   const fetchUserPosts = async () => {
     if (!user) return;
     setIsLoadingPosts(true);
     try {
-      // In a real app, we'd have a getPostsByUser method
-      // For now, we'll fetch all and filter client-side (not efficient but works for MVP)
-      const allPosts = await postService.getPosts();
-      const filteredPosts = allPosts.filter(post => post.user.uid === user.uid);
-      setUserPosts(filteredPosts);
+      const allPosts = await postService.getPosts(user.uid);
+      
+      // Filter for each tab
+      setUserPosts(allPosts.filter(post => post.user.uid === user.uid));
+      setLikedPosts(allPosts.filter(post => post.likedBy?.includes(user.uid)));
+      setBookmarkedPosts(allPosts.filter(post => post.bookmarkedBy?.includes(user.uid)));
+      
     } catch (error) {
       console.error("Failed to fetch user posts:", error);
     } finally {
@@ -183,20 +218,33 @@ export default function ProfilePage() {
                 </div>
                 
                 <button 
-                  onClick={() => {
-                    setActiveTab("stories");
+                  onClick={async () => {
                     setIsSettingsOpen(false);
+                    setIsStoryPopupOpen(true);
+                    if (user) {
+                      setIsLoadingStories(true);
+                      setStoryError(null);
+                      try {
+                        const stories = await storyService.getUserStories(user.uid);
+                        setArchivedStories(stories);
+                      } catch (error: any) {
+                        console.error("Failed to fetch archived stories:", error);
+                        setStoryError(error.message || "스토리를 불러오는데 실패했습니다.");
+                      } finally {
+                        setIsLoadingStories(false);
+                      }
+                    }
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                 >
-                  <MapPin size={18} className="text-[#2A9D8F]" />
-                  <span className="text-sm font-bold text-gray-700">보관</span>
+                  <History size={18} className="text-[#2A9D8F]" />
+                  <span className="text-sm font-bold text-gray-700">스토리 보관함</span>
                 </button>
 
                 <button 
                   onClick={() => {
-                    setActiveTab("bookmarks");
                     setIsSettingsOpen(false);
+                    setIsBookmarkPopupOpen(true);
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
                 >
@@ -206,6 +254,7 @@ export default function ProfilePage() {
 
                 <button 
                   onClick={() => {
+                    setFriendsModalTab("close"); // Default to Close Friends tab
                     setIsFriendsModalOpen(true);
                     setIsSettingsOpen(false);
                   }}
@@ -282,7 +331,10 @@ export default function ProfilePage() {
               <p className="text-[10px] text-text-sub uppercase tracking-wider font-bold">게시물</p>
             </div>
             <div 
-              onClick={() => setIsFriendsModalOpen(true)}
+              onClick={() => {
+                setFriendsModalTab("all"); // Default to All Following tab
+                setIsFriendsModalOpen(true);
+              }}
               className="text-center group cursor-pointer hover:opacity-70 transition-opacity"
             >
               <p className="text-lg font-bold text-text-main">{profile?.friends?.length || 0}</p>
@@ -331,42 +383,48 @@ export default function ProfilePage() {
               <div className="flex justify-center py-10">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
               </div>
-            ) : activeTab === "posts" && userPosts.length > 0 ? (
-              <div className="grid grid-cols-3 gap-[2px]">
-                {userPosts.map((post) => (
-                  <div 
-                    key={post.id} 
-                    className="aspect-square relative group cursor-pointer overflow-hidden"
-                    onClick={() => router.push(`/post/${post.id}`)}
-                  >
-                    <img 
-                      src={post.images[0]} 
-                      alt="Post" 
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
-                    />
-                  </div>
-                ))}
-              </div>
             ) : (
-              <div className="text-center py-20 space-y-4">
-                <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
-                  {activeTab === "posts" ? <Grid size={32} /> : 
-                   activeTab === "liked" ? <Heart size={32} /> :
-                   activeTab === "stories" ? <MapPin size={32} /> : <Bookmark size={32} />}
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-text-main">
-                    {activeTab === "posts" ? "아직 게시물이 없습니다." : 
-                     activeTab === "liked" ? "좋아요 표시한 게시물이 없습니다." :
-                     activeTab === "stories" ? "보관된 스토리가 없습니다." : "북마크한 게시물이 없습니다."}
-                  </p>
-                  <p className="text-xs text-text-sub opacity-70">
-                    {activeTab === "posts" ? "당신의 첫 번째 여행기를 공유해 보세요!" : 
-                     activeTab === "liked" ? "관심 있는 게시물에 좋아요를 눌러보세요." :
-                     activeTab === "stories" ? "설정에서 '스토리 보관'을 활성화하면 여기에 표시됩니다." : "관심 있는 게시물을 저장해 보세요!"}
-                  </p>
-                </div>
-              </div>
+              (() => {
+                const currentPosts = activeTab === "posts" ? userPosts : 
+                                   activeTab === "liked" ? likedPosts : 
+                                   activeTab === "bookmarks" ? bookmarkedPosts : [];
+                
+                if (currentPosts.length > 0) {
+                  return (
+                    <div className="grid grid-cols-3 gap-[2px]">
+                      {currentPosts.map((post) => (
+                        <div 
+                          key={post.id} 
+                          className="aspect-square relative group cursor-pointer overflow-hidden"
+                          onClick={() => router.push(`/post/${post.id}`)}
+                        >
+                          <img 
+                            src={post.images[0]} 
+                            alt="Post" 
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="text-center py-20 space-y-4">
+                    <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                      {activeTab === "posts" ? <Grid size={32} /> : <Heart size={32} />}
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-text-main">
+                        {activeTab === "posts" ? "아직 게시물이 없습니다." : "좋아요 표시한 게시물이 없습니다."}
+                      </p>
+                      <p className="text-xs text-text-sub opacity-70">
+                        {activeTab === "posts" ? "당신의 첫 번째 여행기를 공유해 보세요!" : "관심 있는 게시물에 좋아요를 눌러보세요."}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()
             )}
           </div>
         </div>
@@ -443,51 +501,115 @@ export default function ProfilePage() {
           <div className="w-full sm:w-[400px] h-[70vh] sm:h-auto max-h-[85vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
             <div className="flex items-center justify-between p-5 border-b">
               <h3 className="text-lg font-black flex items-center">
-                <UserIcon size={20} className="mr-2 text-[#2A9D8F]" />
-                팔로잉
+                {friendsModalTab === "all" ? (
+                  <UserIcon size={20} className="mr-2 text-[#2A9D8F]" />
+                ) : (
+                  <Star size={20} className="mr-2 text-[#E76F51] fill-current" />
+                )}
+                {friendsModalTab === "all" ? "팔로잉" : "친한 친구"}
               </h3>
               <button onClick={() => setIsFriendsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
                 <X size={24} />
               </button>
             </div>
+
+            {/* Modal Tabs */}
+            <div className="flex border-b border-gray-100">
+              <button 
+                onClick={() => setFriendsModalTab("all")}
+                className={cn(
+                  "flex-1 py-3 text-[13px] font-bold transition-all relative",
+                  friendsModalTab === "all" ? "text-[#2A9D8F]" : "text-[#ADB5BD] hover:text-[#495057]"
+                )}
+              >
+                전체 팔로잉
+                {friendsModalTab === "all" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F]" />}
+              </button>
+              <button 
+                onClick={() => setFriendsModalTab("close")}
+                className={cn(
+                  "flex-1 py-3 text-[13px] font-bold transition-all relative",
+                  friendsModalTab === "close" ? "text-[#E76F51]" : "text-[#ADB5BD] hover:text-[#495057]"
+                )}
+              >
+                친한 친구 ⭐
+                {friendsModalTab === "close" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E76F51]" />}
+              </button>
+            </div>
             
             <div className="p-5 flex-1 overflow-y-auto min-h-[300px]">
-              {friendProfiles.length > 0 ? (
-                <div className="space-y-4">
-                  {friendProfiles.map((friend, idx) => (
-                    <div 
-                      key={idx} 
-                      className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer"
-                      onClick={() => {
-                        setIsFriendsModalOpen(false);
-                        router.push(`/profile/${friend.uid}`);
-                      }}
-                    >
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 border flex items-center justify-center text-gray-400">
-                          <img src={friend.avatarUrl || DEFAULT_AVATAR} alt={friend.nickname} className="h-full w-full object-cover" />
+              {(() => {
+                const displayedFriends = friendsModalTab === "all" 
+                  ? friendProfiles 
+                  : friendProfiles.filter(f => profile?.closeFriends?.includes(f.uid));
+
+                if (displayedFriends.length > 0) {
+                  return (
+                    <div className="space-y-4">
+                      {displayedFriends.map((friend, idx) => (
+                        <div 
+                          key={idx} 
+                          className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer group"
+                          onClick={() => {
+                            setIsFriendsModalOpen(false);
+                            router.push(`/profile/${friend.uid}`);
+                          }}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-400">
+                              <img src={friend.avatarUrl || DEFAULT_AVATAR} alt={friend.nickname} className="h-full w-full object-cover" />
+                            </div>
+                            <div className="flex flex-col text-left">
+                              <span className="text-sm font-bold">{friend.nickname}</span>
+                              {profile?.closeFriends?.includes(friend.uid) && (
+                                <span className="text-[9px] font-black text-[#E76F51] flex items-center">
+                                  <Star size={8} className="mr-0.5 fill-current" /> 친한친구
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleCloseFriend(friend.uid);
+                              }}
+                              className={cn(
+                                "p-2 rounded-xl transition-all active:scale-95",
+                                profile?.closeFriends?.includes(friend.uid)
+                                  ? "bg-[#E76F51]/10 text-[#E76F51]"
+                                  : "bg-gray-100 text-[#ADB5BD] hover:bg-gray-200"
+                              )}
+                              title={profile?.closeFriends?.includes(friend.uid) ? "친한친구 해제" : "친한친구 추가"}
+                            >
+                              <Star size={16} className={cn(profile?.closeFriends?.includes(friend.uid) && "fill-current")} />
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setUserToUnfollow(friend);
+                                setIsUnfollowConfirmOpen(true);
+                              }}
+                              className="px-3 py-1.5 bg-gray-100 text-[12px] font-bold rounded-xl text-text-sub hover:bg-gray-200 transition-colors"
+                            >
+                              팔로잉
+                            </button>
+                          </div>
                         </div>
-                        <span className="text-sm font-bold">{friend.nickname}</span>
-                      </div>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setUserToUnfollow(friend);
-                          setIsUnfollowConfirmOpen(true);
-                        }}
-                        className="px-3 py-1.5 bg-gray-100 text-[12px] font-bold rounded-xl text-text-sub hover:bg-gray-200 transition-colors"
-                      >
-                        팔로잉
-                      </button>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                  <UserIcon size={40} className="text-gray-100" />
-                  <p className="text-xs text-text-sub font-medium">아직 팔로우하는 친구가 없습니다.</p>
-                </div>
-              )}
+                  );
+                }
+
+                return (
+                  <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                    {friendsModalTab === "all" ? <UserIcon size={40} className="text-gray-100" /> : <Star size={40} className="text-gray-100" />}
+                    <p className="text-xs text-text-sub font-medium">
+                      {friendsModalTab === "all" ? "아직 팔로우하는 친구가 없습니다." : "친한 친구로 등록된 친구가 없습니다."}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -538,7 +660,114 @@ export default function ProfilePage() {
         onClose={() => setIsAccountSwitcherOpen(false)} 
         currentUid={user.uid}
       />
+
+      {/* Bookmarks PowerPopup */}
+      <PowerPopup
+        isOpen={isBookmarkPopupOpen}
+        onClose={() => setIsBookmarkPopupOpen(false)}
+        title="나의 북마크"
+        icon={<Bookmark size={22} fill="currentColor" />}
+        contentClassName="p-6"
+      >
+        {bookmarkedPosts.length > 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            {bookmarkedPosts.map((post) => (
+              <div 
+                key={post.id} 
+                className="aspect-square relative group cursor-pointer overflow-hidden rounded-[20px] bg-gray-50 border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+                onClick={() => {
+                  setIsBookmarkPopupOpen(false);
+                  router.push(`/post/${post.id}`);
+                }}
+              >
+                {post.images && post.images.length > 0 ? (
+                  <img 
+                    src={post.images[0]} 
+                    alt="" 
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-gray-300">
+                    <Camera size={20} />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="p-6 bg-gray-50 rounded-full text-gray-200">
+              <Bookmark size={48} />
+            </div>
+            <p className="text-sm font-bold text-gray-400">저장된 게시물이 없습니다.</p>
+          </div>
+        )}
+      </PowerPopup>
+
+      {/* Story Archive PowerPopup */}
+      <PowerPopup
+        isOpen={isStoryPopupOpen}
+        onClose={() => setIsStoryPopupOpen(false)}
+        title="스토리 보관함"
+        icon={<History size={22} />}
+        contentClassName="p-6"
+      >
+        {isLoadingStories ? (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-sm font-medium text-text-sub">보관함을 불러오는 중...</p>
+          </div>
+        ) : storyError ? (
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center space-y-5">
+            <div className="p-4 bg-red-50 rounded-full text-red-500">
+              <X size={32} />
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-red-600">불러오기 실패</p>
+              <p className="text-xs text-text-sub leading-relaxed">
+                데이터베이스 설정(인덱스)이 완료되지 않았거나<br />
+                네트워크 오류가 발생했습니다.
+              </p>
+            </div>
+            {storyError.includes("index") && (
+              <p className="text-[10px] text-primary font-bold underline cursor-pointer">
+                콘솔창의 링크를 눌러 인덱스를 생성해주세요.
+              </p>
+            )}
+          </div>
+        ) : archivedStories.length > 0 ? (
+          <div className="grid grid-cols-3 gap-4">
+            {archivedStories.map((story) => (
+              <div 
+                key={story.id} 
+                className="group relative aspect-[9/16] rounded-[20px] overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+              >
+                {story.mediaUrl ? (
+                  <img 
+                    src={story.mediaUrl} 
+                    alt="" 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center text-gray-300">
+                    <Camera size={20} />
+                  </div>
+                )}
+                <div className="absolute top-3 left-3 px-2 py-1 bg-black/40 backdrop-blur-md rounded-lg text-[8px] font-bold text-white">
+                  {story.createdAt?.toDate?.() ? new Date(story.createdAt.toDate()).toLocaleDateString() : "방금 전"}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-20 space-y-4">
+            <div className="p-6 bg-gray-50 rounded-full text-gray-200">
+              <History size={48} />
+            </div>
+            <p className="text-sm font-bold text-gray-400">보관된 스토리가 없습니다.</p>
+          </div>
+        )}
+      </PowerPopup>
     </div>
   );
 }
-

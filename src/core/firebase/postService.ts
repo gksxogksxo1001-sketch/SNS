@@ -15,12 +15,14 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
-  increment 
+  increment,
+  deleteDoc
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Post, PostComment } from "@/types/post";
 import { notificationService } from "./notificationService";
 import { userService } from "./userService";
+import { groupService } from "./groupService";
 
 export interface LocationTag {
   name: string;
@@ -97,19 +99,51 @@ export const postService = {
     return null;
   },
 
+  // Update an existing post in Firestore
+  async updatePost(postId: string, postData: Partial<Post>): Promise<void> {
+    try {
+      const cleanData = JSON.parse(JSON.stringify(postData, (key, value) => {
+        return value === undefined ? null : value;
+      }));
+      
+      const postRef = doc(db, "posts", postId);
+      await updateDoc(postRef, {
+        ...cleanData,
+        updatedAt: serverTimestamp(),
+      });
+      console.log("[postService] Post updated successfully. ID:", postId);
+    } catch (error: any) {
+      console.error("[postService] Error in updatePost:", error);
+      throw error;
+    }
+  },
+
   // Delete a post from Firestore
   async deletePost(postId: string): Promise<void> {
-    const { doc, deleteDoc } = await import("firebase/firestore");
     const postRef = doc(db, "posts", postId);
     await deleteDoc(postRef);
   },
 
-  // Fetch all posts from Firestore with latest user data
-  async getPosts(): Promise<Post[]> {
+  // Fetch all posts from Firestore with visibility filtering
+  async getPosts(currentUserId?: string): Promise<Post[]> {
     const postsRef = collection(db, "posts");
     const q = query(postsRef, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     
+    // If not logged in, only show public posts
+    if (!currentUserId) {
+      return querySnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() } as Post))
+        .filter(post => post.visibility === "public");
+    }
+
+    // Fetch user relations for filtering
+    const [myFriends, myGroups] = await Promise.all([
+      userService.getFriends(currentUserId),
+      groupService.getUserGroups(currentUserId)
+    ]);
+    const myGroupIds = myGroups.map(g => g.id);
+
     // Fetch unique users involved in these posts to optimize hits
     const userUids = Array.from(new Set(querySnapshot.docs.map(d => d.data().user?.uid).filter(Boolean)));
     const userProfiles: Record<string, any> = {};
@@ -121,7 +155,7 @@ export const postService = {
       }
     }));
 
-    return querySnapshot.docs.map(doc => {
+    const allPosts = querySnapshot.docs.map(doc => {
       const data = doc.data();
       const latestUserProgress = userProfiles[data.user?.uid];
       
@@ -135,6 +169,79 @@ export const postService = {
         }
       };
     }) as Post[];
+
+    // Filter by visibility
+    return allPosts.filter(post => {
+      // 1. My own post
+      if (post.user.uid === currentUserId) return true;
+      
+      // 2. Public post
+      if (post.visibility === "public" || !post.visibility) return true;
+      
+      // 3. Friends only post (Viewer must follow the author)
+      if (post.visibility === "friends" && myFriends.includes(post.user.uid)) return true;
+      
+      const authorProfile = userProfiles[post.user.uid];
+      
+      // 4. Close Friends (Group OR Personal List)
+      if (post.visibility === "close_friends") {
+        // A. Group-based Close Friends
+        if (post.groupId && myGroupIds.includes(post.groupId)) return true;
+        
+        // B. Personal List-based Close Friends
+        // Must have author profile and viewer must be in their personal closeFriends list
+        const authorCloseFriends = authorProfile?.closeFriends || [];
+        if (!post.groupId && authorCloseFriends.includes(currentUserId)) return true;
+        
+        return false;
+      }
+      
+      return false;
+    });
+  },
+
+  // Fetch posts filtered by group ID
+  async getPostsByGroup(groupId: string): Promise<Post[]> {
+    const postsRef = collection(db, "posts");
+    const q = query(
+      postsRef,
+      where("groupId", "==", groupId)
+      // Removed orderBy("createdAt", "desc") to prevent requiring a composite index.
+    );
+    const querySnapshot = await getDocs(q);
+
+    // Fetch unique users involved in these posts to optimize hits
+    const userUids = Array.from(new Set(querySnapshot.docs.map(d => d.data().user?.uid).filter(Boolean)));
+    const userProfiles: Record<string, any> = {};
+
+    await Promise.all(userUids.map(async (uid) => {
+      const userDoc = await getDoc(doc(db, "users", uid as string));
+      if (userDoc.exists()) {
+        userProfiles[uid as string] = userDoc.data();
+      }
+    }));
+
+    const posts = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      const latestUserProgress = userProfiles[data.user?.uid];
+
+      return {
+        id: doc.id,
+        ...data,
+        user: {
+          ...data.user,
+          name: latestUserProgress?.nickname || data.user?.name,
+          image: latestUserProgress?.avatarUrl || data.user?.image
+        }
+      };
+    }) as Post[];
+
+    // Sort posts client-side so we don't need a composite index on Firebase
+    return posts.sort((a, b) => {
+      const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : 0;
+      const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : 0;
+      return timeB - timeA;
+    });
   },
 
   // Fetch a single post by ID

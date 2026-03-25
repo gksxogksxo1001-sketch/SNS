@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Plane, Hotel, MapPin, Utensils, Wallet, Send, X, ChevronLeft, ChevronRight, Edit2, Trash2, EyeOff, Bookmark } from "lucide-react";
+import { 
+  Heart, MessageCircle, Share2, MoreHorizontal, Plane, Hotel, MapPin, Utensils, Wallet, Send, X, ChevronLeft, ChevronRight, Edit2, Trash2, EyeOff, Bookmark, Users, Globe, Lock 
+} from "lucide-react";
 import { Post, PostComment } from "@/types/post";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
@@ -11,6 +13,10 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import { PowerPopup } from "@/components/common/PowerPopup";
+import { userService } from "@/core/firebase/userService";
+import { UserProfile } from "@/types/user";
+import { messageService } from "@/core/firebase/messageService";
 
 interface PostCardProps {
   post: Post;
@@ -25,10 +31,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   const [comments, setComments] = useState<PostComment[]>([]);
   const [newComment, setNewComment] = useState("");
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isSharePopupOpen, setIsSharePopupOpen] = useState(false);
+  const [friends, setFriends] = useState<UserProfile[]>([]);
+  const [isLoadingFriends, setIsLoadingFriends] = useState(false);
+  const [sharingTo, setSharingTo] = useState<string | null>(null);
   const [commentCount, setCommentCount] = useState(post.comments || 0);
   const [showMenu, setShowMenu] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   useEffect(() => {
@@ -47,6 +59,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
       fetchComments();
     }
   }, [showComments, post.id]);
+
+  useEffect(() => {
+    if (isSharePopupOpen && user) {
+      const fetchFriends = async () => {
+        setIsLoadingFriends(true);
+        try {
+          const friendProfiles = await userService.getFriendsProfiles(user.uid);
+          setFriends(friendProfiles);
+        } catch (error) {
+          console.error("Failed to fetch friends:", error);
+        } finally {
+          setIsLoadingFriends(false);
+        }
+      };
+      fetchFriends();
+    }
+  }, [isSharePopupOpen, user]);
 
   const fetchComments = async () => {
     if (!post.id) return;
@@ -129,6 +158,45 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     }
   };
 
+  const handleShareClick = () => {
+    if (!user) {
+      alert("게시물을 공유하려면 로그인이 필요합니다.");
+      return;
+    }
+    setIsSharePopupOpen(true);
+  };
+
+  const handleShareToFriend = async (friend: UserProfile) => {
+    if (!user || !post.id) return;
+
+    setSharingTo(friend.uid);
+    try {
+      const roomId = await messageService.createOrGetRoom(user.uid, friend.uid);
+      await messageService.sendMessage(
+        roomId,
+        user.uid,
+        `${friend.nickname}님에게 게시물을 공유했습니다.`,
+        "postShare",
+        undefined,
+        undefined,
+        undefined,
+        {
+          postId: post.id,
+          postImage: post.images[0],
+          postTitle: post.content.substring(0, 30),
+          authorName: post.user.name
+        }
+      );
+      alert(`${friend.nickname}님에게 게시물을 공유했습니다.`);
+      setIsSharePopupOpen(false);
+    } catch (error) {
+      console.error("Failed to share post:", error);
+      alert("게시물 공유에 실패했습니다.");
+    } finally {
+      setSharingTo(null);
+    }
+  };
+
   // Format creation date
   const getFormattedDate = () => {
     if (!post.createdAt) return "방금 전";
@@ -154,18 +222,25 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setShowMenu(false);
-    if (!window.confirm("이 게시물을 정말 삭제하시겠습니까?")) return;
-    
+    setShowDeleteConfirm(true);
+  };
+
+  const executeDelete = async () => {
+    setIsDeleting(true);
     try {
       if (post.id) {
         await postService.deletePost(post.id);
         setIsDeleted(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to delete post:", error);
-      alert("게시물 삭제에 실패했습니다.");
+      alert("게시물 삭제에 실패했습니다.\n" + (error.message || error));
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -197,7 +272,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 </span>
               )}
             </div>
-            <span className="text-[10px] font-medium text-[#ADB5BD] block">{getFormattedDate()}</span>
+            <div className="flex items-center space-x-1.5 mt-0.5">
+              <span className="text-[10px] font-medium text-[#ADB5BD]">{getFormattedDate()}</span>
+              <span className="text-[10px] text-[#DEE2E6]">•</span>
+              <div className="flex items-center text-[#ADB5BD]">
+                {post.visibility === "friends" ? (
+                  <Users size={10} className="mr-0.5" />
+                ) : post.visibility === "close_friends" ? (
+                  <Lock size={10} className="mr-0.5" />
+                ) : (
+                  <Globe size={10} className="mr-0.5" />
+                )}
+                <span className="text-[9px] font-bold">
+                  {post.visibility === "friends" ? "친구만" : post.visibility === "close_friends" ? "친한친구" : "전체공개"}
+                </span>
+              </div>
+            </div>
           </div>
         </button>
         <div className="relative">
@@ -222,14 +312,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 {user && post.user.uid === user.uid ? (
                   <>
                     <button 
-                      onClick={() => { setShowMenu(false); alert("개발 중인 기능입니다."); /* Edit logic */ }} 
+                      onClick={(e) => { e.stopPropagation(); setShowMenu(false); router.push(`/post/edit/${post.id}`); }} 
                       className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-[#495057] hover:bg-[#F8F9FA] transition-colors"
                     >
                       <Edit2 size={15} className="mr-2 text-[#ADB5BD]" /> 
                       수정하기
                     </button>
                     <button 
-                      onClick={handleDelete} 
+                      onClick={handleDeleteClick} 
                       className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-[#e74c3c] hover:bg-[#e74c3c]/5 transition-colors"
                     >
                       <Trash2 size={15} className="mr-2" /> 
@@ -365,7 +455,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               <MessageCircle size={20} />
               <span className="text-xs font-bold">{commentCount}</span>
             </button>
-            <button className="flex items-center space-x-1.5 text-[#6C757D] transition-colors hover:text-[#3498db]">
+            <button 
+              onClick={handleShareClick}
+              className="flex items-center space-x-1.5 text-[#6C757D] transition-colors hover:text-[#3498db]"
+            >
               <Share2 size={20} />
             </button>
             <button 
@@ -401,7 +494,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-text-main">{comment.user.name}</span>
                         <span className="text-[10px] text-text-sub">
-                          {comment.createdAt ? formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true, locale: ko }) : "방금 전"}
+                          {comment.createdAt && 'toDate' in comment.createdAt ? formatDistanceToNow(comment.createdAt.toDate(), { addSuffix: true, locale: ko }) : "방금 전"}
                         </span>
                       </div>
                       <p className="text-sm text-text-main leading-relaxed">{comment.content}</p>
@@ -499,14 +592,84 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           )}
         </div>
       )}
+
+      {/* Share PowerPopup */}
+      <PowerPopup
+        isOpen={isSharePopupOpen}
+        onClose={() => setIsSharePopupOpen(false)}
+        title="친구에게 공유하기"
+        icon={<Share2 size={22} />}
+      >
+        <div className="space-y-4">
+          {isLoadingFriends ? (
+            <div className="flex justify-center py-10">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+            </div>
+          ) : friends.length > 0 ? (
+            <div className="grid grid-cols-1 gap-2">
+              {friends.map((friend) => (
+                <button
+                  key={friend.uid}
+                  onClick={() => handleShareToFriend(friend)}
+                  disabled={sharingTo === friend.uid}
+                  className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 border flex items-center justify-center">
+                      <img src={friend.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-sm font-black text-gray-900">{friend.nickname}</p>
+                      <p className="text-[10px] text-gray-400 capitalize">{friend.travelStyle || "여행을 즐기는 중"}</p>
+                    </div>
+                  </div>
+                  <div className="p-2 bg-primary/5 rounded-xl text-primary font-bold text-[11px]">
+                    {sharingTo === friend.uid ? "보내는 중..." : "보내기"}
+                  </div>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10 space-y-3">
+              <div className="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                <Users size={24} />
+              </div>
+              <p className="text-xs text-gray-400 font-bold">공유할 친구가 없습니다.</p>
+            </div>
+          )}
+        </div>
+      </PowerPopup>
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white w-full max-w-[320px] rounded-[28px] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e74c3c]/10 mb-4">
+              <Trash2 size={24} className="text-[#e74c3c]" />
+            </div>
+            <h3 className="text-center text-lg font-black text-[#212529] mb-2">게시물을 삭제할까요?</h3>
+            <p className="text-center text-[13px] text-[#6C757D] mb-6 leading-relaxed">
+              이 작업은 되돌릴 수 없으며,<br />피드에서 영구적으로 사라집니다.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 rounded-2xl bg-[#F8F9FA] py-3.5 text-[14px] font-bold text-[#495057] transition-colors hover:bg-[#E9ECEF] disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={executeDelete}
+                disabled={isDeleting}
+                className="flex-1 rounded-2xl bg-[#e74c3c] py-3.5 text-[14px] font-bold text-white transition-all hover:bg-[#c0392b] hover:shadow-lg hover:shadow-[#e74c3c]/30 disabled:opacity-50 flex items-center justify-center"
+              >
+                {isDeleting ? <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></span> : "삭제하기"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
-
-// Placeholder for User icon if image fails
-const User = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);

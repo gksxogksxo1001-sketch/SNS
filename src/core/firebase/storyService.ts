@@ -24,7 +24,7 @@ import { userService } from "./userService";
 
 export const storyService = {
   // Upload a story image
-  async uploadStory(userId: string, file: File, userData: { name: string, image: string }): Promise<string> {
+  async uploadStory(userId: string, file: File, userData: { name: string, image: string }, visibility: "public" | "friends" | "close_friends" = "public"): Promise<string> {
     const storageRef = ref(storage, `stories/${userId}/${Date.now()}_${file.name}`);
     const snapshot = await uploadBytes(storageRef, file);
     const mediaUrl = await getDownloadURL(snapshot.ref);
@@ -41,6 +41,7 @@ export const storyService = {
       },
       mediaUrl,
       type: "image",
+      visibility,
       createdAt: serverTimestamp(),
       expiresAt: Timestamp.fromDate(expiresAt),
       viewedBy: [],
@@ -166,15 +167,68 @@ export const storyService = {
       userGroups[story.userId].stories.push(story);
     });
 
-    // Calculate hasUnread for each group
+    // Calculate hasUnread for each group and gather author profiles for visibility filtering
     const groups = Object.values(userGroups);
-    if (currentUserId) {
-      groups.forEach(group => {
-        // Group has unread stories if at least one story hasn't been viewed by current user
-        group.hasUnread = group.stories.some(story => !story.viewedBy.includes(currentUserId));
-      });
+    
+    if (!currentUserId) {
+      // If not logged in, only see public stories
+      return groups.map(group => ({
+        ...group,
+        stories: group.stories.filter(s => s.visibility === "public" || !s.visibility)
+      })).filter(group => group.stories.length > 0);
     }
 
-    return groups;
+    // For logged in users:
+    const myProfile = await userService.getUserProfile(currentUserId);
+    const myFriends = myProfile?.friends || [];
+    const userGroupsData = await userService.getUserProfile(currentUserId); // Actually we need group membership here too if we ever add group stories
+    
+    const filteredGroups = await Promise.all(groups.map(async (group) => {
+      const authorProfile = await userService.getUserProfile(group.userId);
+      
+      const allowedStories = group.stories.filter(story => {
+        // 1. My own story
+        if (story.userId === currentUserId) return true;
+
+        // 2. Public story
+        if (story.visibility === "public" || !story.visibility) return true;
+
+        // 3. Friends only story (Viewer must follow the author)
+        if (story.visibility === "friends" && myFriends.includes(story.userId)) return true;
+
+        // 4. Close Friends only story (Viewer must be in author's personal closeFriends list)
+        if (story.visibility === "close_friends") {
+          return authorProfile?.closeFriends?.includes(currentUserId) || false;
+        }
+
+        return false;
+      });
+
+      if (allowedStories.length === 0) return null;
+
+      return {
+        ...group,
+        stories: allowedStories,
+        hasUnread: allowedStories.some(story => !story.viewedBy.includes(currentUserId))
+      };
+    }));
+
+    return filteredGroups.filter((g): g is UserStoryGroup => g !== null);
+  },
+
+  // Get all stories for a specific user (Archive)
+  async getUserStories(userId: string): Promise<Story[]> {
+    const storiesRef = collection(db, "stories");
+    const q = query(
+      storiesRef,
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as Story[];
   }
 };

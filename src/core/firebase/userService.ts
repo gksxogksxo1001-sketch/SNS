@@ -101,6 +101,19 @@ export const userService = {
     return [];
   },
 
+  // Get friends list profiles
+  async getFriendsProfiles(uid: string): Promise<UserProfile[]> {
+    const friendUids = await this.getFriends(uid);
+    if (friendUids.length === 0) return [];
+    
+    // Fetch all profiles
+    const profiles = await Promise.all(
+      friendUids.map((fUid: string) => this.getUserProfile(fUid))
+    );
+    
+    return profiles.filter(Boolean) as UserProfile[];
+  },
+
   // Send friend request
   async sendFriendRequest(fromUid: string, toUid: string): Promise<void> {
     const requestsRef = collection(db, "friendRequests");
@@ -214,8 +227,30 @@ export const userService = {
     });
     
     await batch.commit();
+  },
 
-    // Update totalCountries/stats if necessary (optional but good for consistency)
-    // We don't have a specific counts field except for totalCountries which is based on visitedCountries
+  // Toggle close friend status
+  async toggleCloseFriend(uid: string, targetUid: string, isCloseFriend: boolean): Promise<void> {
+    const userRef = doc(db, "users", uid);
+    if (isCloseFriend) {
+      await updateDoc(userRef, {
+        closeFriends: arrayRemove(targetUid),
+        updatedAt: serverTimestamp()
+      });
+    } else {
+      await updateDoc(userRef, {
+        closeFriends: arrayUnion(targetUid),
+        updatedAt: serverTimestamp()
+      });
+    }
+  },
+
+  // Get close friends list
+  async getCloseFriends(uid: string): Promise<string[]> {
+    const userDoc = await getDoc(doc(db, "users", uid));
+    if (userDoc.exists()) {
+      return userDoc.data().closeFriends || [];
+    }
+    return [];
   }
 };

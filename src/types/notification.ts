@@ -1,4 +1,4 @@
-export type NotificationType = "like" | "comment" | "friend_request" | "friend_accept" | "story_like" | "group_invite";
+export type NotificationType = "like" | "comment" | "friend_request" | "friend_accept" | "story_like" | "group_invite" | "settlement_request" | "settlement_pay";
 
 export interface Notification {
   id: string;
@@ -8,6 +8,7 @@ export interface Notification {
   fromNickname: string;
   fromAvatarUrl: string | null;
   postId?: string;
+  groupId?: string;
   postImage?: string;
   content?: string;
   isRead: boolean;

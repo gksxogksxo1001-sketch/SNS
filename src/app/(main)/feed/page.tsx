@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Search, Bell, Loader2, MessageSquarePlus, Send } from "lucide-react";
 import { PostCard } from "@/components/features/feed/PostCard";
 import { Stories } from "@/components/features/feed/Stories";
-import { postService } from "@/core/firebase/postService";
+import { postService } from "@/core/firebase/postService"; // Added this line
 import { notificationService } from "@/core/firebase/notificationService";
 import { messageService } from "@/core/firebase/messageService";
 import { useAuth } from "@/core/hooks/useAuth";
@@ -22,7 +22,7 @@ export default function FeedPage() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const data = await postService.getPosts();
+        const data = await postService.getPosts(user?.uid);
         setPosts(data);
       } catch (error) {
         console.error("Failed to fetch posts:", error);
@@ -30,8 +30,9 @@ export default function FeedPage() {
         setIsLoading(false);
       }
     };
-    fetchPosts();
-  }, []);
+    if (user) fetchPosts();
+    else if (!isLoading) fetchPosts(); // Guest view (public only)
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -56,7 +57,8 @@ export default function FeedPage() {
       {/* Header */}
       <header className="sticky top-0 z-40 flex items-center justify-between bg-white/80 p-4 backdrop-blur-md border-b border-[#F1F3F5]">
         <h1 className="text-xl font-bold text-[#2A9D8F]">HANS</h1>
-        <div className="flex items-center space-x-5">
+        {/* 모바일에서만 표시 (PC는 사이드바/우측패널에 있음) */}
+        <div className="flex items-center space-x-5 md:hidden">
           <Link href="/search" className="text-[#212529] hover:text-[#2A9D8F] transition-colors block">
             <Search size={24} />
           </Link>

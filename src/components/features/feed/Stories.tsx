@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Plus, User } from "lucide-react";
+import { Plus, User, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth } from "@/core/firebase/config";
 import Link from "next/link";
@@ -81,7 +81,9 @@ export const Stories = () => {
                 "w-[68px] h-[68px] rounded-[26px] flex items-center justify-center transition-all duration-300 group-hover:scale-105",
                 myGroup 
                   ? (myGroup.hasUnread 
-                      ? "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10" 
+                      ? (myGroup.stories.some(s => s.visibility === "close_friends")
+                          ? "bg-[#2ECC71] p-[3px] scale-100 shadow-lg shadow-[#2ECC71]/10" // 친한친구 녹색 링
+                          : "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10")
                       : "bg-slate-200 p-[1.5px]") // 읽음 상태일 때 회색 링
                   : "bg-slate-100 p-[1.5px]"
               )}
@@ -119,7 +121,9 @@ export const Stories = () => {
               <div className={cn(
                 "w-[68px] h-[68px] rounded-[26px] flex items-center justify-center transition-all duration-300 group-hover:scale-105",
                 group.hasUnread 
-                  ? "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10" 
+                  ? (group.stories.some(s => s.visibility === "close_friends")
+                      ? "bg-[#2ECC71] p-[3px] scale-100 shadow-lg shadow-[#2ECC71]/10" 
+                      : "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10")
                   : "bg-slate-200 p-[1.5px]"
               )}>
                 {/* Avatar Container */}

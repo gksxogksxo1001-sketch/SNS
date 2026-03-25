@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { APIProvider, useMapsLibrary } from "@vis.gl/react-google-maps";
-import { X, Camera, Plus, MapPin, Globe, Users, Lock, ChevronRight, Search, Loader2 } from "lucide-react";
+import { X, Camera, Plus, MapPin, Globe, Users, Lock, ChevronRight, Search, Loader2, Wallet } from "lucide-react";
 import { ExpenseInput } from "@/components/features/post/ExpenseInput";
 import { postService } from "@/core/firebase/postService";
 import { auth } from "@/core/firebase/config";
@@ -124,7 +124,18 @@ function LocationSearchModal({
 }
 
 export default function CreatePostPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-400">Loading...</div>}>
+      <CreatePostContent />
+    </Suspense>
+  );
+}
+
+function CreatePostContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlGroupId = searchParams?.get("groupId");
+  
   const [content, setContent] = useState("");
   const [tags, setTags] = useState("");
   const [images, setImages] = useState<{ file: File; preview: string }[]>([]);
@@ -137,8 +148,8 @@ export default function CreatePostPage() {
     food: "",
     other: "",
   });
-  const [visibility, setVisibility] = useState<"public" | "friends" | "group">("public");
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [visibility, setVisibility] = useState<"public" | "friends" | "close_friends">(urlGroupId ? "close_friends" : "public");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(urlGroupId || null);
   const [userGroups, setUserGroups] = useState<Group[]>([]);
   const { user: currentUser, isLoading: isAuthLoading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -270,7 +281,7 @@ export default function CreatePostPage() {
           tags: tagList,
           images: imageUrls,
           location: selectedLocation || null, // undefined 대신 null 사용
-          groupId: visibility === "group" ? selectedGroupId : null,
+          groupId: visibility === "close_friends" ? (selectedGroupId || urlGroupId || null) : null,
           expenses: {
             plane: Number(expenses.plane) || 0,
             stay: Number(expenses.stay) || 0,
@@ -297,7 +308,7 @@ export default function CreatePostPage() {
       // 4. Success cleanup
       images.forEach(img => URL.revokeObjectURL(img.preview));
       alert("게시물이 성공적으로 등록되었습니다! 🎉");
-      router.push("/feed");
+      router.push(urlGroupId ? "/groups" : "/feed");
     } catch (error: any) {
       console.error("[CreatePost] Final Error:", error);
       alert(error.message || "게시물 등록에 실패했습니다. 다시 시도해 주세요.");
@@ -308,7 +319,7 @@ export default function CreatePostPage() {
 
   return (
     <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-      <div className="flex min-h-screen flex-col bg-white">
+      <div className="flex min-h-screen flex-col bg-gradient-to-br from-[#fdfbfb] to-[#ebedee] pb-10">
       {/* Hidden File Input */}
       <input
         type="file"
@@ -320,156 +331,203 @@ export default function CreatePostPage() {
       />
 
       {/* Header */}
-      <header className="sticky top-0 z-50 flex items-center justify-between border-b bg-white px-4 py-3">
-        <button onClick={() => router.back()} className="text-[#212529]">
-          <X size={24} />
+      <header className="sticky top-0 z-50 flex items-center justify-between bg-white/70 px-5 py-4 backdrop-blur-xl backdrop-saturate-150 border-b border-white/40 shadow-sm">
+        <button 
+          onClick={() => router.back()} 
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#495057] shadow-sm hover:bg-gray-50 hover:scale-105 transition-all"
+        >
+          <X size={20} />
         </button>
-        <h1 className="text-lg font-bold text-[#212529]">새 게시물</h1>
+        <h1 className="text-lg font-black tracking-tight text-[#212529]">새 게시물</h1>
         <button
           onClick={handleRegister}
-          disabled={( !content && images.length === 0 ) || isSubmitting || isAuthLoading}
-          className="rounded-full bg-[#2A9D8F] px-5 py-2 text-sm font-bold text-white transition-opacity disabled:opacity-30 flex items-center space-x-2"
+          disabled={images.length === 0 || isSubmitting || isAuthLoading}
+          className="rounded-2xl bg-gradient-to-r from-[#2A9D8F] to-[#264653] px-6 py-2.5 text-sm font-bold text-white transition-all shadow-lg shadow-[#2A9D8F]/30 disabled:opacity-50 disabled:shadow-none hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 active:scale-95 flex items-center space-x-2"
         >
           {(isSubmitting || isAuthLoading) && <Loader2 size={16} className="animate-spin" />}
-          <span>{isSubmitting ? "등록 중..." : isAuthLoading ? "인증 중..." : "등록"}</span>
+          <span>{isSubmitting ? "등록 중..." : isAuthLoading ? "인증 중..." : "등록하기"}</span>
         </button>
       </header>
 
       {/* Content Scrollable */}
-      <div className="flex-1 overflow-y-auto pb-10">
-        {/* Image Picker Section */}
-        <div className="flex space-x-3 overflow-x-auto p-4 scrollbar-hide">
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex h-32 w-32 flex-shrink-0 flex-col items-center justify-center space-y-2 rounded-2xl border-2 border-dashed border-[#F1F3F5] bg-[#F8F9FA] text-[#6C757D] transition-colors hover:border-[#2A9D8F]/30 hover:bg-[#2A9D8F]/5"
-          >
-            <Camera size={24} />
-            <span className="text-xs font-medium">{images.length}/10</span>
-          </button>
-          {images.map((img, idx) => (
-            <div key={idx} className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-2xl bg-slate-100">
-              <img src={img.preview} alt={`Preview ${idx}`} className="h-full w-full object-cover" />
-              <button
-                onClick={() => removeImage(idx)}
-                className="absolute right-1 top-1 rounded-full bg-black/50 p-1 text-white backdrop-blur-sm"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {/* Tag Input Section */}
-        <div className="px-4 py-2 border-b border-[#F1F3F5]">
-          <div className="flex items-center space-x-2">
-            <span className="text-[#2A9D8F] font-bold text-lg">#</span>
-            <input
-              type="text"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder="태그를 입력하세요 (예: 제주 바다 노을)"
-              className="w-full py-2 text-sm text-[#212529] outline-none placeholder:text-[#ADB5BD] font-medium"
-            />
+      <div className="flex-1 overflow-y-auto px-4 pb-20 pt-6">
+        {/* Section: Images */}
+        <div className="mb-6 overflow-hidden rounded-[32px] bg-white/60 p-6 backdrop-blur-xl backdrop-saturate-150 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="text-[15px] font-black tracking-tight text-[#212529] flex items-center space-x-2">
+               <Camera size={18} className="text-[#2A9D8F]" />
+               <span>여행 사진 <span className="text-[#E76F51]">*</span></span>
+            </h2>
+            <span className="rounded-full bg-white px-3 py-1 text-[11px] font-bold text-[#ADB5BD] shadow-sm">
+              <span className={images.length > 0 ? "text-[#2A9D8F]" : ""}>{images.length}</span> / 10
+            </span>
           </div>
+          
+          <div className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide pt-2 px-1">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="group relative flex h-36 w-32 flex-shrink-0 flex-col items-center justify-center space-y-3 rounded-[24px] border-2 border-dashed border-[#DEE2E6] bg-white/50 text-[#ADB5BD] transition-all duration-300 hover:border-[#2A9D8F]/50 hover:bg-gradient-to-b hover:from-white/50 hover:to-[#2A9D8F]/5 hover:shadow-lg hover:-translate-y-1"
+            >
+              <div className="absolute inset-0 bg-[#2A9D8F] opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-10 rounded-[24px]" />
+              <div className="relative rounded-full bg-white p-3 shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:text-[#2A9D8F]">
+                <Plus size={26} strokeWidth={2.5} />
+              </div>
+              <span className="relative text-[11px] font-bold tracking-wide group-hover:text-[#2A9D8F]">추가하기</span>
+            </button>
+            {images.map((img, idx) => (
+              <div key={idx} className="group relative h-36 w-32 flex-shrink-0 overflow-hidden rounded-[24px] bg-slate-100 shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
+                <img src={img.preview} alt={`Preview ${idx}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <div className="absolute inset-0 bg-black/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <button
+                  onClick={() => removeImage(idx)}
+                  className="absolute right-2 top-2 rounded-full bg-black/40 p-1.5 text-white backdrop-blur-md transition-all hover:bg-[#E76F51] hover:scale-110 shadow-sm"
+                >
+                  <X size={14} strokeWidth={3} />
+                </button>
+              </div>
+            ))}
+          </div>
+          {images.length === 0 && (
+            <div className="mt-2 text-center rounded-2xl bg-[#E76F51]/10 p-3">
+              <p className="text-[12px] font-bold text-[#E76F51]">
+                최소 1장 이상의 사진을 등록해 주세요.
+              </p>
+            </div>
+          )}
         </div>
 
-        {/* Text Input Section */}
-        <div className="px-4 pt-4">
+        {/* Section: Content */}
+        <div className="mb-6 rounded-[32px] bg-white/60 p-6 backdrop-blur-xl backdrop-saturate-150 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)] group/content transition-all focus-within:shadow-[0_8px_30px_rgb(42,157,143,0.12)]">
+          <div className="mb-4 border-b border-gray-200/50 pb-3 transition-colors group-focus-within/content:border-[#2A9D8F]/30">
+            <div className="flex items-center space-x-3">
+              <div className="rounded-xl bg-[#2A9D8F]/10 p-2 text-[#2A9D8F]">
+                <span className="text-lg font-black leading-none flex items-center justify-center">#</span>
+              </div>
+              <input
+                type="text"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+                placeholder="태그를 입력하세요 (예: 제주 바다 노을)"
+                className="w-full bg-transparent py-1 text-[15px] font-bold text-[#212529] outline-none placeholder:text-[#ADB5BD] transition-all"
+              />
+            </div>
+          </div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="이번 여행은 어떠셨나요? 본문을 작성해 주세요."
-            className="min-h-[200px] w-full resize-none border-none text-base text-[#212529] outline-none placeholder:text-[#ADB5BD] leading-relaxed"
+            placeholder="이번 여행은 어떠셨나요? 이야기를 들려주세요..."
+            className="min-h-[180px] w-full resize-none bg-white/40 p-4 rounded-2xl text-[15px] leading-relaxed text-[#495057] outline-none placeholder:text-[#CED4DA] transition-all focus:bg-white focus:shadow-inner focus:ring-1 focus:ring-[#2A9D8F]/30"
           />
         </div>
 
-        {/* Divider */}
-        <div className="h-2 bg-[#F8F9FA]" />
-
-        {/* Expense Section */}
-        <div className="p-4">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold text-[#212529]">여행 비용 기록</h2>
+        {/* Section: Expenses */}
+        <div className="mb-6 rounded-[32px] bg-white/60 p-6 backdrop-blur-xl backdrop-saturate-150 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+           <div className="mb-5 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="rounded-xl bg-gradient-to-br from-[#E9C46A] to-[#F4A261] p-2 text-white shadow-sm">
+                <Wallet size={18} />
+              </div>
+              <h2 className="text-[15px] font-black tracking-tight text-[#212529]">여행 비용 기록</h2>
+            </div>
             <div className="text-right">
-              <p className="text-[10px] font-medium text-[#6C757D]">총 지출액</p>
-              <p className="text-base font-bold text-[#2A9D8F]">{totalExpense.toLocaleString()}원</p>
+              <p className="text-[11px] font-bold text-[#ADB5BD]">총 지출액</p>
+              <p className="text-lg font-black text-[#E76F51]">{totalExpense.toLocaleString()}원</p>
             </div>
           </div>
-          <ExpenseInput expenses={expenses} onExpenseChange={handleExpenseChange} />
+          <div className="rounded-2xl bg-white/50 p-4 border border-white/60 shadow-inner">
+            <ExpenseInput expenses={expenses} onExpenseChange={handleExpenseChange} />
+          </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-2 bg-[#F8F9FA]" />
-
-        {/* Settings Section */}
-        <div className="divide-y divide-[#F1F3F5] px-4">
+        {/* Section: Settings */}
+        <div className="mb-6 space-y-4 rounded-[32px] bg-white/60 p-6 backdrop-blur-xl backdrop-saturate-150 border border-white shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
           <button 
             onClick={() => setIsLocationModalOpen(true)}
-            className="flex w-full items-center justify-between py-4 group"
+            className="group relative flex w-full items-center justify-between rounded-2xl bg-white p-4 transition-all hover:shadow-md border border-transparent hover:border-gray-100 active:scale-[0.98]"
           >
-            <div className="flex items-center space-x-3">
-              <div className={`rounded-xl p-2 transition-colors ${
-                selectedLocation ? "bg-[#2A9D8F]/10 text-[#2A9D8F]" : "bg-[#F8F9FA] text-[#6C757D]"
-              } group-hover:bg-[#2A9D8F]/10 group-hover:text-[#2A9D8F]`}>
-                <MapPin size={20} />
+            <div className="flex items-center space-x-4 text-left">
+              <div className={`rounded-xl p-3 shadow-sm transition-colors ${
+                selectedLocation ? "bg-gradient-to-br from-[#2A9D8F] to-[#264653] text-white" : "bg-gray-50 text-[#ADB5BD] group-hover:text-[#2A9D8F]"
+              }`}>
+                <MapPin size={22} className={selectedLocation ? "animate-bounce" : ""} style={{ animationIterationCount: 1 }} />
               </div>
-              <div className="flex flex-col items-start">
-                <span className={`text-sm font-semibold ${selectedLocation ? "text-[#2A9D8F]" : "text-[#212529]"}`}>
-                  {selectedLocation ? selectedLocation.name : "위치 추가"}
-                </span>
+              <div>
+                <p className={`text-[14px] font-black tracking-tight ${selectedLocation ? "text-[#2A9D8F]" : "text-[#212529]"}`}>
+                  {selectedLocation ? selectedLocation.name : "위치 추가하기"}
+                </p>
                 {selectedLocation && (
-                  <span className="text-[10px] text-[#6C757D] line-clamp-1">{selectedLocation.address}</span>
+                  <p className="text-[11px] font-medium text-[#6C757D] line-clamp-1 mt-0.5">{selectedLocation.address}</p>
                 )}
               </div>
             </div>
-            <ChevronRight size={18} className="text-[#ADB5BD]" />
+            <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-[#ADB5BD] group-hover:bg-[#2A9D8F]/10 group-hover:text-[#2A9D8F] transition-colors">
+              <ChevronRight size={18} />
+            </div>
           </button>
 
-          <div className="flex w-full flex-col space-y-4 py-4">
-            <div className="flex items-center space-x-3">
-              <div className="rounded-xl bg-[#F8F9FA] p-2 text-[#6C757D]">
-                <Globe size={20} />
+          <div className="pt-2">
+            <div className="mb-4 flex items-center space-x-2 px-1">
+              <div className="rounded-lg bg-gray-100 p-1.5 text-[#6C757D]">
+                <Globe size={16} />
               </div>
-              <span className="text-sm font-semibold text-[#212529]">공개 범위 설정</span>
+              <span className="text-[13px] font-black text-[#212529]">누구와 공유할까요?</span>
             </div>
             
-            <div className="flex space-x-2">
+            <div className="flex space-x-3">
               {[
-                { id: "public", label: "전체", icon: Globe },
-                { id: "friends", label: "친구", icon: Users },
-                { id: "group", label: "그룹", icon: Lock },
+                { id: "public", label: "전체 공개", icon: Globe, color: "from-[#3498db] to-[#2980b9]" },
+                { id: "friends", label: "친구만", icon: Users, color: "from-[#9b59b6] to-[#8e44ad]" },
+                { id: "close_friends", label: "친한 친구만", icon: Lock, color: "from-[#E76F51] to-[#D62828]" },
               ].map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => setVisibility(item.id as any)}
-                  className={`flex flex-1 items-center justify-center space-x-2 rounded-xl py-3 transition-all ${
+                  className={`relative flex flex-1 flex-col items-center justify-center py-4 rounded-2xl transition-all border overflow-hidden ${
                     visibility === item.id
-                      ? "bg-[#2A9D8F] text-white shadow-lg shadow-[#2A9D8F]/20"
-                      : "bg-[#F8F9FA] text-[#6C757D]"
+                      ? "border-transparent shadow-lg transform -translate-y-1 bg-gradient-to-br text-white " + item.color
+                      : "bg-white text-[#ADB5BD] border-white/60 hover:border-gray-200 hover:shadow-sm hover:text-[#495057]"
                   }`}
                 >
-                  <item.icon size={16} />
-                  <span className="text-xs font-bold">{item.label}</span>
+                  <item.icon size={20} className="mb-2 z-10" />
+                  <span className="text-[12px] font-black z-10">{item.label}</span>
+                  {visibility === item.id && (
+                    <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {visibility === "group" && userGroups.length > 0 && (
-            <div className="flex w-full flex-col space-y-3 py-4 animate-in slide-in-from-top-2">
-              <span className="text-xs font-bold text-[#6C757D] ml-1">나의 여행 그룹 선택</span>
+          {visibility === "close_friends" && (
+            <div className="mt-4 border-t border-gray-100 pt-5 animate-in slide-in-from-top-4 duration-300">
+              <p className="mb-3 text-[12px] font-bold text-[#6C757D] ml-1 flex items-center space-x-1.5">
+                <Users size={14} />
+                <span>공유 대상 선택</span>
+              </p>
               <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedGroupId(null)}
+                  className={cn(
+                    "px-5 py-2.5 rounded-full text-[13px] font-extrabold transition-all shadow-sm",
+                    selectedGroupId === null
+                      ? "bg-[#D62828] text-white border-transparent shadow-md shadow-[#D62828]/20 -translate-y-0.5"
+                      : "bg-white border border-gray-100 text-[#6C757D] hover:bg-gray-50 hover:text-[#212529]"
+                  )}
+                >
+                  ⭐ 내 친한친구 리스트
+                </button>
                 {userGroups.map((group) => (
                   <button
                     key={group.id}
                     type="button"
                     onClick={() => setSelectedGroupId(group.id)}
                     className={cn(
-                      "px-4 py-2 rounded-xl text-xs font-bold transition-all border",
+                      "px-5 py-2.5 rounded-full text-[13px] font-extrabold transition-all shadow-sm",
                       selectedGroupId === group.id
-                        ? "bg-[#2A9D8F]/10 border-[#2A9D8F] text-[#2A9D8F]"
-                        : "bg-white border-slate-100 text-slate-500 hover:border-slate-200"
+                        ? "bg-[#D62828] text-white border-transparent shadow-md shadow-[#D62828]/20 -translate-y-0.5"
+                        : "bg-white border border-gray-100 text-[#6C757D] hover:bg-gray-50 hover:text-[#212529]"
                     )}
                   >
                     {group.name}

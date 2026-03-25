@@ -12,6 +12,7 @@ export interface Story {
   type: "image" | "video";
   createdAt: Timestamp | any;
   expiresAt: Timestamp | any;
+  visibility: "public" | "friends" | "close_friends";
   viewedBy: string[];
   likesCount: number;
   likedBy: string[];

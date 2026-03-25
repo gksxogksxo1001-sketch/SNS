@@ -37,7 +37,7 @@ export interface Post {
     other?: number;
   };
   totalExpense: number;
-  visibility: "public" | "friends" | "group";
+  visibility: "public" | "friends" | "close_friends";
   likes: number;
   likedBy: string[]; // List of user UIDs who liked this post
   bookmarkedBy?: string[]; // List of user UIDs who bookmarked this post

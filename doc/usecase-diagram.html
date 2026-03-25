@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SNS 프로젝트 - 유스케이스 다이어그램</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 {
+      font-size: 24px;
+      color: #212529;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      font-size: 13px;
+      color: #6c757d;
+      margin-bottom: 32px;
+    }
+    #diagram-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+      padding: 24px;
+      max-width: 100%;
+      overflow: auto;
+    }
+    #diagram-container img {
+      max-width: 100%;
+      height: auto;
+    }
+    .loading {
+      padding: 60px;
+      text-align: center;
+      color: #6c757d;
+      font-size: 14px;
+    }
+    .error {
+      color: #dc3545;
+      padding: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>SNS 프로젝트 유스케이스 다이어그램</h1>
+  <p class="subtitle">PlantUML 서버로 자동 렌더링됩니다. 인터넷 연결이 필요합니다.</p>
+  <div id="diagram-container">
+    <div class="loading" id="loading">⏳ 다이어그램 로딩 중...</div>
+  </div>
+
+  <script>
+    // PlantUML Text Encoding (deflate + custom base64)
+    function encode64(data) {
+      let r = '';
+      for (let i = 0; i < data.length; i += 3) {
+        const b1 = data[i];
+        const b2 = i + 1 < data.length ? data[i + 1] : 0;
+        const b3 = i + 2 < data.length ? data[i + 2] : 0;
+        r += encode6bit(b1 >> 2);
+        r += encode6bit(((b1 & 0x3) << 4) | (b2 >> 4));
+        r += encode6bit(((b2 & 0xF) << 2) | (b3 >> 6));
+        r += encode6bit(b3 & 0x3F);
+      }
+      return r;
+    }
+
+    function encode6bit(b) {
+      if (b < 10) return String.fromCharCode(48 + b);
+      b -= 10;
+      if (b < 26) return String.fromCharCode(65 + b);
+      b -= 26;
+      if (b < 26) return String.fromCharCode(97 + b);
+      b -= 26;
+      if (b === 0) return '-';
+      if (b === 1) return '_';
+      return '?';
+    }
+
+    const uml = `@startuml SNS_UseCase
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #E8F5E9
+  BorderColor #2A9D8F
+  ArrowColor #264653
+  FontColor #212529
+}
+skinparam actor {
+  BackgroundColor #2A9D8F
+  BorderColor #264653
+}
+left to right direction
+
+actor "User" as User
+actor "Firebase Auth" as FAuth <<System>>
+actor "Firestore" as FStore <<System>>
+actor "Storage" as FStorage <<System>>
+actor "Realtime DB" as FRealtime <<System>>
+actor "Google Maps" as GMaps <<System>>
+
+rectangle "SNS Project System" {
+  package "Auth and User" {
+    usecase "Register" as UC_Reg
+    usecase "Login" as UC_Log
+    usecase "Logout" as UC_Out
+    usecase "Edit Profile" as UC_Prof
+    usecase "Follow" as UC_Fol
+    usecase "Close Friends" as UC_CF
+  }
+  package "Feed" {
+    usecase "Create Post" as UC_CP
+    usecase "View Feed" as UC_VF
+    usecase "Edit Post" as UC_EP
+    usecase "Delete Post" as UC_DP
+    usecase "Like" as UC_Lk
+    usecase "Comment" as UC_Cm
+    usecase "Bookmark" as UC_Bk
+    usecase "Share Post" as UC_SP
+    usecase "Add Location" as UC_AL
+    usecase "Add Tags" as UC_AT
+    usecase "Upload Image" as UC_UI
+  }
+  package "Stories" {
+    usecase "Upload Story" as UC_US
+    usecase "View Story" as UC_VS
+    usecase "Visibility" as UC_SV
+    usecase "Archive" as UC_SA
+  }
+  package "Messaging" {
+    usecase "Direct Chat" as UC_DC
+    usecase "Group Chat" as UC_GC
+    usecase "Send Image" as UC_SI
+    usecase "Share in Chat" as UC_SC
+    usecase "Settlement" as UC_ST
+    usecase "Manage Settlement" as UC_MS
+  }
+  package "Discovery Map" {
+    usecase "Map View" as UC_MV
+    usecase "Search" as UC_MS2
+    usecase "My Location" as UC_ML
+    usecase "Marker Detail" as UC_MD
+  }
+  package "Notifications" {
+    usecase "View Notifications" as UC_VN
+    usecase "Mark Read" as UC_MR
+  }
+}
+
+User --> UC_Reg
+User --> UC_Log
+User --> UC_Out
+User --> UC_Prof
+User --> UC_Fol
+User --> UC_CF
+User --> UC_CP
+User --> UC_VF
+User --> UC_EP
+User --> UC_DP
+User --> UC_Lk
+User --> UC_Cm
+User --> UC_Bk
+User --> UC_SP
+User --> UC_US
+User --> UC_VS
+User --> UC_SA
+User --> UC_DC
+User --> UC_GC
+User --> UC_ST
+User --> UC_MS
+User --> UC_MV
+User --> UC_MS2
+User --> UC_ML
+User --> UC_VN
+User --> UC_MR
+
+UC_CP ..> UC_UI : <<include>>
+UC_CP ..> UC_AL : <<extend>>
+UC_CP ..> UC_AT : <<extend>>
+UC_US ..> UC_SV : <<include>>
+UC_US ..> UC_UI : <<include>>
+UC_DC ..> UC_SI : <<extend>>
+UC_DC ..> UC_SC : <<extend>>
+UC_GC ..> UC_SI : <<extend>>
+UC_GC ..> UC_ST : <<extend>>
+UC_MV ..> UC_MD : <<extend>>
+UC_MV ..> UC_ML : <<extend>>
+UC_SP ..> UC_SC : <<include>>
+
+UC_Reg --> FAuth
+UC_Log --> FAuth
+UC_CP --> FStore
+UC_VF --> FStore
+UC_US --> FStore
+UC_VN --> FStore
+UC_UI --> FStorage
+UC_DC --> FRealtime
+UC_GC --> FRealtime
+UC_MV --> GMaps
+UC_MS2 --> GMaps
+UC_ML --> GMaps
+@enduml`;
+
+    // Use pako (deflate) via CDN
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js';
+    script.onload = function() {
+      try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(uml);
+        const compressed = pako.deflateRaw(data);
+        const encoded = encode64(compressed);
+        const imgUrl = `https://www.plantuml.com/plantuml/svg/~1${encoded}`;
+
+        const container = document.getElementById('diagram-container');
+        container.innerHTML = '';
+        const img = document.createElement('img');
+        img.src = imgUrl;
+        img.alt = 'SNS 프로젝트 유스케이스 다이어그램';
+        img.onerror = function() {
+          // Fallback: try png
+          const pngUrl = `https://www.plantuml.com/plantuml/png/~1${encoded}`;
+          img.src = pngUrl;
+          img.onerror = function() {
+            container.innerHTML = '<div class="error">다이어그램 로딩 실패. 인터넷 연결을 확인하거나 <a href="https://www.plantuml.com/plantuml/uml" target="_blank">PlantUML 서버</a>에서 직접 코드를 붙여넣어 주세요.</div>';
+          };
+        };
+        container.appendChild(img);
+      } catch (e) {
+        document.getElementById('diagram-container').innerHTML = '<div class="error">인코딩 오류: ' + e.message + '</div>';
+      }
+    };
+    document.head.appendChild(script);
+  </script>
+</body>
+</html>

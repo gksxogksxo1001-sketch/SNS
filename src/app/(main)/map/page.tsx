@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from "react";
-import { APIProvider, Map, Marker, useMap } from "@vis.gl/react-google-maps";
-import { ChevronLeft, X, Search, Map as MapIcon, Compass, Layers } from "lucide-react";
+import { APIProvider, Map, AdvancedMarker, useMap, Pin } from "@vis.gl/react-google-maps";
+import { ChevronLeft, X, Search, Map as MapIcon, Compass, Layers, List } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { postService } from "@/core/firebase/postService";
 import { Post } from "@/types/post";
@@ -38,7 +38,7 @@ function MapPageContent() {
   const targetLat = searchParams.get('lat');
   const targetLng = searchParams.get('lng');
   const targetName = searchParams.get('name');
-  
+
   const isSingleView = !!(targetLat && targetLng);
   const singlePlace = isSingleView ? {
     id: "single-target",
@@ -53,8 +53,10 @@ function MapPageContent() {
   const [places, setPlaces] = useState<MapPlace[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [currentLocation, setCurrentLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [currentLocation, setCurrentLocation] = useState<{ lat: number, lng: number } | null>(null);
   const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  const [isMobileListOpen, setIsMobileListOpen] = useState(false);
+  const [isMobileSearchActive, setIsMobileSearchActive] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -67,7 +69,7 @@ function MapPageContent() {
     const unsubscribe = postService.subscribeToPosts((allPosts) => {
       try {
         // Filter posts: My posts OR posts bookmarked by me
-        const filteredPosts = allPosts.filter(p => 
+        const filteredPosts = allPosts.filter(p =>
           p.location && (p.user.uid === user.uid || (p.bookmarkedBy && p.bookmarkedBy.includes(user.uid)))
         );
 
@@ -128,15 +130,15 @@ function MapPageContent() {
     );
   };
 
-  const filteredPlaces = places.filter(p => 
+  const filteredPlaces = places.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // 지도의 기본 중심점과 줌 레벨 결정
-  const defaultCenter = isSingleView && singlePlace 
-    ? { lat: singlePlace.lat, lng: singlePlace.lng } 
+  const defaultCenter = isSingleView && singlePlace
+    ? { lat: singlePlace.lat, lng: singlePlace.lng }
     : places.length > 0 ? { lat: places[0].lat, lng: places[0].lng } : { lat: 37.5665, lng: 126.9780 }; // 기본 서울시 중심
   const defaultZoom = isSingleView ? 16 : places.length > 0 ? 13 : 11;
 
@@ -147,8 +149,8 @@ function MapPageContent() {
           <X size={32} />
         </div>
         <p className="text-lg font-bold text-slate-800">{errorMsg}</p>
-        <button 
-          onClick={() => window.location.reload()} 
+        <button
+          onClick={() => window.location.reload()}
           className="mt-6 px-6 py-2.5 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 transition-colors"
         >
           다시 시도
@@ -158,7 +160,7 @@ function MapPageContent() {
   }
 
   return (
-    <div className="flex h-full w-full bg-white overflow-hidden">
+    <div className="flex flex-col md:flex-row h-full w-full bg-white overflow-hidden relative">
       {isLoading ? (
         <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2A9D8F]"></div>
@@ -166,17 +168,99 @@ function MapPageContent() {
         </div>
       ) : (
         <>
-          {/* Left Sidebar: Search & Controls */}
-          <div className="w-80 h-full border-r border-slate-100 flex flex-col bg-white z-20 shadow-[4px_0_15px_rgba(0,0,0,0.02)]">
-            <div className="p-6 space-y-6">
-              <div className="flex items-center space-x-3">
-                <button 
-                  onClick={() => router.back()} 
-                  className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-[#212529] hover:bg-slate-100 transition-colors"
+          {/* Mobile Header (Hidden on Desktop) */}
+          <div className="md:hidden flex items-center justify-between p-4 bg-white border-b absolute top-0 left-0 right-0 z-30 shadow-sm">
+            {isMobileSearchActive ? (
+              <div className="flex flex-1 items-center space-x-3">
+                <button
+                  onClick={() => {
+                    setIsMobileSearchActive(false);
+                    setSearchQuery("");
+                  }}
+                  className="p-2 text-[#6C757D]"
                 >
-                  <ChevronLeft size={20} />
+                  <ChevronLeft size={24} />
                 </button>
-                <h1 className="text-xl font-black text-[#212529]">Discovery</h1>
+                <div className="relative flex-1">
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ADB5BD]">
+                    <Search size={16} />
+                  </div>
+                  <input
+                    type="text"
+                    autoFocus
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="장소, 태그 검색..."
+                    className="w-full bg-slate-50 border-none rounded-xl py-2 pl-10 pr-8 text-sm focus:ring-2 focus:ring-[#2A9D8F]/20"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#ADB5BD]"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => router.back()}
+                    className="p-2 text-[#212529]"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <h1 className="text-lg font-black text-[#212529]">Discovery</h1>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => {
+                      setIsMobileSearchActive(true);
+                      setIsMobileListOpen(true);
+                    }}
+                    className="p-2.5 text-[#2A9D8F] bg-[#2A9D8F]/10 rounded-xl"
+                  >
+                    <Search size={20} />
+                  </button>
+                  <button
+                    onClick={() => setIsMobileListOpen(!isMobileListOpen)}
+                    className={cn(
+                      "p-2.5 rounded-xl transition-all",
+                      isMobileListOpen ? "bg-[#2A9D8F] text-white" : "text-[#2A9D8F] bg-[#2A9D8F]/10"
+                    )}
+                  >
+                    <List size={20} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Unified Sidebar: Search & Collection List (Desktop + Tablet) */}
+          <div className={cn(
+            "h-full border-r border-slate-100 flex-col bg-white z-20 shadow-[4px_0_15px_rgba(0,0,0,0.02)] transition-all duration-300",
+            "fixed inset-0 top-[60px] md:static md:w-96 md:flex",
+            isMobileListOpen ? "flex" : "hidden md:flex"
+          )}>
+            <div className="p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => router.back()}
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-slate-50 text-[#212529] hover:bg-slate-100 transition-colors"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <h1 className="text-xl font-black text-[#212529]">Discovery</h1>
+                </div>
+                <button
+                  onClick={() => setIsMobileListOpen(false)}
+                  className="md:hidden p-2 text-[#ADB5BD]"
+                >
+                  <X size={24} />
+                </button>
               </div>
 
               <div className="space-y-4">
@@ -184,7 +268,7 @@ function MapPageContent() {
                   <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#ADB5BD]">
                     <Search size={18} />
                   </div>
-                  <input 
+                  <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -192,7 +276,7 @@ function MapPageContent() {
                     className="w-full bg-slate-50 border-none rounded-2xl py-3.5 pl-12 pr-10 text-sm font-medium text-[#495057] placeholder:text-[#ADB5BD] focus:ring-2 focus:ring-[#2A9D8F]/20 transition-all"
                   />
                   {searchQuery && (
-                    <button 
+                    <button
                       onClick={() => setSearchQuery("")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-[#ADB5BD] hover:text-[#e74c3c]"
                     >
@@ -200,46 +284,95 @@ function MapPageContent() {
                     </button>
                   )}
                 </div>
-
-                <div className="flex items-center justify-between px-1">
-                  <p className="text-[11px] font-bold text-[#ADB5BD] uppercase tracking-widest">Quick Filters</p>
-                  <button onClick={() => setSearchQuery("")} className="text-[10px] font-bold text-[#2A9D8F] hover:underline">Reset</button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <button className="flex items-center space-x-2 bg-[#2A9D8F] text-white p-3 rounded-2xl shadow-sm text-xs font-bold transition-transform active:scale-95">
-                    <Compass size={16} />
-                    <span>전체 탐험</span>
-                  </button>
-                  <button className="flex items-center space-x-2 bg-slate-50 text-[#6C757D] p-3 rounded-2xl text-xs font-bold hover:bg-slate-100 transition-all">
-                    <Layers size={16} />
-                    <span>레이어</span>
-                  </button>
-                </div>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-2 scrollbar-hide">
-              <div className="bg-[#2A9D8F]/5 rounded-3xl p-5 border border-[#2A9D8F]/10">
-                <div className="flex items-center space-x-2 mb-3">
-                  <MapIcon size={16} className="text-[#2A9D8F]" />
-                  <span className="text-sm font-black text-[#264653]">My Vacations</span>
-                </div>
-                <p className="text-xs text-[#6C757D] leading-relaxed font-medium">
-                  {isSingleView ? "선택한 장소의 위치를 확인하세요." : `현재 ${filteredPlaces.length}개의 어썸한 휴양지가 지도에 표시되어 있습니다.`}
-                </p>
+            <div className="flex-1 overflow-y-auto px-6 py-2 pb-24 scrollbar-hide">
+              <div className="flex items-center justify-between mb-6 px-1">
+                <p className="text-[11px] font-bold text-[#ADB5BD] uppercase tracking-widest">Collection list</p>
+                <p className="text-[10px] font-bold text-[#2A9D8F]">{filteredPlaces.length} locations</p>
               </div>
+
+              {filteredPlaces.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-[#ADB5BD]">
+                  <div className="w-16 h-16 rounded-full bg-slate-50 flex items-center justify-center mb-4">
+                    <Compass size={32} className="opacity-20" />
+                  </div>
+                  <p className="text-xs font-bold text-center px-6 leading-relaxed">
+                    {searchQuery ? `'${searchQuery}'에 대한\n장소를 찾을 수 없습니다.` : "저장된 휴양지가 없습니다.\n피드에서 멋진 곳을 탐험해 보세요!"}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {filteredPlaces.map((place, idx) => (
+                    <div
+                      key={place.id}
+                      className={cn(
+                        "group cursor-pointer transition-all duration-500",
+                        activeIndex === idx ? "translate-x-[-4px]" : "hover:translate-x-[-2px]"
+                      )}
+                      onClick={() => {
+                        setActiveIndex(idx);
+                        if (mapInstance) {
+                          mapInstance.panTo({ lat: place.lat, lng: place.lng });
+                          mapInstance.setZoom(15);
+                        }
+                      }}
+                    >
+                      <div className={cn(
+                        "relative aspect-[16/10] rounded-3xl overflow-hidden mb-3 shadow-md transition-all duration-500",
+                        activeIndex === idx ? "ring-2 ring-[#2A9D8F] scale-[1.02] shadow-lg" : "group-hover:shadow-xl"
+                      )}>
+                        <img src={place.image} alt={place.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80" />
+
+                        <div className="absolute top-3 left-3">
+                          <div className={cn(
+                            "px-2 py-0.5 rounded-full border backdrop-blur-md transition-colors",
+                            activeIndex === idx ? "bg-[#2A9D8F] border-[#2A9D8F] text-white" : "bg-white/20 border-white/30 text-white"
+                          )}>
+                            <span className="text-[10px] font-black">#{idx + 1}</span>
+                          </div>
+                        </div>
+
+                        <div className="absolute bottom-4 left-4 right-4 text-white">
+                          <h3 className="text-base font-black truncate drop-shadow-md">{place.name}</h3>
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {place.tags.slice(0, 2).map(tag => (
+                              <span key={tag} className="text-[9px] font-bold text-white/90 bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="px-1">
+                        <p className="text-[11px] text-[#6C757D] line-clamp-2 leading-relaxed font-medium">
+                          {place.description || "기록된 정보가 없는 장소입니다."}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="p-6 bg-slate-50/50 border-t border-slate-50 text-center">
-              <p className="text-[10px] font-bold text-[#ADB5BD]">공유 중인 순간들</p>
+            <div className="p-6 bg-slate-50/50 border-t border-slate-50 md:sticky bottom-0">
+              <button
+                onClick={() => router.push('/feed')}
+                className="w-full py-3 bg-[#212529] text-white rounded-2xl text-xs font-black shadow-lg hover:bg-[#343a40] transition-all flex items-center justify-center space-x-2 active:scale-95"
+              >
+                <MapIcon size={16} />
+                <span>탐색 계속하기</span>
+              </button>
             </div>
           </div>
 
           {/* Center Area: Map */}
-          <div className="flex-1 relative bg-slate-50">
+          <div className="flex-1 relative bg-slate-50 z-10 w-full h-full">
             <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
               <Map
+                mapId="bf50a9134b7f3d6c" // Required for AdvancedMarker
                 key={`${defaultCenter.lat}-${defaultCenter.lng}`}
                 defaultCenter={defaultCenter}
                 defaultZoom={defaultZoom}
@@ -248,132 +381,55 @@ function MapPageContent() {
                 className="h-full w-full"
               >
                 {isSingleView && singlePlace ? (
-                  <Marker
+                  <AdvancedMarker
                     position={{ lat: singlePlace.lat, lng: singlePlace.lng }}
-                    label={{ text: "📍", color: "white", fontSize: "14px" }}
                     title={singlePlace.name}
-                  />
+                  >
+                    <Pin background={"#e74c3c"} glyphColor={"#fff"} borderColor={"#c0392b"} />
+                  </AdvancedMarker>
                 ) : (
                   filteredPlaces.map((place) => (
-                    <Marker
+                    <AdvancedMarker
                       key={place.id}
                       position={{ lat: place.lat, lng: place.lng }}
-                      label={{
-                        text: "🏝️",
-                        color: "white",
-                        fontSize: "14px",
-                      }}
                       title={place.name}
                       onClick={() => {
                         const idx = places.findIndex(p => p.id === place.id);
-                        if (idx !== -1) setActiveIndex(idx);
+                        if (idx !== -1) {
+                          setActiveIndex(idx);
+                          // Mobile: Scroll into view or just update map is enough
+                        }
                       }}
-                    />
+                    >
+                      <div className="text-2xl animate-bounce duration-1000">🏝️</div>
+                    </AdvancedMarker>
                   ))
                 )}
 
                 <MapInstanceHandler setMap={setMapInstance} />
 
                 {currentLocation && (
-                  <Marker 
+                  <AdvancedMarker
                     position={currentLocation}
-                    label={{ text: "🔵", fontSize: "20px" }}
                     title="현재 위치"
-                  />
+                  >
+                    <div className="w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-lg animate-pulse" />
+                  </AdvancedMarker>
                 )}
               </Map>
             </APIProvider>
-            
+
             {/* Map Overlay Button */}
-            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10 flex items-center space-x-3">
-              <button 
+            <div className="absolute bottom-28 md:bottom-10 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-3">
+              <button
                 onClick={handleCenterLocation}
-                className="flex items-center space-x-2 bg-white text-[#212529] px-6 py-3 rounded-full shadow-2xl hover:bg-slate-50 transition-all font-bold text-xs"
+                className="flex items-center space-x-2 bg-white/90 backdrop-blur-md text-[#212529] px-6 py-3 rounded-full shadow-2xl hover:bg-white transition-all font-bold text-xs border border-slate-100"
               >
                 <Compass size={18} className="text-[#2A9D8F]" />
                 <span>현재 위치로</span>
               </button>
             </div>
           </div>
-
-          {/* Right Sidebar: Post List */}
-          {!isSingleView && (
-            <div className="w-96 h-full bg-white border-l border-slate-100 flex flex-col z-20 shadow-[-4px_0_15px_rgba(0,0,0,0.02)]">
-              <div className="p-8 border-b border-slate-50">
-                <h2 className="text-2xl font-black text-[#212529]">Collection</h2>
-                <p className="text-[11px] text-[#ADB5BD] font-bold mt-1 uppercase tracking-widest">Shared Moments & Bookmarks</p>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto px-6 py-8 space-y-8 scrollbar-hide">
-                {filteredPlaces.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-64 text-[#ADB5BD]">
-                    <div className="w-20 h-20 rounded-full bg-slate-50 flex items-center justify-center mb-4">
-                      <Compass size={40} className="opacity-20" />
-                    </div>
-                    <p className="text-sm font-bold text-center px-10 leading-relaxed">
-                      {searchQuery ? `'${searchQuery}'에 대한\n장소를 찾을 수 없습니다.` : "저장된 휴양지가 없습니다.\n피드에서 멋진 곳을 탐험해 보세요!"}
-                    </p>
-                  </div>
-                ) : (
-                  filteredPlaces.map((place, idx) => (
-                    <div 
-                      key={place.id} 
-                      className={cn(
-                        "group cursor-pointer transition-all duration-500",
-                        activeIndex === idx ? "translate-x-[-8px]" : "hover:translate-x-[-4px]"
-                      )}
-                      onClick={() => {
-                        setActiveIndex(idx);
-                        if (mapInstance) {
-                          mapInstance.panTo({ lat: place.lat, lng: place.lng });
-                        }
-                      }}
-                    >
-                      <div className={cn(
-                        "relative aspect-[16/10] rounded-[32px] overflow-hidden mb-4 shadow-xl transition-all duration-500",
-                        activeIndex === idx ? "ring-4 ring-[#2A9D8F] scale-105" : "group-hover:shadow-2xl"
-                      )}>
-                        <img src={place.image} alt={place.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80" />
-                        
-                        <div className="absolute top-4 left-4">
-                          <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/30">
-                            <span className="text-[10px] font-black text-white">#{idx + 1}</span>
-                          </div>
-                        </div>
-
-                        <div className="absolute bottom-5 left-5 right-5 text-white">
-                          <h3 className="text-lg font-black truncate drop-shadow-md">{place.name}</h3>
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {place.tags.slice(0, 3).map(tag => (
-                              <span key={tag} className="text-[9px] font-bold text-white/90 bg-white/20 px-2 py-0.5 rounded-lg backdrop-blur-sm border border-white/10 italic">
-                                #{tag}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="px-2">
-                        <p className="text-[12px] text-[#6C757D] line-clamp-2 leading-relaxed font-medium">
-                          {place.description || "이 멋진 휴양지에 기록된 정보가 없습니다. 직접 첫 번째 코멘트를 남겨보세요!"}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              
-              <div className="p-6 bg-slate-50 border-t border-slate-100">
-                <button 
-                  onClick={() => router.push('/feed')}
-                  className="w-full py-4 bg-[#212529] text-white rounded-[24px] text-sm font-black shadow-xl hover:bg-[#343a40] hover:shadow-2xl transition-all flex items-center justify-center space-x-3 active:scale-95"
-                >
-                  <MapIcon size={18} />
-                  <span>새로운 휴양지 탐색하기</span>
-                </button>
-              </div>
-            </div>
-          )}
         </>
       )}
     </div>

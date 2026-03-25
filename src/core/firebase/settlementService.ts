@@ -3,11 +3,16 @@ import {
   query, 
   where, 
   getDocs, 
+  addDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp,
   Timestamp 
 } from "firebase/firestore";
 import { db } from "./config";
 import { Post } from "@/types/post";
 import { Group } from "@/types/group";
+import { Expense } from "@/types/settlement";
 import { groupService } from "./groupService";
 import { SettlementGroup, SettlementSplit } from "@/types/settlement";
 
@@ -20,6 +25,8 @@ export const settlementService = {
     balances: Record<string, number>;
     splits: SettlementSplit[];
     memberCount: number;
+    posts: Post[];
+    expenses: any[];
   }> {
     // 1. Get Group info to know members
     const group = await groupService.getGroup(groupId);
@@ -38,13 +45,28 @@ export const settlementService = {
       posts.push({ id: doc.id, ...doc.data() } as Post);
     });
     
-    // 3. Aggregate expenses
-    let totalAmount = 0;
+    // 2.5 Fetch all expenses in the 'expenses' collection for this groupId
+    const expensesRef = collection(db, "expenses");
+    const eq = query(expensesRef, where("groupId", "==", groupId));
+    const eSnapshot = await getDocs(eq);
+    const expenses: any[] = [];
+    eSnapshot.forEach((doc) => {
+      expenses.push({ id: doc.id, ...doc.data() });
+    });
+    
+    // 3. Aggregate expenses from both posts and settlement requests
     const paidAmounts: Record<string, number> = {}; // amount each member paid
+    const totalShouldPay: Record<string, number> = {}; // amount each member should pay
     
-    // Initialize paidAmounts for all members
-    members.forEach((uid: string) => paidAmounts[uid] = 0);
+    // Initialize for all members
+    members.forEach((uid: string) => {
+      paidAmounts[uid] = 0;
+      totalShouldPay[uid] = 0;
+    });
     
+    let totalAmount = 0;
+
+    // Process Posts (Default to splitting among all group members for now)
     posts.forEach(post => {
       const amount = post.totalExpense || 0;
       totalAmount += amount;
@@ -52,19 +74,46 @@ export const settlementService = {
       const paidBy = post.user.uid;
       if (members.includes(paidBy)) {
         paidAmounts[paidBy] += amount;
-      } else {
-        // If the payer is not in the group anymore, or somehow different
-        // We might need a special logic, but for now just skip or assign to first member
-        console.warn(`[settlementService] Post by ${paidBy} found in group ${groupId} but user not in members list.`);
       }
+
+      // Split evenly among all current group members
+      const splitAmount = amount / (members.length || 1);
+      members.forEach(uid => {
+        totalShouldPay[uid] += splitAmount;
+      });
+    });
+
+    // Process Direct Expenses (Supports custom participants)
+    expenses.forEach(exp => {
+      const amount = exp.amount || 0;
+      
+      // Do not include 'Settlement Completed' (balancing payments) in the total group expense sum
+      if (exp.title !== "정산 완료") {
+        totalAmount += amount;
+      }
+      
+      const paidBy = exp.paidBy;
+      if (members.includes(paidBy)) {
+        paidAmounts[paidBy] += amount;
+      }
+
+      // Split among specified participants, or all members if not specified
+      const participants = (exp.participants && exp.participants.length > 0) 
+        ? exp.participants 
+        : members;
+      
+      const splitAmount = amount / (participants.length || 1);
+      participants.forEach((uid: string) => {
+        if (totalShouldPay[uid] !== undefined) {
+          totalShouldPay[uid] += splitAmount;
+        }
+      });
     });
     
     // 4. Calculate individual balances (amount paid - amount should pay)
-    const shouldPay = totalAmount / (memberCount || 1);
     const balances: Record<string, number> = {};
-    
     members.forEach((uid: string) => {
-      balances[uid] = paidAmounts[uid] - shouldPay;
+      balances[uid] = Math.round((paidAmounts[uid] || 0) - (totalShouldPay[uid] || 0));
     });
     
     // 5. Generate splits (who owes whom)
@@ -89,11 +138,11 @@ export const settlementService = {
       
       const toPay = Math.min(Math.abs(tempBalances[debtor]), tempBalances[creditor]);
       
-      if (toPay > 0.01) { // Skip tiny amounts
+      if (toPay >= 1) { // Skip tiny amounts (1 KRW or less)
         splits.push({
           fromUserId: debtor,
           toUserId: creditor,
-          amount: toPay
+          amount: Math.round(toPay)
         });
       }
       
@@ -108,7 +157,9 @@ export const settlementService = {
       totalAmount,
       balances,
       splits,
-      memberCount
+      memberCount,
+      posts,
+      expenses
     };
   },
 
@@ -126,7 +177,7 @@ export const settlementService = {
           name: group.name,
           date: "최근 여행", // In real app, get from group duration or last post
           participants: group.members,
-          status: "ongoing", // Default to ongoing
+          settlementStatus: group.settlementStatus || "ongoing",
           totalAmount: settlement.totalAmount,
           myBalance: settlement.balances[userId] || 0
         };
@@ -137,5 +188,38 @@ export const settlementService = {
     }));
     
     return summaries.filter(s => s !== null);
+  },
+
+  /**
+   * Add a new expense (e.g. from chat settlement)
+   */
+  async addExpense(expense: Omit<Expense, "id">): Promise<string> {
+    const expenseRef = await addDoc(collection(db, "expenses"), {
+      ...expense,
+      createdAt: serverTimestamp(),
+    });
+    return expenseRef.id;
+  },
+
+  /**
+   * Mark a specific split as settled by creating a balancing payment
+   */
+  async markSplitAsSettled(groupId: string, fromUserId: string, toUserId: string, amount: number): Promise<void> {
+    await this.addExpense({
+      groupId,
+      title: `정산 완료`,
+      amount: Math.round(amount),
+      paidBy: fromUserId,
+      participants: [toUserId],
+      category: "기타",
+      date: new Date().toISOString()
+    });
+  },
+
+  /**
+   * Delete an expense entry
+   */
+  async deleteExpense(expenseId: string): Promise<void> {
+    await deleteDoc(doc(db, "expenses", expenseId));
   }
 };

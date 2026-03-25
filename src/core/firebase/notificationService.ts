@@ -103,6 +103,25 @@ export const notificationService = {
     }
   },
 
+  // Delete all notifications for a user
+  async deleteAllNotifications(uid: string): Promise<void> {
+    try {
+      const q = query(
+        collection(db, "notifications"),
+        where("uid", "==", uid)
+      );
+      const snapshot = await getDocs(q);
+      
+      const batch = writeBatch(db);
+      snapshot.docs.forEach((d) => {
+        batch.delete(d.ref);
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Failed to delete all notifications:", error);
+    }
+  },
+
   // Mark a single notification as read
   async markAsRead(notificationId: string): Promise<void> {
     try {
@@ -148,7 +167,7 @@ export const notificationService = {
       const newDocRef = doc(notificationsRef);
       batch.set(newDocRef, {
         uid: recipient.uid,
-        type: "group_invite", // Reuse or add a new type if strictly needed, but let's use group_invite or content-based
+        type: "settlement_request", 
         fromUid: fromUser.uid,
         fromNickname: fromUser.nickname,
         fromAvatarUrl: fromUser.avatarUrl,
@@ -164,6 +183,32 @@ export const notificationService = {
       console.log(`[notificationService] Sent ${recipients.length} settlement notifications`);
     } catch (error) {
       console.error("[notificationService] Failed to send settlement notifications:", error);
+    }
+  },
+
+  async sendSettlementPaymentNotification(
+    toUid: string,
+    fromUser: { uid: string; nickname: string; avatarUrl: string | null },
+    groupName: string,
+    groupId: string,
+    amount: number
+  ): Promise<void> {
+    try {
+      const notificationsRef = collection(db, "notifications");
+      await addDoc(notificationsRef, {
+        uid: toUid,
+        type: "settlement_pay",
+        fromUid: fromUser.uid,
+        fromNickname: fromUser.nickname,
+        fromAvatarUrl: fromUser.avatarUrl,
+        groupId: groupId,
+        content: `'${groupName}' 정산 완료: ${amount.toLocaleString()}원 입금을 확인했습니다.`,
+        isRead: false,
+        createdAt: serverTimestamp()
+      });
+      console.log(`[notificationService] Sent settlement payment notification to ${toUid}`);
+    } catch (error) {
+      console.error("[notificationService] Failed to send settlement payment notification:", error);
     }
   }
 };

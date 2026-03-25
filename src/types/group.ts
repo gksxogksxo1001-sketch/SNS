@@ -4,6 +4,11 @@ export interface Group {
   description: string;
   members: string[]; // array of uids
   ownerId: string;
+  status?: 'ongoing' | 'completed'; // Travel group status
+  settlementStatus?: 'ongoing' | 'completed'; // Settlement specific status
+  startDate?: string;
+  endDate?: string;
+  splitStates?: Record<string, 'requested' | 'paid'>; // Tracks settlement status between participants (fromUserId_toUserId)
   createdAt: any;
   updatedAt?: any;
 }

@@ -32,8 +32,15 @@ export default function MessagesPage() {
     }
 
     if (user) {
-      const unsubscribe = messageService.subscribeToUserRooms(user.uid, (newRooms) => {
-        setRooms(newRooms);
+      // 1. Subscribe to rooms where user is explicitly defined as participant
+      const unsubscribeRooms = messageService.subscribeToUserRooms(user.uid, (newRooms) => {
+        setRooms(prev => {
+          // Merge based on ID to avoid duplicates
+          const roomMap = new Map();
+          prev.forEach(r => roomMap.set(r.id, r));
+          newRooms.forEach(r => roomMap.set(r.id, r));
+          return Array.from(roomMap.values());
+        });
         
         // Fetch profiles for all participants
         const otherUids = newRooms.map(room => 
@@ -45,12 +52,23 @@ export default function MessagesPage() {
         }
       });
 
-      // Fetch travel groups
-      groupService.getUserGroups(user.uid).then(groups => {
+      // 2. Fetch travel groups and their specific rooms
+      groupService.getUserGroups(user.uid).then(async (groups) => {
         setTravelGroups(groups);
+        
+        // Ensure rooms for these groups are also fetched in case user was missing from participants array
+        for (const group of groups) {
+          const room = await messageService.getRoom(group.id);
+          if (room) {
+            setRooms(prev => {
+              if (prev.find(r => r.id === room.id)) return prev;
+              return [...prev, room];
+            });
+          }
+        }
       });
 
-      return () => unsubscribe();
+      return () => unsubscribeRooms();
     }
   }, [user, isAuthLoading]);
 
@@ -168,7 +186,10 @@ export default function MessagesPage() {
               ))
             )}
           </div>
-        ) : (activeTab === "direct" ? rooms.filter(r => r.type === "direct" || !r.type) : travelGroups).length === 0 ? (
+        ) : (activeTab === "direct" 
+             ? rooms.filter(r => r.type === "direct" || (!r.type && !travelGroups.some(g => g.id === r.id))) 
+             : travelGroups
+            ).length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-[#ADB5BD] space-y-2">
             <div className="w-16 h-16 bg-[#F8F9FA] rounded-full flex items-center justify-center">
               <Search size={24} className="opacity-20" />
@@ -179,7 +200,7 @@ export default function MessagesPage() {
           </div>
         ) : (
           (activeTab === "direct" 
-            ? rooms.filter(r => r.type === "direct" || !r.type)
+            ? rooms.filter(r => r.type === "direct" || (!r.type && !travelGroups.some(g => g.id === r.id)))
             : travelGroups
           ).map((item: any) => {
             let title = "";
@@ -191,8 +212,11 @@ export default function MessagesPage() {
             if (activeTab === "group") {
               const group = item as Group;
               const room = rooms.find(r => r.id === group.id);
-              title = group.name;
-              image = `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=E9C46A&color=fff`;
+              
+              // Use room data as priority if it's been edited in chat
+              title = room?.name || group.name;
+              image = room?.groupImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=E9C46A&color=fff`;
+              
               chatUrl = `/messages/${group.id}?name=${encodeURIComponent(title)}&image=${encodeURIComponent(image)}&type=group`;
               if (room?.lastMessage) {
                 lastMsg = room.lastMessage.text;
@@ -202,7 +226,7 @@ export default function MessagesPage() {
               }
             } else {
               const room = item as ChatRoom;
-              const otherUserId = room.participants.find(p => p !== currentUserId) || "Unknown User";
+              const otherUserId = room.participants?.find(p => p !== currentUserId) || "Unknown User";
               const profile = userProfiles[otherUserId];
               title = profile?.nickname || otherUserId;
               image = profile?.avatarUrl || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=2A9D8F&color=fff`;

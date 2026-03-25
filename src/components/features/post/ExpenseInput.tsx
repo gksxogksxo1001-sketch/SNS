@@ -24,29 +24,27 @@ export const ExpenseInput: React.FC<ExpenseInputProps> = ({ expenses, onExpenseC
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 gap-4">
       {categories.map((cat) => (
-        <div key={cat.id} className="flex flex-col space-y-1">
-          <label className="flex items-center space-x-2 text-xs font-medium text-[#6C757D]">
-            <div className={`p-1 rounded-md ${cat.bgColor}`}>
+        <div key={cat.id} className="flex flex-col space-y-2">
+          <label className="flex items-center space-x-2 px-1 text-[11px] font-bold text-[#6C757D]">
+            <div className={`p-1.5 rounded-lg ${cat.bgColor} shadow-sm`}>
               <cat.icon size={12} className={cat.color} />
             </div>
             <span>{cat.label}</span>
           </label>
-          <div className="relative">
+          <div className="group relative">
             <input
               type="text"
               inputMode="numeric"
               value={expenses[cat.id as keyof typeof expenses]}
               onChange={(e) => onExpenseChange(cat.id, e.target.value.replace(/[^0-9]/g, ""))}
               placeholder="0"
-              className="w-full rounded-xl bg-[#F1F3F5] px-4 py-3 text-sm font-semibold text-[#212529] outline-none transition-all focus:ring-2 focus:ring-[#2A9D8F]/20"
+              className="w-full rounded-2xl bg-[#F8F9FA] px-4 py-3.5 text-sm font-black text-[#212529] outline-none border border-transparent transition-all focus:bg-white focus:border-[#2A9D8F]/20 focus:ring-4 focus:ring-[#2A9D8F]/5 placeholder:text-[#CED4DA]"
             />
-            {expenses[cat.id as keyof typeof expenses] && (
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#6C757D]">
-                원
-              </span>
-            )}
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-[#ADB5BD] transition-colors group-focus-within:text-[#2A9D8F]">
+              원
+            </span>
           </div>
         </div>
       ))}

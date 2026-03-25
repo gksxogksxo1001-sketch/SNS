@@ -14,6 +14,8 @@ interface GroupCreateProps {
 export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,7 +33,7 @@ export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
     setError(null);
 
     try {
-      const groupId = await groupService.createGroup(user.uid, name, description);
+      const groupId = await groupService.createGroup(user.uid, name, description, startDate, endDate);
       onSuccess(groupId);
     } catch (err: any) {
       console.error("Failed to create group:", err);
@@ -79,8 +81,30 @@ export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="이번 여행의 목적이나 간단한 설명을 적어주세요"
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none resize-none h-28"
+              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none resize-none h-20"
             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 ml-1">가는 날</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none text-slate-700"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-slate-700 ml-1">오는 날</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                min={startDate}
+                className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none text-slate-700"
+              />
+            </div>
           </div>
 
           {error && (

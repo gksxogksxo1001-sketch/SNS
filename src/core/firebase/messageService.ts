@@ -11,7 +11,8 @@ import {
   orderBy, 
   onSnapshot,
   serverTimestamp,
-  updateDoc
+  updateDoc,
+  arrayUnion
 } from "firebase/firestore";
 import { Message, ChatRoom } from "@/types/message";
 
@@ -114,10 +115,12 @@ export const messageService = {
     roomId: string, 
     senderId: string, 
     text: string, 
-    type: "text" | "settlement" | "storyReply" = "text",
+    type: "text" | "settlement" | "storyReply" | "postShare" | "settlementSummary" = "text",
     settlementData?: { title: string; amountToPay: number; bankAccount: string; },
     storyData?: { mediaUrl: string; storyId: string; },
-    replyTo?: { id: string; text: string; senderId: string; senderName?: string; }
+    replyTo?: { id: string; text: string; senderId: string; senderName?: string; },
+    postShareData?: { postId: string; postImage: string; postTitle?: string; authorName: string; },
+    settlementSummaryData?: { groupId: string; groupName: string; totalAmount: number; splitCount: number; }
   ): Promise<void> {
     const messagesRef = collection(db, "chatRooms", roomId, "messages");
     const roomRef = doc(db, "chatRooms", roomId);
@@ -148,6 +151,14 @@ export const messageService = {
     if (type === "storyReply" && storyData) {
       messagePayload.storyData = storyData;
     }
+    
+    if (type === "postShare" && postShareData) {
+      messagePayload.postShareData = postShareData;
+    }
+
+    if (type === "settlementSummary" && settlementSummaryData) {
+      messagePayload.settlementSummaryData = settlementSummaryData;
+    }
 
     // Add message
     const messageDoc = await addDoc(messagesRef, messagePayload);
@@ -169,7 +180,11 @@ export const messageService = {
 
       await updateDoc(roomRef, {
         lastMessage: {
-          text: type === "text" ? text : (type === "settlement" ? "정산 요청" : "스토리 답장"),
+          text: type === "text" ? text : 
+                type === "settlement" ? "정산 요청" : 
+                type === "storyReply" ? "스토리 답장" : 
+                type === "postShare" ? "게시물 공유" : 
+                "정산 요약 공유",
           createdAt: serverTimestamp(),
           senderId
         },
@@ -195,6 +210,7 @@ export const messageService = {
           type: data.type || "text",
           settlementData: data.settlementData,
           storyData: data.storyData,
+          postShareData: data.postShareData,
           replyTo: data.replyTo,
           likes: data.likes || [],
           isEdited: data.isEdited || false,
@@ -263,11 +279,27 @@ export const messageService = {
   async markRoomAsRead(roomId: string, userId: string) {
     try {
       const roomRef = doc(db, "chatRooms", roomId);
-      await updateDoc(roomRef, {
-        [`unreadCount.${userId}`]: 0
-      });
+      // Use setDoc with merge so it works even if the room document doesn't exist yet
+      // Also ensure the user is in the participants list for future notifications/unread counts
+      await setDoc(roomRef, {
+        unreadCount: {
+          [userId]: 0
+        },
+        participants: arrayUnion(userId),
+        updatedAt: serverTimestamp()
+      }, { merge: true });
     } catch (error) {
       console.error("[messageService] Failed to mark room as read:", error);
     }
+  },
+
+  // Update room name or image
+  async updateRoomProfile(roomId: string, data: { name?: string; groupImage?: string }) {
+    const roomRef = doc(db, "chatRooms", roomId);
+    // Use setDoc with merge to ensure it creates the document if it somehow doesn't exist
+    await setDoc(roomRef, {
+      ...data,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
   }
 };

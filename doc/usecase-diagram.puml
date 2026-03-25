@@ -1,0 +1,123 @@
+@startuml SNS_UseCase
+skinparam actorStyle awesome
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor #E8F5E9
+  BorderColor #2A9D8F
+  ArrowColor #264653
+  FontColor #212529
+}
+skinparam actor {
+  BackgroundColor #2A9D8F
+  BorderColor #264653
+}
+left to right direction
+
+actor "User" as User
+actor "Firebase Auth" as FAuth <<System>>
+actor "Firestore" as FStore <<System>>
+actor "Storage" as FStorage <<System>>
+actor "Realtime DB" as FRealtime <<System>>
+actor "Google Maps" as GMaps <<System>>
+
+rectangle "SNS Project System" {
+  package "Auth and User" {
+    usecase "Register" as UC_Reg
+    usecase "Login" as UC_Log
+    usecase "Logout" as UC_Out
+    usecase "Edit Profile" as UC_Prof
+    usecase "Follow" as UC_Fol
+    usecase "Close Friends" as UC_CF
+  }
+  package "Feed" {
+    usecase "Create Post" as UC_CP
+    usecase "View Feed" as UC_VF
+    usecase "Edit Post" as UC_EP
+    usecase "Delete Post" as UC_DP
+    usecase "Like" as UC_Lk
+    usecase "Comment" as UC_Cm
+    usecase "Bookmark" as UC_Bk
+    usecase "Share Post" as UC_SP
+    usecase "Add Location" as UC_AL
+    usecase "Add Tags" as UC_AT
+    usecase "Upload Image" as UC_UI
+  }
+  package "Stories" {
+    usecase "Upload Story" as UC_US
+    usecase "View Story" as UC_VS
+    usecase "Visibility" as UC_SV
+    usecase "Archive" as UC_SA
+  }
+  package "Messaging" {
+    usecase "Direct Chat" as UC_DC
+    usecase "Group Chat" as UC_GC
+    usecase "Send Image" as UC_SI
+    usecase "Share in Chat" as UC_SC
+    usecase "Settlement" as UC_ST
+    usecase "Manage Settlement" as UC_MS
+  }
+  package "Discovery Map" {
+    usecase "Map View" as UC_MV
+    usecase "Search" as UC_MS2
+    usecase "My Location" as UC_ML
+    usecase "Marker Detail" as UC_MD
+  }
+  package "Notifications" {
+    usecase "View Notifications" as UC_VN
+    usecase "Mark Read" as UC_MR
+  }
+}
+
+User --> UC_Reg
+User --> UC_Log
+User --> UC_Out
+User --> UC_Prof
+User --> UC_Fol
+User --> UC_CF
+User --> UC_CP
+User --> UC_VF
+User --> UC_EP
+User --> UC_DP
+User --> UC_Lk
+User --> UC_Cm
+User --> UC_Bk
+User --> UC_SP
+User --> UC_US
+User --> UC_VS
+User --> UC_SA
+User --> UC_DC
+User --> UC_GC
+User --> UC_ST
+User --> UC_MS
+User --> UC_MV
+User --> UC_MS2
+User --> UC_ML
+User --> UC_VN
+User --> UC_MR
+
+UC_CP ..> UC_UI : <<include>>
+UC_CP ..> UC_AL : <<extend>>
+UC_CP ..> UC_AT : <<extend>>
+UC_US ..> UC_SV : <<include>>
+UC_US ..> UC_UI : <<include>>
+UC_DC ..> UC_SI : <<extend>>
+UC_DC ..> UC_SC : <<extend>>
+UC_GC ..> UC_SI : <<extend>>
+UC_GC ..> UC_ST : <<extend>>
+UC_MV ..> UC_MD : <<extend>>
+UC_MV ..> UC_ML : <<extend>>
+UC_SP ..> UC_SC : <<include>>
+
+UC_Reg --> FAuth
+UC_Log --> FAuth
+UC_CP --> FStore
+UC_VF --> FStore
+UC_US --> FStore
+UC_VN --> FStore
+UC_UI --> FStorage
+UC_DC --> FRealtime
+UC_GC --> FRealtime
+UC_MV --> GMaps
+UC_MS2 --> GMaps
+UC_ML --> GMaps
+@enduml

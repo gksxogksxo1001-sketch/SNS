@@ -18,6 +18,7 @@ export default function PublicProfilePage() {
   const router = useRouter();
   
   const [userPosts, setUserPosts] = useState<Post[]>([]);
+  const [likedPosts, setLikedPosts] = useState<Post[]>([]);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"posts" | "liked">("posts");
@@ -39,16 +40,32 @@ export default function PublicProfilePage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [profileData, allPosts] = await Promise.all([
+      const [profileData, allPosts, myProfile] = await Promise.all([
         userService.getUserProfile(userId),
-        postService.getPosts()
+        postService.getPosts(),
+        currentUser ? userService.getUserProfile(currentUser.uid) : Promise.resolve(null)
       ]);
-      setProfile(profileData);
-      setUserPosts(allPosts.filter(post => post.user.uid === userId));
+      const filteredPosts = allPosts.filter(post => post.user.uid === userId);
+      setUserPosts(filteredPosts);
+      setLikedPosts(allPosts.filter(post => post.likedBy?.includes(userId)));
+
+      let finalProfile = profileData;
+      if (!finalProfile && filteredPosts.length > 0) {
+        const postUser = filteredPosts[0].user;
+        finalProfile = {
+          uid: userId,
+          email: "이메일 정보 없음",
+          nickname: postUser.name || "알 수 없는 사용자",
+          avatarUrl: postUser.image || "",
+          friends: [],
+          visitedCountries: [],
+        } as unknown as UserProfile;
+      }
+      setProfile(finalProfile);
 
       // Check friend status
-      if (currentUser && profileData) {
-        if (profileData.friends?.includes(currentUser.uid)) {
+      if (currentUser && finalProfile) {
+        if (myProfile?.friends?.includes(userId)) {
           setRequestStatus("friends");
         } else {
           // Check if I sent a request (Pending)
@@ -257,33 +274,41 @@ export default function PublicProfilePage() {
 
           {/* Content */}
           <div className="space-y-6 pb-6">
-            {userPosts.length > 0 ? (
-              <div className="grid grid-cols-3 gap-[2px]">
-                {userPosts.map((post) => (
-                  <div 
-                    key={post.id} 
-                    className="aspect-square relative group cursor-pointer overflow-hidden"
-                    onClick={() => router.push(`/post/${post.id}`)}
-                  >
-                    <img 
-                      src={post.images[0]} 
-                      alt="Post" 
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <div className="flex items-center text-white font-bold text-sm">
-                        <Heart size={16} className="mr-1 fill-white" />
-                        {post.likes}
+            {(() => {
+              const currentPosts = activeTab === "posts" ? userPosts : likedPosts;
+              
+              if (currentPosts.length > 0) {
+                return (
+                  <div className="grid grid-cols-3 gap-[2px]">
+                    {currentPosts.map((post) => (
+                      <div 
+                        key={post.id} 
+                        className="aspect-square relative group cursor-pointer overflow-hidden"
+                        onClick={() => router.push(`/post/${post.id}`)}
+                      >
+                        <img 
+                          src={post.images[0]} 
+                          alt="Post" 
+                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                        />
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="flex items-center text-white font-bold text-sm">
+                            <Heart size={16} className="mr-1 fill-white" />
+                            {post.likes}
+                          </div>
+                        </div>
                       </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-20 text-text-sub">
-                게시물이 없습니다.
-              </div>
-            )}
+                );
+              }
+
+              return (
+                <div className="text-center py-20 text-text-sub">
+                  {activeTab === "posts" ? "게시물이 없습니다." : "좋아요한 게시물이 없습니다."}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </main>

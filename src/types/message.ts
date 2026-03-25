@@ -7,7 +7,7 @@ export interface Message {
   text: string;
   createdAt: Timestamp | Date;
   isRead: boolean;
-  type?: "text" | "settlement" | "storyReply";
+  type?: "text" | "settlement" | "storyReply" | "postShare" | "settlementSummary";
   settlementData?: {
     title: string;
     amountToPay: number;      // Amount the OTHER person needs to pay (e.g. Total / 2)
@@ -17,6 +17,18 @@ export interface Message {
   storyData?: {
     mediaUrl: string;
     storyId: string;
+  };
+  postShareData?: {
+    postId: string;
+    postImage: string;
+    postTitle?: string;
+    authorName: string;
+  };
+  settlementSummaryData?: {
+    groupId: string;
+    groupName: string;
+    totalAmount: number;
+    splitCount: number;
   };
   replyTo?: {
     id: string;
