@@ -9,6 +9,7 @@ import { useAuth } from "@/core/hooks/useAuth";
 import { notificationService } from "@/core/firebase/notificationService";
 import { messageService } from "@/core/firebase/messageService";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import Image from "next/image";
 
 const navItems = [
   { icon: Home, label: "피드", href: "/feed" },
@@ -182,8 +183,16 @@ export const SideNav = () => {
 
         {user && (
           <div className="px-2 mt-4">
-            <button onClick={openDrawer} className="w-full flex justify-center py-1">
-              <img src={user.photoURL || DEFAULT_AVATAR} alt="profile" className="w-9 h-9 rounded-full object-cover border border-border-base hover:scale-105 transition-transform" />
+            <button onClick={openDrawer} className="relative w-full flex justify-center py-1">
+              <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border-base hover:scale-105 transition-transform">
+                <Image 
+                  src={user.photoURL || DEFAULT_AVATAR} 
+                  alt="profile" 
+                  fill
+                  sizes="36px"
+                  className="object-cover" 
+                />
+              </div>
             </button>
           </div>
         )}
@@ -232,11 +241,15 @@ export const SideNav = () => {
             onClick={closeDrawer}
             className="group flex items-center gap-3 px-3 py-3 rounded-2xl mt-4 transition-all duration-200 hover:bg-bg-alt"
           >
-            <img
-              src={user.photoURL || DEFAULT_AVATAR}
-              alt="profile"
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-border-base group-hover:scale-105 transition-transform duration-200"
-            />
+            <div className="relative w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-border-base group-hover:scale-105 transition-transform duration-200">
+              <Image
+                src={user.photoURL || DEFAULT_AVATAR}
+                alt="profile"
+                fill
+                sizes="36px"
+                className="object-cover"
+              />
+            </div>
             <div className="overflow-hidden">
               <p className="text-[13px] font-bold text-text-main truncate">{user.displayName || "사용자"}</p>
               <p className="text-[11px] text-text-sub truncate">{user.email}</p>

@@ -9,6 +9,7 @@ import { Post } from "@/types/post";
 import { ArrowLeft, Search as SearchIcon, UserPlus, Check, Loader2, User as UserDefaultIcon, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postService } from "@/core/firebase/postService";
+import Image from "next/image";
 
 export default function SearchPage() {
   const router = useRouter();
@@ -110,7 +111,13 @@ export default function SearchPage() {
                   <div className="flex items-center space-x-3">
                     <div className="h-12 w-12 overflow-hidden rounded-full bg-bg-alt border border-border-base">
                       {profile.avatarUrl ? (
-                        <img src={profile.avatarUrl} alt={profile.nickname} className="h-full w-full object-cover" />
+                        <Image 
+                          src={profile.avatarUrl} 
+                          alt={profile.nickname} 
+                          fill
+                          sizes="48px"
+                          className="h-full w-full object-cover" 
+                        />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-text-sub">
                           <UserDefaultIcon size={24} />
@@ -158,8 +165,14 @@ export default function SearchPage() {
                   className="flex items-center space-x-3 p-3 hover:bg-bg-alt rounded-2xl transition-colors cursor-pointer"
                   onClick={() => router.push(`/post/${post.id}`)}
                 >
-                  <div className="h-16 w-16 overflow-hidden rounded-xl bg-bg-alt">
-                    <img src={post.images[0]} alt={post.location?.name} className="h-full w-full object-cover" />
+                  <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-bg-alt">
+                    <Image 
+                      src={post.images[0]} 
+                      alt={post.location?.name || ""} 
+                      fill
+                      sizes="64px"
+                      className="h-full w-full object-cover" 
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-text-main truncate">{post.location?.name}</p>

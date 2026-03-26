@@ -9,6 +9,7 @@ import { auth } from "@/core/firebase/config";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import Image from "next/image";
 
 interface StoryViewerProps {
   groups: UserStoryGroup[];
@@ -25,8 +26,8 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(auth.currentUser?.uid || null);
   const [progress, setProgress] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   const currentGroup = groups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
@@ -62,24 +63,25 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   const startTimer = () => {
     stopTimer();
     
-    const startTime = Date.now();
-    const duration = 5000;
-
-    progressIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      const nextProgress = Math.min((elapsed / duration) * 100, 100);
-      setProgress(nextProgress);
+    // Reset progress to 0 and turn off transition for the reset
+    setIsTransitioning(false);
+    setProgress(0);
+    
+    // Use a small delay for the browser to register the 0% width before starting the transition
+    setTimeout(() => {
+      setIsTransitioning(true);
+      setProgress(100);
       
-      if (elapsed >= duration) {
+      timeoutRef.current = setTimeout(() => {
         handleNext();
-      }
-    }, 50); // Update every 50ms for smoothness
+      }, 5000);
+    }, 10);
   };
 
   const stopTimer = () => {
-    if (progressIntervalRef.current) {
-      clearInterval(progressIntervalRef.current);
-      progressIntervalRef.current = null;
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
     }
   };
 
@@ -164,20 +166,24 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   return (
     <div className="fixed inset-0 z-[100] bg-bg-base flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
       {/* Immersive background with blur */}
-      <div 
-        className="absolute inset-0 z-0 opacity-10 blur-3xl scale-125"
-        style={{ 
-          backgroundImage: `url(${currentStory.mediaUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      />
+      <div className="absolute inset-0 z-0 opacity-10 blur-3xl scale-125">
+        <Image 
+          src={currentStory.mediaUrl} 
+          alt="" 
+          fill
+          sizes="100vw"
+          className="object-cover" 
+        />
+      </div>
 
       <div className="relative w-full max-w-lg aspect-[9/16] bg-bg-base shadow-2xl overflow-hidden sm:rounded-[40px] border border-border-base z-10">
-        <img 
+        <Image 
           src={currentStory.mediaUrl} 
           alt="Story" 
-          className="w-full h-full object-cover"
+          fill
+          priority
+          sizes="(max-width: 768px) 100vw, 512px"
+          className="object-cover"
         />
 
         {/* Top Overlay */}
@@ -187,7 +193,8 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
               <div key={idx} className="flex-1 h-1 bg-border-base/30 rounded-full overflow-hidden">
                 <div 
                   className={cn(
-                    "h-full transition-all duration-75 ease-linear",
+                    "h-full",
+                    isTransitioning && idx === currentStoryIndex ? "transition-all duration-[5000ms] ease-linear" : "transition-none",
                     currentGroup.stories[idx].visibility === "close_friends" ? "bg-success" : "bg-text-main"
                   )}
                   style={{ 
@@ -207,7 +214,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                 <div className="w-full h-full rounded-[13px] bg-bg-base p-[1.5px]">
                   <div className="w-full h-full rounded-[11px] overflow-hidden bg-bg-alt">
                     {currentGroup.user.image ? (
-                      <img src={currentGroup.user.image} alt="" className="w-full h-full object-cover" />
+                      <Image src={currentGroup.user.image} alt="" fill sizes="44px" className="object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <UserIcon size={20} className="text-[#ADB5BD]" />

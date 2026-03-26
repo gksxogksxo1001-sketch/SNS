@@ -10,6 +10,7 @@ import { UserProfile } from "@/types/user";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import { Users, ChevronRight, Plus, Loader2, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface GroupListProps {
   onSelectGroup: (group: Group) => void;
@@ -145,10 +146,12 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
                     {group.members.slice(0, 3).map((uid, i) => {
                       const profile = memberProfiles[uid];
                       return (
-                        <div key={uid} className="w-8 h-8 rounded-xl bg-bg-alt border-2 border-bg-base flex items-center justify-center overflow-hidden">
-                          <img 
+                        <div key={uid} className="relative w-8 h-8 rounded-xl bg-bg-alt border-2 border-bg-base flex items-center justify-center overflow-hidden">
+                          <Image 
                             src={profile?.avatarUrl || DEFAULT_AVATAR} 
                             alt="member" 
+                            fill
+                            sizes="32px"
                             className="w-full h-full object-cover" 
                           />
                         </div>

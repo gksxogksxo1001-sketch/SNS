@@ -11,6 +11,7 @@ import { PostCard } from "@/components/features/feed/PostCard";
 import { ChevronLeft, Grid, Heart, User as UserIcon, Globe, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import Image from "next/image";
 
 export default function PublicProfilePage() {
   const params = useParams();
@@ -168,14 +169,20 @@ export default function PublicProfilePage() {
         <button onClick={() => router.back()} className="mr-4 p-1 text-text-main hover:bg-bg-alt rounded-full">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold">profile.nickname님의 프로필</h1>
+        <h1 className="text-lg font-bold">{profile.nickname}님의 프로필</h1>
       </header>
 
       <main className="px-5 pt-6 space-y-8">
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
-            <img src={profile.avatarUrl || DEFAULT_AVATAR} alt={profile.nickname} className="h-full w-full object-cover" />
+          <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
+            <Image 
+              src={profile.avatarUrl || DEFAULT_AVATAR} 
+              alt={profile.nickname} 
+              fill
+              sizes="96px"
+              className="h-full w-full object-cover" 
+            />
           </div>
           
           <div className="space-y-1">
@@ -286,9 +293,11 @@ export default function PublicProfilePage() {
                         className="aspect-square relative group cursor-pointer overflow-hidden"
                         onClick={() => router.push(`/post/${post.id}`)}
                       >
-                        <img 
+                        <Image 
                           src={post.images[0]} 
                           alt="Post" 
+                          fill
+                          sizes="(max-width: 768px) 33vw, 250px"
                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
                         />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -368,8 +377,14 @@ export default function PublicProfilePage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
           <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base bg-bg-alt flex items-center justify-center">
-                <img src={profile.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
+              <div className="relative mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base bg-bg-alt flex items-center justify-center">
+                <Image 
+                  src={profile.avatarUrl || DEFAULT_AVATAR} 
+                  alt="" 
+                  fill
+                  sizes="80px"
+                  className="h-full w-full object-cover" 
+                />
               </div>
               <div className="space-y-1">
                 <p className="text-[15px] font-bold text-text-main">

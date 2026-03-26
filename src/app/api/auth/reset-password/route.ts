@@ -3,8 +3,15 @@ import { db } from "@/core/firebase/config";
 import { collection, query, where, getDocs, limit } from "firebase/firestore";
 import * as admin from "firebase-admin";
 
-// Initialize Admin SDK if not already initialized
-if (!admin.apps.length) {
+// Helper function to initialize Firebase Admin
+function initAdmin() {
+  if (admin.apps.length) return;
+  
+  if (!process.env.FIREBASE_ADMIN_PROJECT_ID) {
+    console.error("Missing FIREBASE_ADMIN_PROJECT_ID environment variable");
+    return;
+  }
+
   admin.initializeApp({
     credential: admin.credential.cert({
       projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
@@ -15,6 +22,7 @@ if (!admin.apps.length) {
 }
 
 export async function POST(request: Request) {
+  initAdmin();
   try {
     const { loginId, email, newPassword } = await request.json();
 

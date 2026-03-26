@@ -35,6 +35,7 @@ import { useAuth } from "@/core/hooks/useAuth";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import { cn } from "@/lib/utils";
 import { ConfirmModal, AlertModal } from "@/components/common/UIModals";
+import Image from "next/image";
 
 // Mock Messages Extended
 export default function ChatRoomPage() {
@@ -513,7 +514,15 @@ export default function ChatRoomPage() {
               onClick={() => router.push(`/profile/${otherId}`)}
               className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity text-left"
             >
-              <img src={otherProfile?.avatarUrl || otherImage || DEFAULT_AVATAR} alt={otherProfile?.nickname || otherName} className="w-9 h-9 rounded-full object-cover border border-border-base" />
+              <div className="relative w-9 h-9 border border-border-base rounded-full overflow-hidden">
+                <Image 
+                  src={otherProfile?.avatarUrl || otherImage || DEFAULT_AVATAR} 
+                  alt={otherProfile?.nickname || otherName} 
+                  fill
+                  sizes="36px"
+                  className="object-cover" 
+                />
+              </div>
               <div className="flex flex-col">
                 <span className="text-[15px] font-bold text-text-main leading-tight">{otherProfile?.nickname || otherName}</span>
                 <span className="text-[11px] font-semibold text-primary">현재 접속 중</span>
@@ -524,9 +533,15 @@ export default function ChatRoomPage() {
               onClick={() => setIsGroupProfileModalOpen(true)}
               className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity text-left"
             >
-              <div className="relative">
-                <img src={roomData?.groupImage || DEFAULT_AVATAR} alt={roomData?.name} className="w-9 h-9 rounded-full object-cover border border-border-base" />
-                <div className="absolute -bottom-1 -right-1 bg-bg-base p-0.5 rounded-full border border-border-base">
+              <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border-base">
+                <Image 
+                  src={roomData?.groupImage || DEFAULT_AVATAR} 
+                  alt={roomData?.name || ""} 
+                  fill
+                  sizes="36px"
+                  className="object-cover" 
+                />
+                <div className="absolute -bottom-1 -right-1 bg-bg-base p-0.5 rounded-full border border-border-base z-10">
                   <Camera size={10} className="text-text-sub" />
                 </div>
               </div>
@@ -555,9 +570,9 @@ export default function ChatRoomPage() {
               <div className="py-2">
                 {!otherId && groupData && (
                   <>
-                    {groupData.ownerId === currentUserId ? (
+                    {groupData?.ownerId === currentUserId ? (
                       <>
-                        {(groupData.members?.length || 0) > 1 && (
+                        {(groupData?.members?.length || 0) > 1 && (
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
@@ -596,6 +611,37 @@ export default function ChatRoomPage() {
                       </button>
                     )}
                   </>
+                )}
+                
+                {/* 1:1 Chat Delete Option */}
+                {otherId && (
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsMenuOpen(false);
+                      setConfirmConfig({
+                        isOpen: true,
+                        title: "대화 삭제",
+                        message: "정말 이 대화방을 삭제하시겠습니까?\n삭제된 대화는 복구할 수 없습니다.",
+                        isDanger: true,
+                        confirmText: "삭제하기",
+                        onClose: () => setConfirmConfig({ isOpen: false }),
+                        onConfirm: async () => {
+                          try {
+                            await messageService.deleteRoom(roomId);
+                            router.push("/messages");
+                          } catch (e) {
+                            console.error(e);
+                            alert("삭제 중 오류가 발생했습니다.");
+                          }
+                        }
+                      });
+                    }}
+                    className="w-full text-left px-4 py-3 text-[13px] font-bold text-error hover:bg-error/10 flex items-center transition-colors"
+                  >
+                    <Trash2 size={16} className="mr-2.5" />
+                    대화 삭제하기
+                  </button>
                 )}
               </div>
             </div>
@@ -640,12 +686,14 @@ export default function ChatRoomPage() {
                   {!isMe && (
                     <button
                       onClick={() => router.push(`/profile/${msg.senderId}`)}
-                      className="flex-shrink-0 hover:opacity-80 transition-opacity flex items-end"
+                      className="relative w-7 h-7 flex-shrink-0 hover:opacity-80 transition-opacity flex items-end rounded-full overflow-hidden border border-border-base mb-1"
                     >
-                      <img 
-                        src={profiles[msg.senderId]?.avatarUrl || (otherId ? otherImage : DEFAULT_AVATAR)} 
+                      <Image 
+                        src={profiles[msg.senderId]?.avatarUrl || (otherId ? otherImage : DEFAULT_AVATAR) || DEFAULT_AVATAR} 
                         alt={profiles[msg.senderId]?.nickname || otherName} 
-                        className="w-7 h-7 rounded-full object-cover border border-border-base mb-1" 
+                        fill
+                        sizes="28px"
+                        className="object-cover" 
                       />
                     </button>
                   )}
@@ -730,10 +778,12 @@ export default function ChatRoomPage() {
                       ) : msg.type === "storyReply" && msg.storyData ? (
                         <div className="flex flex-col space-y-2">
                           <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border border-border-base bg-bg-alt">
-                            <img
-                              src={msg.storyData.mediaUrl}
-                              alt="Story Preview"
-                              className="w-full h-full object-cover"
+                            <Image 
+                              src={msg.storyData.mediaUrl} 
+                              alt="Story Preview" 
+                              fill
+                              sizes="(max-width: 260px) 100vw, 260px"
+                              className="w-full h-full object-cover" 
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/20 to-transparent h-12"></div>
                           </div>
@@ -747,10 +797,12 @@ export default function ChatRoomPage() {
                            className="flex flex-col space-y-2 cursor-pointer group/post min-w-[200px]"
                          >
                            <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border-base bg-bg-alt">
-                            <img 
+                            <Image 
                               src={msg.postShareData.postImage} 
                               alt="Shared Post" 
-                              className="w-full h-full object-cover group-hover/post:scale-105 transition-transform duration-300"
+                              fill
+                              sizes="(max-width: 260px) 100vw, 260px"
+                              className="w-full h-full object-cover group-hover/post:scale-105 transition-transform duration-300" 
                             />
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent h-12"></div>
                             <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-sm text-[10px] font-bold text-white border border-white/10">
@@ -1046,9 +1098,17 @@ export default function ChatRoomPage() {
             
             <div className="flex flex-col items-center mb-8">
               <div className="relative group cursor-pointer" onClick={() => document.getElementById("room-image-input")?.click()}>
-                <img src={roomData?.groupImage || DEFAULT_AVATAR} alt="group" className="w-24 h-24 rounded-full object-cover border-4 border-bg-alt shadow-md" />
-                <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Camera size={24} className="text-white" />
+                <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-bg-alt shadow-md">
+                  <Image 
+                    src={roomData?.groupImage || DEFAULT_AVATAR} 
+                    alt="group" 
+                    fill
+                    sizes="96px"
+                    className="object-cover" 
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera size={24} className="text-white" />
+                  </div>
                 </div>
                 <input 
                   id="room-image-input" 
@@ -1139,11 +1199,15 @@ export default function ChatRoomPage() {
                       isSelected ? 'border-primary bg-primary/5' : 'border-border-base hover:bg-bg-alt'
                     }`}
                   >
-                    <img 
-                      src={profile?.avatarUrl || `https://ui-avatars.com/api/?name=${profile?.nickname || uid}&background=F1F3F5&color=6C757D`} 
-                      alt="Profile" 
-                      className="w-10 h-10 rounded-full object-cover mr-3"
-                    />
+                    <div className="relative w-10 h-10 rounded-full border border-border-base overflow-hidden mr-3">
+                      <Image 
+                        src={profile?.avatarUrl || `https://ui-avatars.com/api/?name=${profile?.nickname || uid}&background=F1F3F5&color=6C757D`} 
+                        alt="Profile" 
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    </div>
                     <span className={`font-bold text-[14px] ${isSelected ? 'text-primary' : 'text-text-main'}`}>
                       {profile?.nickname?.split('(')[0] || "알 수 없는 유저"}
                     </span>

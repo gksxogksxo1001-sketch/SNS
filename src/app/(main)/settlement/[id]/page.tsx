@@ -13,6 +13,7 @@ import { UserProfile } from "@/types/user";
 import { Group } from "@/types/group";
 import { useAuth } from "@/core/hooks/useAuth";
 import { ConfirmModal, AlertModal } from "@/components/common/UIModals";
+import Image from "next/image";
 
 export default function SettlementDetailPage() {
   const params = useParams();
@@ -470,8 +471,24 @@ export default function SettlementDetailPage() {
                         }`}>
                         <div className="flex items-center space-x-3">
                           <div className="flex -space-x-2">
-                            <img src={fromAvatar} alt={fromUserName} className="w-8 h-8 rounded-full border-2 border-bg-base object-cover shadow-sm" />
-                            <img src={toAvatar} alt={toUserName} className="w-8 h-8 rounded-full border-2 border-bg-base object-cover shadow-sm" />
+                            <div className="relative w-8 h-8 rounded-full border-2 border-bg-base overflow-hidden shadow-sm">
+                              <Image 
+                                src={fromAvatar} 
+                                alt={fromUserName} 
+                                fill
+                                sizes="32px"
+                                className="object-cover" 
+                              />
+                            </div>
+                            <div className="relative w-8 h-8 rounded-full border-2 border-bg-base overflow-hidden shadow-sm">
+                              <Image 
+                                src={toAvatar} 
+                                alt={toUserName} 
+                                fill
+                                sizes="32px"
+                                className="object-cover" 
+                              />
+                            </div>
                           </div>
                           <div className="flex items-center space-x-1.5 text-[13px] font-semibold text-text-sub">
                             <span className="text-text-main font-bold">{fromUserName.split('(')[0]}</span>
@@ -620,12 +637,15 @@ export default function SettlementDetailPage() {
                                 <span className="text-[11px] text-border-base">•</span>
                                 <div className="flex -space-x-1">
                                   {(exp.participants || currentGroup?.members || []).map((pId: string, pIdx: number) => (
-                                    <img
-                                      key={pId}
-                                      src={userProfiles[pId]?.avatarUrl || `https://ui-avatars.com/api/?name=${userProfiles[pId]?.nickname || pId}&background=var(--primary-hex)&color=fff`}
-                                      className="w-4 h-4 rounded-full border border-bg-base object-cover"
-                                      title={userProfiles[pId]?.nickname}
-                                    />
+                                    <div key={pId} className="relative w-4 h-4 rounded-full border border-bg-base overflow-hidden">
+                                      <Image
+                                        src={userProfiles[pId]?.avatarUrl || `https://ui-avatars.com/api/?name=${userProfiles[pId]?.nickname || pId}&background=var(--primary-hex)&color=fff`}
+                                        alt={userProfiles[pId]?.nickname || "participant"}
+                                        fill
+                                        sizes="16px"
+                                        className="object-cover"
+                                      />
+                                    </div>
                                   ))}
                                 </div>
                               </>
@@ -863,7 +883,15 @@ export default function SettlementDetailPage() {
                                 : "bg-bg-alt border-border-base text-text-sub"
                               }`}
                           >
-                            <img src={avatar} alt={name} className={`w-5 h-5 rounded-full object-cover ${!isSelected && "grayscale opacity-50"}`} />
+                            <div className={`relative w-5 h-5 rounded-full overflow-hidden ${!isSelected && "grayscale opacity-50"}`}>
+                              <Image 
+                                src={avatar} 
+                                alt={name} 
+                                fill
+                                sizes="20px"
+                                className="object-cover" 
+                              />
+                            </div>
                             <span className="text-[12px] font-bold">{name}</span>
                           </button>
                         );

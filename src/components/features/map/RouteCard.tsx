@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Clock, Navigation } from "lucide-react";
+import Image from "next/image";
 
 interface RouteCardProps {
   place: {
@@ -24,8 +25,14 @@ export const RouteCard: React.FC<RouteCardProps> = ({ place, isActive }) => {
     >
       <div className="flex space-x-3">
         {/* Image */}
-        <div className="h-20 w-20 overflow-hidden rounded-xl bg-bg-alt">
-          <img src={place.image} alt={place.name} className="h-full w-full object-cover" />
+        <div className="relative h-20 w-20 overflow-hidden rounded-xl bg-bg-alt">
+          <Image 
+            src={place.image} 
+            alt={place.name} 
+            fill
+            sizes="80px"
+            className="h-full w-full object-cover" 
+          />
         </div>
 
         {/* Info */}

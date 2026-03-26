@@ -5,6 +5,7 @@ import { ChevronLeft, Camera, Image as ImageIcon, Send, X, Loader2, Globe, Users
 import { useRouter } from "next/navigation";
 import { auth } from "@/core/firebase/config";
 import { storyService } from "@/core/firebase/storyService";
+import Image from "next/image";
 
 export default function StoryCreatePage() {
   const router = useRouter();
@@ -87,7 +88,14 @@ export default function StoryCreatePage() {
         ) : (
           <div className="flex-1 flex flex-col space-y-6">
             <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded-[40px] overflow-hidden shadow-2xl border-4 border-bg-base">
-              <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+              <Image 
+                src={preview} 
+                alt="Preview" 
+                fill
+                priority
+                sizes="(max-width: 384px) 100vw, 384px"
+                className="w-full h-full object-cover" 
+              />
               <button 
                 onClick={removeFile}
                 className="absolute top-5 right-5 p-2 bg-bg-base/20 backdrop-blur-md rounded-full text-white hover:bg-bg-base/40 transition-colors border border-border-base/20"

@@ -130,20 +130,6 @@ export const postService = {
     const q = query(postsRef, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
     
-    // If not logged in, only show public posts
-    if (!currentUserId) {
-      return querySnapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() } as Post))
-        .filter(post => post.visibility === "public");
-    }
-
-    // Fetch user relations for filtering
-    const [myFriends, myGroups] = await Promise.all([
-      userService.getFriends(currentUserId),
-      groupService.getUserGroups(currentUserId)
-    ]);
-    const myGroupIds = myGroups.map(g => g.id);
-
     // Fetch unique users involved in these posts to optimize hits
     const userUids = Array.from(new Set(querySnapshot.docs.map(d => d.data().user?.uid).filter(Boolean)));
     const userProfiles: Record<string, any> = {};
@@ -171,7 +157,23 @@ export const postService = {
     }) as Post[];
 
     // Filter by visibility
-    return allPosts.filter(post => {
+    return this.filterPostsByVisibility(allPosts, currentUserId, userProfiles);
+  },
+
+  // Helper method to filter posts based on visibility rules
+  async filterPostsByVisibility(posts: Post[], currentUserId?: string, userProfiles: Record<string, any> = {}): Promise<Post[]> {
+    if (!currentUserId) {
+      return posts.filter(post => post.visibility === "public" || !post.visibility);
+    }
+
+    // Fetch user relations for filtering
+    const [myFriends, myGroups] = await Promise.all([
+      userService.getFriends(currentUserId),
+      groupService.getUserGroups(currentUserId)
+    ]);
+    const myGroupIds = myGroups.map(g => g.id);
+
+    return posts.filter(post => {
       // 1. My own post
       if (post.user.uid === currentUserId) return true;
       
@@ -372,8 +374,8 @@ export const postService = {
     }
   },
 
-  // Subscribe to all posts for real-time updates
-  subscribeToPosts(callback: (posts: Post[]) => void): () => void {
+  // Subscribe to all posts for real-time updates with visibility filtering
+  subscribeToPosts(currentUserId: string | undefined, callback: (posts: Post[]) => void): () => void {
     const postsRef = collection(db, "posts");
     const q = query(postsRef, orderBy("createdAt", "desc"));
 
@@ -389,7 +391,7 @@ export const postService = {
         }
       }));
 
-      const posts = querySnapshot.docs.map((doc: any) => {
+      const allPosts = querySnapshot.docs.map((doc: any) => {
         const data = doc.data();
         const latestUserProgress = userProfiles[data.user?.uid];
         
@@ -404,7 +406,9 @@ export const postService = {
         };
       }) as Post[];
 
-      callback(posts);
+      // Apply visibility filtering
+      const filteredPosts = await this.filterPostsByVisibility(allPosts, currentUserId, userProfiles);
+      callback(filteredPosts);
     });
   },
 

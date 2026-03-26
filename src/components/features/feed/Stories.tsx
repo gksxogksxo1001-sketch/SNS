@@ -10,6 +10,7 @@ import { UserStoryGroup } from "@/types/story";
 import { StoryViewer } from "./StoryViewer";
 import { useRouter } from "next/navigation";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import Image from "next/image";
 
 interface Story {
   id: string;
@@ -89,8 +90,15 @@ export const Stories = () => {
               )}
             >
               <div className="w-full h-full rounded-[23px] bg-bg-base p-[2px]">
-                <div className="w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
-                  <img src={auth.currentUser?.photoURL || DEFAULT_AVATAR} alt="Me" className="w-full h-full object-cover" />
+                <div className="relative w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
+                  <Image 
+                    src={auth.currentUser?.photoURL || DEFAULT_AVATAR} 
+                    alt="Me" 
+                    fill
+                    priority
+                    sizes="68px"
+                    className="object-cover" 
+                  />
                 </div>
               </div>
             </div>
@@ -128,8 +136,15 @@ export const Stories = () => {
               )}>
                 {/* Avatar Container */}
                 <div className="w-full h-full rounded-[23px] bg-bg-base p-[2px]">
-                  <div className="w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
-                    <img src={group.user.image || DEFAULT_AVATAR} alt={group.user.name} className="w-full h-full object-cover" />
+                  <div className="relative w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
+                    <Image 
+                      src={group.user.image || DEFAULT_AVATAR} 
+                      alt={group.user.name} 
+                      fill
+                      priority
+                      sizes="68px"
+                      className="object-cover" 
+                    />
                   </div>
                 </div>
               </div>

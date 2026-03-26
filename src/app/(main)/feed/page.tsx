@@ -20,18 +20,14 @@ export default function FeedPage() {
   const [unreadMsgCount, setUnreadMsgCount] = useState(0);
 
   useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const data = await postService.getPosts(user?.uid);
-        setPosts(data);
-      } catch (error) {
-        console.error("Failed to fetch posts:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    if (user) fetchPosts();
-    else if (!isLoading) fetchPosts(); // Guest view (public only)
+    setIsLoading(true);
+    // Real-time subscription
+    const unsubscribe = postService.subscribeToPosts(user?.uid, (data) => {
+      setPosts(data);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
   useEffect(() => {
@@ -98,8 +94,8 @@ export default function FeedPage() {
             <p className="text-sm font-medium">피드를 불러오는 중...</p>
           </div>
         ) : posts.length > 0 ? (
-          posts.map((post) => (
-            <PostCard key={post.id} post={post as any} />
+          posts.map((post, index) => (
+            <PostCard key={post.id} post={post as any} priority={index === 0} />
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center px-10">

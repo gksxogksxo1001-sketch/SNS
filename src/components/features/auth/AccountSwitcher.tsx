@@ -6,6 +6,7 @@ import { accountManager, StoredAccount } from "@/core/auth/accountManager";
 import { AuthService } from "@/core/services/AuthService";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface AccountSwitcherProps {
   isOpen: boolean;
@@ -70,9 +71,15 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
                 )}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-11 h-11 rounded-full overflow-hidden bg-bg-alt border border-bg-base shadow-sm">
+                  <div className="relative w-11 h-11 rounded-full overflow-hidden bg-bg-alt border border-bg-base shadow-sm">
                     {acc.photoURL ? (
-                      <img src={acc.photoURL} alt="" className="w-full h-full object-cover" />
+                      <Image 
+                        src={acc.photoURL} 
+                        alt="" 
+                        fill
+                        sizes="44px"
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-400">
                         <User size={20} />

@@ -14,15 +14,17 @@ import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import { PowerPopup } from "@/components/common/PowerPopup";
+import Image from "next/image";
 import { userService } from "@/core/firebase/userService";
 import { UserProfile } from "@/types/user";
 import { messageService } from "@/core/firebase/messageService";
 
 interface PostCardProps {
   post: Post;
+  priority?: boolean;
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post }) => {
+export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) => {
   const router = useRouter();
   const { user } = useAuth();
   const [isLiked, setIsLiked] = useState(false);
@@ -260,8 +262,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           }}
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
-          <div className="h-10 w-10 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-            <img src={post.user.image || DEFAULT_AVATAR} alt={post.user.name || "User"} className="h-full w-full object-cover" />
+          <div className="relative h-10 w-10 overflow-hidden rounded-full bg-bg-alt border border-border-base">
+            <Image 
+              src={post.user.image || DEFAULT_AVATAR} 
+              alt={post.user.name || "User"} 
+              fill
+              priority={priority}
+              sizes="40px"
+              className="object-cover" 
+            />
           </div>
           <div className="text-left">
             <div className="flex items-center space-x-2">
@@ -366,8 +375,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           className="relative aspect-[4/3] w-full px-4 py-2 cursor-pointer group"
           onClick={() => setLightboxIndex(0)}
         >
-          <div className="h-full w-full overflow-hidden rounded-2xl bg-bg-alt">
-            <img src={post.images[0]} alt="Post" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <div className="relative h-full w-full overflow-hidden rounded-2xl bg-bg-alt">
+            <Image 
+              src={post.images[0]} 
+              alt="Post" 
+              fill
+              priority={priority}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-300" 
+            />
           </div>
           {post.images.length > 1 && (
             <div className="absolute right-6 top-4 rounded-full bg-black/50 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
@@ -487,8 +503,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               {comments.length > 0 ? (
                 comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
-                    <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-                      <img src={comment.user.image || DEFAULT_AVATAR} alt={comment.user.name} className="h-full w-full object-cover" />
+                    <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
+                      <Image 
+                        src={comment.user.image || DEFAULT_AVATAR} 
+                        alt={comment.user.name} 
+                        fill
+                        sizes="32px"
+                        className="object-cover" 
+                      />
                     </div>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
@@ -509,8 +531,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {/* Comment Input */}
             {user ? (
               <form onSubmit={handleCommentSubmit} className="flex items-center space-x-2 pt-2">
-                <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-                  <img src={user.photoURL || DEFAULT_AVATAR} alt={user.displayName || ""} className="h-full w-full object-cover" />
+                <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
+                  <Image 
+                    src={user.photoURL || DEFAULT_AVATAR} 
+                    alt={user.displayName || ""} 
+                    fill
+                    sizes="32px"
+                    className="object-cover" 
+                  />
                 </div>
                 <div className="relative flex-1">
                   <input
@@ -566,10 +594,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
           {/* Image Container */}
           <div className="relative h-[80vh] w-full max-w-4xl px-16 flex items-center justify-center pointer-events-none">
-            <img 
+            <Image 
               src={post.images[lightboxIndex]} 
               alt={`Post Image ${lightboxIndex + 1}`} 
-              className="max-h-full max-w-full object-contain drop-shadow-2xl animate-in zoom-in-95 duration-200 pointer-events-auto" 
+              fill
+              className="object-contain drop-shadow-2xl animate-in zoom-in-95 duration-200 pointer-events-auto" 
               onClick={(e) => e.stopPropagation()} // Prevent close when clicking directly on image
             />
             
@@ -615,8 +644,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                    className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-bg-alt transition-all border border-transparent hover:border-border-base active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center">
-                      <img src={friend.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
+                    <div className="relative h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center">
+                      <Image 
+                        src={friend.avatarUrl || DEFAULT_AVATAR} 
+                        alt="" 
+                        fill
+                        sizes="40px"
+                        className="object-cover" 
+                      />
                     </div>
                     <div className="text-left">
                       <p className="text-sm font-black text-text-main">{friend.nickname}</p>
@@ -672,4 +707,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
     </div>
   );
-};
+});
+
+PostCard.displayName = "PostCard";

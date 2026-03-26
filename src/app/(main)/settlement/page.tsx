@@ -10,6 +10,7 @@ import { useAuth } from "@/core/hooks/useAuth";
 import { settlementService } from "@/core/firebase/settlementService";
 import { userService } from "@/core/firebase/userService";
 import { groupService } from "@/core/firebase/groupService";
+import Image from "next/image";
 
 // Mock Settlement Groups
 export default function SettlementListPage() {
@@ -137,7 +138,17 @@ export default function SettlementListPage() {
                       {group.participants.slice(0, 3).map((p: string, idx: number) => {
                         const profile = userProfiles[p];
                         const avatar = profile?.avatarUrl || `https://ui-avatars.com/api/?name=${profile?.nickname || p}&background=2A9D8F&color=fff`;
-                        return <img key={idx} src={avatar} alt="participant" className="w-7 h-7 rounded-full border-2 border-bg-base object-cover shadow-sm bg-bg-alt" />
+                        return (
+                          <div key={idx} className="relative w-7 h-7 rounded-full border-2 border-bg-base overflow-hidden shadow-sm bg-bg-alt">
+                            <Image 
+                              src={avatar} 
+                              alt="participant" 
+                              fill
+                              sizes="28px"
+                              className="object-cover" 
+                            />
+                          </div>
+                        );
                       })}
                       {group.participants.length > 3 && (
                         <div className="w-7 h-7 rounded-full border-2 border-bg-base bg-bg-alt flex items-center justify-center text-[9px] font-black text-text-sub z-10">

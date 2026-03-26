@@ -6,6 +6,7 @@ import { userService } from "@/core/firebase/userService";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import Link from "next/link";
 import { Search, Users, X } from "lucide-react";
+import Image from "next/image";
 
 export const RightPanel = () => {
   const { user } = useAuth();
@@ -92,11 +93,15 @@ export const RightPanel = () => {
                   onClick={clearSearch}
                   className="flex items-center gap-3 p-2.5 rounded-2xl hover:bg-bg-alt transition-colors group"
                 >
-                  <img
-                    src={u.profileImageUrl || DEFAULT_AVATAR}
-                    alt={u.nickname}
-                    className="w-9 h-9 rounded-full object-cover border border-gray-100 flex-shrink-0"
-                  />
+                  <div className="relative w-9 h-9 rounded-full overflow-hidden border border-gray-100 flex-shrink-0">
+                    <Image
+                      src={u.avatarUrl || DEFAULT_AVATAR}
+                      alt={u.nickname}
+                      fill
+                      sizes="36px"
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-bold text-text-main truncate group-hover:text-primary transition-colors">{u.nickname}</p>
                     {u.bio && <p className="text-[11px] text-text-sub truncate">{u.bio}</p>}
@@ -120,11 +125,15 @@ export const RightPanel = () => {
               {suggestedUsers.map((u) => (
                 <div key={u.uid} className="flex items-center gap-3">
                   <Link href={`/profile/${u.uid}`}>
-                    <img
-                      src={u.profileImageUrl || DEFAULT_AVATAR}
-                      alt={u.nickname}
-                      className="w-9 h-9 rounded-full object-cover border border-gray-100"
-                    />
+                    <div className="relative w-9 h-9 rounded-full overflow-hidden border border-gray-100">
+                      <Image
+                        src={u.avatarUrl || DEFAULT_AVATAR}
+                        alt={u.nickname}
+                        fill
+                        sizes="36px"
+                        className="object-cover"
+                      />
+                    </div>
                   </Link>
                   <div className="flex-1 min-w-0">
                     <Link href={`/profile/${u.uid}`}>

@@ -11,10 +11,11 @@ import { Post } from "@/types/post";
 import { PostCard } from "@/components/features/feed/PostCard";
 import { 
   Settings, LogOut, Grid, Heart, MapPin, Calendar, 
+  Loader2,
   User as UserIcon, Camera, Plus, Trash2, X, Globe, 
   Bookmark, Users, UserCog, ChevronRight, History, Star,
-  Loader2
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
@@ -298,8 +299,15 @@ export default function ProfilePage() {
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative group">
-            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt relative flex items-center justify-center">
-              <img src={profile?.avatarUrl || DEFAULT_AVATAR} alt={user.displayName || ""} className="h-full w-full object-cover" />
+            <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
+              <Image 
+                src={profile?.avatarUrl || DEFAULT_AVATAR} 
+                alt={user.displayName || ""} 
+                fill 
+                priority 
+                sizes="96px"
+                className="object-cover" 
+              />
               {isUpdatingPhoto && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <div className="h-5 w-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
@@ -399,9 +407,11 @@ export default function ProfilePage() {
                           className="aspect-square relative group cursor-pointer overflow-hidden"
                           onClick={() => router.push(`/post/${post.id}`)}
                         >
-                          <img 
+                          <Image 
                             src={post.images[0]} 
                             alt="Post" 
+                            fill
+                            sizes="33vw"
                             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
                           />
                         </div>
@@ -557,8 +567,14 @@ export default function ProfilePage() {
                           }}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center text-text-sub">
-                              <img src={friend.avatarUrl || DEFAULT_AVATAR} alt={friend.nickname} className="h-full w-full object-cover" />
+                            <div className="relative h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center text-text-sub">
+                              <Image 
+                                src={friend.avatarUrl || DEFAULT_AVATAR} 
+                                alt={friend.nickname} 
+                                fill
+                                sizes="40px"
+                                className="object-cover" 
+                              />
                             </div>
                             <div className="flex flex-col text-left">
                               <span className="text-sm font-bold text-text-main">{friend.nickname}</span>
@@ -621,8 +637,14 @@ export default function ProfilePage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
           <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base flex items-center justify-center">
-                <img src={userToUnfollow.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
+              <div className="relative mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base flex items-center justify-center">
+                <Image 
+                  src={userToUnfollow.avatarUrl || DEFAULT_AVATAR} 
+                  alt="" 
+                  fill
+                  sizes="80px"
+                  className="object-cover" 
+                />
               </div>
               <div className="space-y-1">
                 <p className="text-[15px] font-bold text-text-main">
@@ -682,9 +704,11 @@ export default function ProfilePage() {
                 }}
               >
                 {post.images && post.images.length > 0 ? (
-                  <img 
+                  <Image 
                     src={post.images[0]} 
                     alt="" 
+                    fill
+                    sizes="100px"
                     className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
                   />
                 ) : (
@@ -744,9 +768,11 @@ export default function ProfilePage() {
                 className="group relative aspect-[9/16] rounded-[20px] overflow-hidden bg-bg-alt border border-border-base cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
               >
                 {story.mediaUrl ? (
-                  <img 
+                  <Image 
                     src={story.mediaUrl} 
                     alt="" 
+                    fill
+                    sizes="150px"
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                   />
                 ) : (

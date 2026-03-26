@@ -8,6 +8,7 @@ import { postService } from "@/core/firebase/postService";
 import { Post } from "@/types/post";
 import { useAuth } from "@/core/hooks/useAuth";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -99,14 +100,14 @@ function MapPageContent() {
     }
 
     // Real-time subscription
-    const unsubscribe = postService.subscribeToPosts((allPosts) => {
+    const unsubscribe = postService.subscribeToPosts(user.uid, (allPosts: Post[]) => {
       try {
         // Filter posts: My posts OR posts bookmarked by me
-        const filteredPosts = allPosts.filter(p =>
+        const filteredPosts = allPosts.filter((p: Post) =>
           p.location && (p.user.uid === user.uid || (p.bookmarkedBy && p.bookmarkedBy.includes(user.uid)))
         );
 
-        const mappedPlaces = filteredPosts.map((p, idx) => ({
+        const mappedPlaces = filteredPosts.map((p: Post, idx: number) => ({
           id: p.id || `temp-${idx}`,
           name: p.location!.name,
           image: (p.images && p.images.length > 0) ? p.images[0] : "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=400&q=80",
@@ -219,6 +220,8 @@ function MapPageContent() {
                     <Search size={16} />
                   </div>
                   <input
+                    id="mobile-map-search"
+                    name="mobile-map-search"
                     type="text"
                     autoFocus
                     value={searchQuery}
@@ -302,6 +305,8 @@ function MapPageContent() {
                     <Search size={18} />
                   </div>
                   <input
+                    id="desktop-map-search"
+                    name="desktop-map-search"
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -356,7 +361,12 @@ function MapPageContent() {
                         "relative aspect-[16/10] rounded-3xl overflow-hidden mb-3 shadow-md transition-all duration-500",
                         activeIndex === idx ? "ring-2 ring-primary scale-[1.02] shadow-lg" : "group-hover:shadow-xl"
                       )}>
-                        <img src={place.image} alt={place.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                        <Image 
+                          src={place.image} 
+                          alt={place.name} 
+                          fill 
+                          className="object-cover group-hover:scale-110 transition-transform duration-700" 
+                        />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80" />
 
                         <div className="absolute top-3 left-3">
@@ -412,7 +422,7 @@ function MapPageContent() {
                 gestureHandling={"greedy"}
                 disableDefaultUI={true}
                 className="h-full w-full"
-                styles={isDarkMode ? DARK_MAP_STYLE : []}
+                // styles={isDarkMode ? DARK_MAP_STYLE : []} // Conflict with mapId. Dark mode should be set via Cloud Console.
               >
                 {isSingleView && singlePlace ? (
                   <AdvancedMarker

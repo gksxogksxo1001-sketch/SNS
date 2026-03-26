@@ -301,5 +301,20 @@ export const messageService = {
       ...data,
       updatedAt: serverTimestamp()
     }, { merge: true });
+  },
+
+  // Delete an entire chat room and its messages
+  async deleteRoom(roomId: string) {
+    const roomRef = doc(db, "chatRooms", roomId);
+    const messagesRef = collection(db, "chatRooms", roomId, "messages");
+    
+    // 1. Delete all messages first (Firestore requires manual batching for subcollections)
+    const messagesSnapshot = await getDocs(messagesRef);
+    const { deleteDoc } = await import("firebase/firestore");
+    
+    await Promise.all(messagesSnapshot.docs.map(mDoc => deleteDoc(mDoc.ref)));
+    
+    // 2. Delete the room document
+    await deleteDoc(roomRef);
   }
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { ChevronLeft, Edit, Search } from "lucide-react";
+import { ChevronLeft, Edit, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { messageService } from "@/core/firebase/messageService";
@@ -12,6 +12,143 @@ import { UserProfile } from "@/types/user";
 import { cn } from "@/lib/utils";
 import { groupService } from "@/core/firebase/groupService";
 import { Group } from "@/types/group";
+import { DEFAULT_AVATAR } from "@/core/constants";
+import { ConfirmModal } from "@/components/common/UIModals";
+import Image from "next/image";
+
+function SwipeableMessageItem({ 
+  item, 
+  title, 
+  image, 
+  chatUrl, 
+  lastMsg, 
+  lastTime, 
+  activeTab,
+  onDelete 
+}: any) {
+  const [translateX, setTranslateX] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const startX = React.useRef(0);
+  const currentX = React.useRef(0);
+  const SWIPE_THRESHOLD = -80;
+  const isDraggingClick = React.useRef(false);
+
+  const handleStart = (clientX: number) => {
+    startX.current = clientX;
+    setIsSwiping(true);
+  };
+
+  const handleMove = (clientX: number) => {
+    if (!isSwiping) return;
+    let diff = clientX - startX.current;
+    if (isOpen) {
+      diff += SWIPE_THRESHOLD;
+    }
+    if (diff < 0) {
+      const newX = Math.max(diff, SWIPE_THRESHOLD * 1.5);
+      setTranslateX(newX);
+      currentX.current = newX;
+    } else {
+      setTranslateX(0);
+      currentX.current = 0;
+    }
+  };
+
+  const handleEnd = () => {
+    if (!isSwiping) return;
+    setIsSwiping(false);
+    
+    if (Math.abs(currentX.current - (isOpen ? SWIPE_THRESHOLD : 0)) > 10) {
+      isDraggingClick.current = true;
+      setTimeout(() => { isDraggingClick.current = false; }, 50);
+    }
+
+    if (currentX.current <= SWIPE_THRESHOLD / 2) {
+      setTranslateX(SWIPE_THRESHOLD);
+      currentX.current = SWIPE_THRESHOLD;
+      setIsOpen(true);
+    } else {
+      setTranslateX(0);
+      currentX.current = 0;
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div className="relative w-full overflow-hidden bg-error border-b border-border-base">
+      <div 
+        className="absolute inset-y-0 right-0 w-24 flex items-center justify-end pr-6 text-white cursor-pointer"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete(item);
+          setTranslateX(0);
+          setIsOpen(false);
+        }}
+      >
+        <Trash2 size={24} />
+      </div>
+
+      <div 
+        className={cn(
+          "relative bg-bg-base transition-transform",
+          !isSwiping && "duration-200"
+        )}
+        style={{ transform: `translateX(${translateX}px)` }}
+        onTouchStart={(e) => handleStart(e.touches[0].clientX)}
+        onTouchMove={(e) => handleMove(e.touches[0].clientX)}
+        onTouchEnd={handleEnd}
+        onMouseDown={(e) => handleStart(e.clientX)}
+        onMouseMove={(e) => isSwiping && handleMove(e.clientX)}
+        onMouseUp={handleEnd}
+        onMouseLeave={() => isSwiping && handleEnd()}
+      >
+        <Link 
+          href={chatUrl}
+          onClick={(e) => {
+            if (isOpen || isDraggingClick.current) {
+              e.preventDefault();
+              setTranslateX(0);
+              setIsOpen(false);
+            }
+          }}
+          className="flex items-center justify-between px-4 py-3 hover:bg-bg-alt transition-colors active:bg-bg-base"
+        >
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <div className={cn(
+                "relative w-14 h-14 overflow-hidden border border-border-base shadow-sm",
+                activeTab === "group" ? "rounded-2xl" : "rounded-full"
+              )}>
+                <Image 
+                  src={image} 
+                  alt={title} 
+                  fill
+                  sizes="56px"
+                  className="w-full h-full object-cover" 
+                  draggable={false}
+                />
+              </div>
+            </div>
+            
+            <div className="flex flex-col">
+              <span className="text-[15px] font-bold text-text-main">{title}</span>
+              <span className="text-[13px] mt-0.5 truncate max-w-[180px] text-text-sub">
+                {lastMsg}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col items-end space-y-1">
+            <span className="text-[11px] font-semibold text-text-sub">
+              {lastTime}
+            </span>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function MessagesPage() {
   const router = useRouter();
@@ -22,6 +159,7 @@ export default function MessagesPage() {
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
   const [travelGroups, setTravelGroups] = useState<Group[]>([]);
   const [activeTab, setActiveTab] = useState<"direct" | "group">("direct");
+  const [confirmModal, setConfirmModal] = useState({ isOpen: false, roomId: "" });
   
   const currentUserId = user?.uid || "";
 
@@ -32,17 +170,15 @@ export default function MessagesPage() {
     }
 
     if (user) {
-      // 1. Subscribe to rooms where user is explicitly defined as participant
+      // 1. Subscribe to rooms
       const unsubscribeRooms = messageService.subscribeToUserRooms(user.uid, (newRooms) => {
         setRooms(prev => {
-          // Merge based on ID to avoid duplicates
           const roomMap = new Map();
-          prev.forEach(r => roomMap.set(r.id, r));
+          // Initialize with newRooms to prioritize them
           newRooms.forEach(r => roomMap.set(r.id, r));
           return Array.from(roomMap.values());
         });
         
-        // Fetch profiles for all participants
         const otherUids = newRooms.map(room => 
           room.participants.find(p => p !== user.uid)
         ).filter(Boolean) as string[];
@@ -52,11 +188,9 @@ export default function MessagesPage() {
         }
       });
 
-      // 2. Fetch travel groups and their specific rooms
+      // 2. Fetch travel groups
       groupService.getUserGroups(user.uid).then(async (groups) => {
         setTravelGroups(groups);
-        
-        // Ensure rooms for these groups are also fetched in case user was missing from participants array
         for (const group of groups) {
           const room = await messageService.getRoom(group.id);
           if (room) {
@@ -96,13 +230,22 @@ export default function MessagesPage() {
     }
   };
 
-  // Format Helper
+  const handleDeleteRoom = async () => {
+    if (!confirmModal.roomId) return;
+    try {
+      await messageService.deleteRoom(confirmModal.roomId);
+      setRooms(prev => prev.filter(r => r.id !== confirmModal.roomId));
+      setConfirmModal({ isOpen: false, roomId: "" });
+    } catch (error) {
+      console.error("Failed to delete room:", error);
+      alert("삭제 중 오류가 발생했습니다.");
+    }
+  };
+
   const formatRoomTime = (dateProp: any) => {
     if (!dateProp) return '';
     let d = dateProp.toDate ? dateProp.toDate() : new Date(dateProp);
     if (isNaN(d.getTime())) return '';
-    
-    // Simplistic relative time for demo (just returning HH:MM or local string)
     return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -116,20 +259,20 @@ export default function MessagesPage() {
           </button>
           <h1 className="text-xl font-bold text-text-main tracking-tight">메시지</h1>
         </div>
-        <button 
-          className="text-text-main hover:bg-bg-alt p-1.5 rounded-full transition-colors"
-        >
+        <button className="text-text-main hover:bg-bg-alt p-1.5 rounded-full transition-colors">
           <Edit size={22} className="text-primary" />
         </button>
       </header>
 
       {/* Search Bar */}
       <div className="p-4">
-        <div className="relative">
+        <form onSubmit={(e) => e.preventDefault()} className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search size={18} className="text-text-sub" />
           </div>
           <input
+            id="message-search"
+            name="message-search"
             type="text"
             value={searchQuery}
             onChange={(e) => {
@@ -139,7 +282,7 @@ export default function MessagesPage() {
             placeholder="사람 검색..."
             className="w-full bg-bg-base border-none rounded-xl py-2.5 pl-10 pr-4 text-[14px] text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
           />
-        </div>
+        </form>
       </div>
 
       {/* Tabs */}
@@ -166,7 +309,7 @@ export default function MessagesPage() {
         </button>
       </div>
 
-      {/* Chat List / Search Results */}
+      {/* Chat List */}
       <div className="flex-1 overflow-y-auto">
         {isSearching ? (
           <div className="px-4 py-2">
@@ -180,7 +323,15 @@ export default function MessagesPage() {
                   onClick={() => startChat(profile.uid, profile.nickname, profile.avatarUrl || "")}
                   className="w-full flex items-center space-x-4 py-3 border-b border-border-base hover:bg-bg-alt transition-colors px-4"
                 >
-                  <img src={profile.avatarUrl || ""} alt={profile.nickname} className="w-12 h-12 rounded-full border border-border-base" />
+                  <div className="relative w-12 h-12 rounded-full overflow-hidden border border-border-base">
+                    <Image 
+                      src={profile.avatarUrl || DEFAULT_AVATAR} 
+                      alt={profile.nickname} 
+                      fill
+                      sizes="48px"
+                      className="object-cover" 
+                    />
+                  </div>
                   <span className="text-[15px] font-bold text-text-main">{profile.nickname}</span>
                 </button>
               ))
@@ -212,11 +363,8 @@ export default function MessagesPage() {
             if (activeTab === "group") {
               const group = item as Group;
               const room = rooms.find(r => r.id === group.id);
-              
-              // Use room data as priority if it's been edited in chat
               title = room?.name || group.name;
               image = room?.groupImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(title)}&background=E9C46A&color=fff`;
-              
               chatUrl = `/messages/${group.id}?name=${encodeURIComponent(title)}&image=${encodeURIComponent(image)}&type=group`;
               if (room?.lastMessage) {
                 lastMsg = room.lastMessage.text;
@@ -240,39 +388,32 @@ export default function MessagesPage() {
             }
 
             return (
-              <Link 
-                key={item.id} 
-                href={chatUrl}
-                className="flex items-center justify-between px-4 py-3 hover:bg-bg-alt transition-colors active:bg-bg-base"
-              >
-                <div className="flex items-center space-x-4">
-                  <div className="relative">
-                    <div className={cn(
-                      "w-14 h-14 overflow-hidden border border-border-base shadow-sm",
-                      activeTab === "group" ? "rounded-2xl" : "rounded-full"
-                    )}>
-                      <img src={image} alt={title} className="w-full h-full object-cover" />
-                    </div>
-                  </div>
-                  
-                  <div className="flex flex-col">
-                    <span className="text-[15px] font-bold text-text-main">{title}</span>
-                    <span className="text-[13px] mt-0.5 truncate max-w-[180px] text-text-sub">
-                      {lastMsg}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end space-y-1">
-                  <span className="text-[11px] font-semibold text-text-sub">
-                    {lastTime}
-                  </span>
-                </div>
-              </Link>
+              <SwipeableMessageItem
+                key={item.id}
+                item={item}
+                title={title}
+                image={image}
+                chatUrl={chatUrl}
+                lastMsg={lastMsg}
+                lastTime={lastTime}
+                activeTab={activeTab}
+                onDelete={(room: any) => setConfirmModal({ isOpen: true, roomId: room.id })}
+              />
             );
           })
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        title="대화 삭제"
+        message="정말 이 대화방을 삭제하시겠습니까? 관련 메시지가 모두 삭제됩니다."
+        confirmText="삭제하기"
+        isDanger={true}
+        onConfirm={handleDeleteRoom}
+        onClose={() => setConfirmModal({ isOpen: false, roomId: "" })}
+      />
     </div>
   );
 }
+

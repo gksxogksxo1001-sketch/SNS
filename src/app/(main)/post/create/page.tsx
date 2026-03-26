@@ -11,6 +11,7 @@ import { useAuth } from "@/core/hooks/useAuth";
 import { groupService } from "@/core/firebase/groupService";
 import { Group } from "@/types/group";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -374,7 +375,13 @@ function CreatePostContent() {
             </button>
             {images.map((img, idx) => (
               <div key={idx} className="group relative h-36 w-32 flex-shrink-0 overflow-hidden rounded-[24px] bg-bg-alt shadow-md transition-all duration-300 hover:shadow-lg hover:-translate-y-1">
-                <img src={img.preview} alt={`Preview ${idx}`} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                <Image 
+                  src={img.preview} 
+                  alt={`Preview ${idx}`} 
+                  fill
+                  sizes="128px"
+                  className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                />
                 <div className="absolute inset-0 bg-black/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <button
                   onClick={() => removeImage(idx)}

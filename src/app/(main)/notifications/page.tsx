@@ -11,6 +11,7 @@ import { userService } from "@/core/firebase/userService";
 import { groupService } from "@/core/firebase/groupService";
 import { Notification } from "@/types/notification";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import Image from "next/image";
 
 const formatTime = (createdAt: any) => {
   if (!createdAt) return "";
@@ -229,8 +230,15 @@ function SwipeableNotificationItem({
       >
         {/* User Avatar & Type Icon */}
         <div className="relative flex-shrink-0 mt-0.5 pointer-events-none">
-          <div className="h-12 w-12 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-            <img src={notif.fromAvatarUrl || DEFAULT_AVATAR} alt={notif.fromNickname} className="h-full w-full object-cover" draggable={false} />
+          <div className="relative h-12 w-12 overflow-hidden rounded-full bg-bg-alt border border-border-base">
+            <Image 
+              src={notif.fromAvatarUrl || DEFAULT_AVATAR} 
+              alt={notif.fromNickname} 
+              fill
+              sizes="48px"
+              className="h-full w-full object-cover" 
+              draggable={false} 
+            />
           </div>
           <div className={cn(
             "absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-bg-base flex items-center justify-center",
@@ -316,8 +324,15 @@ function SwipeableNotificationItem({
 
         {/* Target Image (if post related) */}
         {notif.postImage && (
-          <div className="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-bg-alt border border-border-base mt-0.5 pointer-events-none">
-            <img src={notif.postImage} alt="Post" className="h-full w-full object-cover" draggable={false} />
+          <div className="relative h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-bg-alt border border-border-base mt-0.5 pointer-events-none">
+            <Image 
+              src={notif.postImage} 
+              alt="Post" 
+              fill
+              sizes="48px"
+              className="h-full w-full object-cover" 
+              draggable={false} 
+            />
           </div>
         )}
       </div>
