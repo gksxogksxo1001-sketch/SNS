@@ -5,8 +5,27 @@ import { BottomNav } from "@/components/common/BottomNav";
 import { SideNav } from "@/components/layout/SideNav";
 import { RightPanel } from "@/components/layout/RightPanel";
 import { usePathname, useRouter } from "next/navigation";
-import { getAuth, onAuthStateChanged } from "firebase/auth"; // Firebase Auth 임포트
-// import { auth } from "@/lib/firebase"; // 만약 별도 설정 파일이 있다면 이걸 사용하세요
+import { getAuth, onAuthStateChanged } from "firebase/auth";
+
+// --- 1. 초간단 모달 컴포넌트 (파일 안에 같이 두셔도 됩니다) ---
+const AuthModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in zoom-in duration-200">
+        <h3 className="text-lg font-bold text-gray-900">로그인 필요</h3>
+        <p className="mt-2 text-sm text-gray-600">세션이 만료되었습니다. 다시 로그인해주세요.</p>
+        <button
+          onClick={onClose}
+          className="mt-6 w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition-colors"
+        >
+          확인
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default function MainLayout({
   children,
@@ -15,32 +34,36 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const auth = getAuth(); // Firebase 인증 객체 가져오기
+  const auth = getAuth();
   const [isAuthChecking, setIsAuthChecking] = useState(true);
+
+  // 모달 상태 추가
+  const [showModal, setShowModal] = useState(false);
 
   const isMapPage = pathname === "/map";
   const isChatRoom = pathname.startsWith("/messages/");
 
   useEffect(() => {
-    // 1. 인증 상태 관찰자 설정
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      // 2. 로그인이 필요한 페이지인데 사용자가 없는 경우 체크
-      // (메인 레이아웃이 로그인/회원가입 페이지까지 감싸고 있다면 예외처리가 필요합니다)
       const isAuthPage = pathname === "/login" || pathname === "/signup";
 
       if (!user && !isAuthPage) {
-        // 로그인 안 됨 -> 로그인 페이지로 튕겨내기
-        router.replace("/login");
+        // 바로 리다이렉트 하지 않고 모달을 띄움
+        setShowModal(true);
       } else {
-        // 로그인 됨 또는 로그인 페이지임 -> 콘텐츠 보여주기
         setIsAuthChecking(false);
       }
     });
 
-    return () => unsubscribe(); // 언마운트 시 정리
+    return () => unsubscribe();
   }, [auth, pathname, router]);
 
-  // 3. 인증 확인 중일 때 화면 깜빡임 방지 (화이트아웃 방지용 로딩)
+  // 모달 확인 버튼 눌렀을 때 동작
+  const handleModalClose = () => {
+    setShowModal(false);
+    router.replace("/login");
+  };
+
   if (isAuthChecking && pathname !== "/login" && pathname !== "/signup") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white">
@@ -51,17 +74,15 @@ export default function MainLayout({
 
   return (
     <div className="min-h-screen bg-[#F8F9FA]">
-      {/* PC 사이드바 */}
-      <SideNav />
+      {/* 2. 모달 배치 */}
+      <AuthModal isOpen={showModal} onClose={handleModalClose} />
 
-      {/* PC 우측 패널 */}
+      <SideNav />
       {!isMapPage && !isChatRoom && <RightPanel />}
 
-      {/* 메인 콘텐츠 */}
       <main
         className={`
-          w-full
-          md:pl-16
+          w-full md:pl-16
           ${!isMapPage && !isChatRoom ? "xl:pr-72" : ""}
           ${isChatRoom ? "" : "pb-20 md:pb-0"}
           flex justify-center
@@ -78,7 +99,6 @@ export default function MainLayout({
         </div>
       </main>
 
-      {/* 모바일 하단 탭 */}
       {!isChatRoom && <BottomNav />}
     </div>
   );
