@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { GlobalModalContainer } from "@/components/common/GlobalModalContainer";
 
 export const metadata: Metadata = {
   title: "HANS - 여행의 순간을 기록하다",
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="ko">
       <body className="antialiased">
         {children}
+        <GlobalModalContainer />
       </body>
     </html>
   );

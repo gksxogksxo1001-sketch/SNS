@@ -11,6 +11,7 @@ import { useAuth } from "@/core/hooks/useAuth";
 import { groupService } from "@/core/firebase/groupService";
 import { Group } from "@/types/group";
 import { cn } from "@/lib/utils";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
@@ -134,6 +135,7 @@ export default function CreatePostPage() {
 
 function CreatePostContent() {
   const router = useRouter();
+  const { showAlert } = useModalStore();
   const searchParams = useSearchParams();
   const urlGroupId = searchParams?.get("groupId");
   
@@ -306,11 +308,19 @@ function CreatePostContent() {
 
       // 4. Success cleanup
       images.forEach(img => URL.revokeObjectURL(img.preview));
-      alert("게시물이 성공적으로 등록되었습니다! 🎉");
-      router.push(urlGroupId ? "/groups" : "/feed");
+      showAlert({ 
+        title: "성공", 
+        message: "게시물이 성공적으로 등록되었습니다! 🎉", 
+        type: "success",
+        onClose: () => router.push(urlGroupId ? "/groups" : "/feed")
+      });
     } catch (error: any) {
       console.error("[CreatePost] Final Error:", error);
-      alert(error.message || "게시물 등록에 실패했습니다. 다시 시도해 주세요.");
+      showAlert({ 
+        title: "오류", 
+        message: error.message || "게시물 등록에 실패했습니다. 다시 시도해 주세요.", 
+        type: "error" 
+      });
     } finally {
       setIsSubmitting(false);
     }

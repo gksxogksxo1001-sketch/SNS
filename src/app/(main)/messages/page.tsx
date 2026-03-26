@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { groupService } from "@/core/firebase/groupService";
 import { Group } from "@/types/group";
 import { DEFAULT_AVATAR } from "@/core/constants";
-import { ConfirmModal } from "@/components/common/UIModals";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 function SwipeableMessageItem({ 
@@ -159,7 +159,7 @@ export default function MessagesPage() {
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfile>>({});
   const [travelGroups, setTravelGroups] = useState<Group[]>([]);
   const [activeTab, setActiveTab] = useState<"direct" | "group">("direct");
-  const [confirmModal, setConfirmModal] = useState({ isOpen: false, roomId: "" });
+  const { showAlert, showConfirm } = useModalStore();
   
   const currentUserId = user?.uid || "";
 
@@ -230,15 +230,13 @@ export default function MessagesPage() {
     }
   };
 
-  const handleDeleteRoom = async () => {
-    if (!confirmModal.roomId) return;
+  const handleDeleteRoom = async (roomId: string) => {
     try {
-      await messageService.deleteRoom(confirmModal.roomId);
-      setRooms(prev => prev.filter(r => r.id !== confirmModal.roomId));
-      setConfirmModal({ isOpen: false, roomId: "" });
+      await messageService.deleteRoom(roomId);
+      setRooms(prev => prev.filter(r => r.id !== roomId));
     } catch (error) {
       console.error("Failed to delete room:", error);
-      alert("삭제 중 오류가 발생했습니다.");
+      showAlert({ title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
@@ -397,22 +395,19 @@ export default function MessagesPage() {
                 lastMsg={lastMsg}
                 lastTime={lastTime}
                 activeTab={activeTab}
-                onDelete={(room: any) => setConfirmModal({ isOpen: true, roomId: room.id })}
+                onDelete={(room: any) => showConfirm({
+                  title: "대화 삭제",
+                  message: "정말 이 대화방을 삭제하시겠습니까? 관련 메시지가 모두 삭제됩니다.",
+                  confirmText: "삭제하기",
+                  isDanger: true,
+                  onConfirm: () => handleDeleteRoom(room.id)
+                })}
               />
             );
           })
         )}
       </div>
 
-      <ConfirmModal
-        isOpen={confirmModal.isOpen}
-        title="대화 삭제"
-        message="정말 이 대화방을 삭제하시겠습니까? 관련 메시지가 모두 삭제됩니다."
-        confirmText="삭제하기"
-        isDanger={true}
-        onConfirm={handleDeleteRoom}
-        onClose={() => setConfirmModal({ isOpen: false, roomId: "" })}
-      />
     </div>
   );
 }

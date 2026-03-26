@@ -5,21 +5,22 @@ import { GroupList } from "@/components/features/group/GroupList";
 import { GroupCreate } from "@/components/features/group/GroupCreate";
 import { GroupInvite } from "@/components/features/group/GroupInvite";
 import { Group } from "@/types/group";
-import { Users, Plus, LayoutGrid, List, Settings, Trash2, CheckCircle } from "lucide-react";
+import { Users, Plus, LayoutGrid, List, Settings, Trash2, CheckCircle, X } from "lucide-react";
 import { useAuth } from "@/core/hooks/useAuth";
 import { Post } from "@/types/post";
 import { postService } from "@/core/firebase/postService";
 import { groupService } from "@/core/firebase/groupService";
 import { PostCard } from "@/components/features/feed/PostCard";
 import { useRouter } from "next/navigation";
+import { useModalStore } from "@/store/useModalStore";
 
 export default function GroupsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   const [showInviteSection, setShowInviteSection] = useState(false);
   
-  // Custom Modal States
-  const [activeModal, setActiveModal] = useState<"edit" | "delete" | "complete" | null>(null);
+  // States for Edit Modal (Form)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editStartDate, setEditStartDate] = useState("");
@@ -31,6 +32,7 @@ export default function GroupsPage() {
 
   const { user } = useAuth();
   const router = useRouter();
+  const { showAlert, showConfirm } = useModalStore();
 
   React.useEffect(() => {
     if (selectedGroup) {
@@ -58,27 +60,52 @@ export default function GroupsPage() {
 
   const handleConfirmDelete = async () => {
     if (!selectedGroup) return;
-    try {
-      await groupService.deleteGroup(selectedGroup.id);
-      alert("그룹이 삭제되었습니다.");
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-    }
+    showConfirm({
+      title: "여행 그룹 삭제",
+      message: "정말 이 그룹을 삭제하시겠습니까?\n관련 데이터가 영구적으로 삭제됩니다.",
+      confirmText: "삭제하기",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await groupService.deleteGroup(selectedGroup.id);
+          showAlert({ 
+            title: "삭제 완료", 
+            message: "그룹이 삭제되었습니다.", 
+            type: "success",
+            onClose: () => window.location.reload()
+          });
+        } catch (err) {
+          console.error(err);
+          showAlert({ title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
+        }
+      }
+    });
   };
 
   const handleConfirmComplete = async () => {
     if (!selectedGroup) return;
-    try {
-      await groupService.updateGroup(selectedGroup.id, { 
-        status: 'completed',
-        description: `${selectedGroup.description} (여행 완료 ✈️)` 
-      });
-      alert("여행 완료 처리되었습니다.");
-      window.location.reload();
-    } catch (err) {
-      console.error(err);
-    }
+    showConfirm({
+      title: "여행 완료 처리",
+      message: "이 여행 그룹을 완료(종료) 처리하시겠습니까?\n그룹 이름에 완료 표시가 추가됩니다.",
+      confirmText: "완료하기",
+      onConfirm: async () => {
+        try {
+          await groupService.updateGroup(selectedGroup.id, { 
+            status: 'completed',
+            description: `${selectedGroup.description} (여행 완료 ✈️)` 
+          });
+          showAlert({ 
+            title: "처리 완료", 
+            message: "여행 완료 처리되었습니다.", 
+            type: "success",
+            onClose: () => window.location.reload()
+          });
+        } catch (err) {
+          console.error(err);
+          showAlert({ title: "오류", message: "처리 중 오류가 발생했습니다.", type: "error" });
+        }
+      }
+    });
   };
 
   const handleConfirmEdit = async () => {
@@ -90,10 +117,16 @@ export default function GroupsPage() {
         startDate: editStartDate || undefined,
         endDate: editEndDate || undefined,
       });
-      alert("그룹 정보가 수정되었습니다.");
-      window.location.reload();
+      setIsEditModalOpen(false);
+      showAlert({ 
+        title: "수정 완료", 
+        message: "그룹 정보가 수정되었습니다.", 
+        type: "success",
+        onClose: () => window.location.reload()
+      });
     } catch (err) {
       console.error(err);
+      showAlert({ title: "오류", message: "수정 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
@@ -131,22 +164,22 @@ export default function GroupsPage() {
                                 setEditDesc(selectedGroup.description || "");
                                 setEditStartDate(selectedGroup.startDate || "");
                                 setEditEndDate(selectedGroup.endDate || "");
-                                setActiveModal("edit");
+                                setIsEditModalOpen(true);
                                 setShowOptions(false);
                               }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-text-main hover:bg-bg-alt border-b border-border-base">
                                 <Settings size={15} /> 정보 수정
                               </button>
                               <button onClick={() => {
-                                setActiveModal("complete");
                                 setShowOptions(false);
+                                handleConfirmComplete();
                               }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-primary hover:bg-primary/5">
                                 <CheckCircle size={15} /> 여행 완료
                               </button>
                             </>
                           )}
                           <button onClick={() => {
-                            setActiveModal("delete");
                             setShowOptions(false);
+                            handleConfirmDelete();
                           }} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-bold text-error hover:bg-error/5">
                             <Trash2 size={15} /> 그룹 삭제
                           </button>
@@ -217,7 +250,6 @@ export default function GroupsPage() {
                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                    {groupPosts.map(post => (
                      <div key={post.id} className="relative">
-                       {/* Wrapped in a scaler to fit 3-col comfortably or just rendered directly */}
                        <PostCard post={post} />
                      </div>
                    ))}
@@ -247,11 +279,16 @@ export default function GroupsPage() {
         />
       )}
 
-      {/* Modals for Group Management */}
-      {activeModal === "edit" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setActiveModal(null)}>
+      {/* Custom Edit Modal remains as it's a form */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setIsEditModalOpen(false)}>
           <div className="w-[90%] max-w-[400px] bg-bg-base rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
-            <h3 className="text-xl font-black text-text-main mb-6">그룹 수정</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-black text-text-main">그룹 수정</h3>
+              <button onClick={() => setIsEditModalOpen(false)} className="p-1 text-text-sub hover:bg-bg-alt rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
             <div className="space-y-4 mb-8">
               <div>
                 <label className="text-xs font-bold text-text-sub mb-1 block">그룹 이름</label>
@@ -273,40 +310,8 @@ export default function GroupsPage() {
               </div>
             </div>
             <div className="flex gap-3">
-              <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-bg-alt text-text-sub font-bold rounded-xl hover:bg-border-base transition">취소</button>
+              <button onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 bg-bg-alt text-text-sub font-bold rounded-xl hover:bg-border-base transition">취소</button>
               <button onClick={handleConfirmEdit} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition">수정하기</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeModal === "complete" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setActiveModal(null)}>
-          <div className="w-[90%] max-w-[360px] bg-bg-base rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 text-center" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle size={32} className="text-success" />
-            </div>
-            <h3 className="text-xl font-black text-text-main mb-2">여행 완료 처리</h3>
-            <p className="text-text-sub text-sm mb-8 leading-relaxed">이 여행 그룹을 완료(종료) 처리하시겠습니까?<br/>그룹 이름에 완료 표시가 추가됩니다.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-bg-alt text-text-sub font-bold rounded-xl hover:bg-border-base transition">취소</button>
-              <button onClick={handleConfirmComplete} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition">완료하기</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {activeModal === "delete" && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setActiveModal(null)}>
-          <div className="w-[90%] max-w-[360px] bg-bg-base rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95 text-center" onClick={e => e.stopPropagation()}>
-            <div className="w-16 h-16 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={32} className="text-error" />
-            </div>
-            <h3 className="text-xl font-black text-text-main mb-2">여행 그룹 삭제</h3>
-            <p className="text-text-sub text-sm mb-8 leading-relaxed">정말 이 그룹을 삭제하시겠습니까?<br/>관련 데이터가 영구적으로 삭제됩니다.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setActiveModal(null)} className="flex-1 py-3 bg-bg-alt text-text-sub font-bold rounded-xl hover:bg-border-base transition">취소</button>
-              <button onClick={handleConfirmDelete} className="flex-1 py-3 bg-error text-white font-bold rounded-xl hover:opacity-90 shadow-lg shadow-error/20 transition">삭제하기</button>
             </div>
           </div>
         </div>

@@ -18,6 +18,7 @@ import {
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
+import { useModalStore } from "@/store/useModalStore";
 import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import { PowerPopup } from "@/components/common/PowerPopup";
@@ -26,6 +27,7 @@ import { Story } from "@/types/story";
 
 export default function ProfilePage() {
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { showConfirm } = useModalStore();
   const router = useRouter();
   const [userPosts, setUserPosts] = useState<Post[]>([]);
   const [likedPosts, setLikedPosts] = useState<Post[]>([]);
@@ -41,7 +43,6 @@ export default function ProfilePage() {
   const [newCountry, setNewCountry] = useState("");
   const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false);
   const [userToUnfollow, setUserToUnfollow] = useState<UserProfile | null>(null);
   const [isAccountSwitcherOpen, setIsAccountSwitcherOpen] = useState(false);
   const [isBookmarkPopupOpen, setIsBookmarkPopupOpen] = useState(false);
@@ -49,7 +50,6 @@ export default function ProfilePage() {
   const [archivedStories, setArchivedStories] = useState<Story[]>([]);
   const [isLoadingStories, setIsLoadingStories] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
-  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [friendsModalTab, setFriendsModalTab] = useState<"all" | "close">("all");
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -172,7 +172,6 @@ export default function ProfilePage() {
     if (!user || !userToUnfollow) return;
     try {
       await userService.unfollowUser(user.uid, userToUnfollow.uid);
-      setIsUnfollowConfirmOpen(false);
       setUserToUnfollow(null);
       // Refresh profiles
       fetchUserProfile();
@@ -281,8 +280,14 @@ export default function ProfilePage() {
 
                 <button 
                   onClick={() => {
-                    setIsLogoutConfirmOpen(true);
                     setIsSettingsOpen(false);
+                    showConfirm({
+                      title: "로그아웃",
+                      message: "정말 로그아웃 하시겠습니까?",
+                      confirmText: "로그아웃",
+                      isDanger: true,
+                      onConfirm: handleLogout
+                    });
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 text-error hover:bg-error/5 transition-colors"
                 >
@@ -604,8 +609,17 @@ export default function ProfilePage() {
                             <button 
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setUserToUnfollow(friend);
-                                setIsUnfollowConfirmOpen(true);
+                                showConfirm({
+                                  title: "팔로우 취소",
+                                  message: `@${friend.nickname}님을 팔로우 취소하시겠습니까?\n취소하면 상대방의 소식을 피드에서 더 이상 받아볼 수 없습니다.`,
+                                  confirmText: "팔로우 취소",
+                                  isDanger: true,
+                                  onConfirm: async () => {
+                                    if (!user) return;
+                                    await userService.unfollowUser(user.uid, friend.uid);
+                                    fetchUserProfile();
+                                  }
+                                });
                               }}
                               className="px-3 py-1.5 bg-bg-alt text-[12px] font-bold rounded-xl text-text-sub hover:bg-border-base transition-colors"
                             >
@@ -632,51 +646,6 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Unfollow Confirmation Modal */}
-      {isUnfollowConfirmOpen && userToUnfollow && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
-          <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="p-8 text-center space-y-4">
-              <div className="relative mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base flex items-center justify-center">
-                <Image 
-                  src={userToUnfollow.avatarUrl || DEFAULT_AVATAR} 
-                  alt="" 
-                  fill
-                  sizes="80px"
-                  className="object-cover" 
-                />
-              </div>
-              <div className="space-y-1">
-                <p className="text-[15px] font-bold text-text-main">
-                  @{userToUnfollow.nickname}님을 팔로우 취소하시겠습니까?
-                </p>
-                <p className="text-[12px] text-text-sub leading-relaxed">
-                  취소하면 상대방의 소식을 피드에서 <br />
-                  더 이상 받아볼 수 없습니다.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col border-t border-border-base divide-y divide-border-base">
-              <button 
-                onClick={handleUnfollow}
-                className="w-full py-4 text-error font-black text-sm hover:bg-error/5 transition-colors"
-              >
-                팔로우 취소
-              </button>
-              <button 
-                onClick={() => {
-                  setIsUnfollowConfirmOpen(false);
-                  setUserToUnfollow(null);
-                }}
-                className="w-full py-4 text-text-main font-bold text-sm hover:bg-border-base transition-colors"
-              >
-                아니요
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Account Switcher Modal */}
       <AccountSwitcher 
         isOpen={isAccountSwitcherOpen} 
@@ -795,42 +764,6 @@ export default function ProfilePage() {
           </div>
         )}
       </PowerPopup>
-      {/* Logout Confirmation Modal */}
-      {isLogoutConfirmOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
-          <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-            <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full bg-error/10 flex items-center justify-center text-error">
-                <LogOut size={40} />
-              </div>
-              <div className="space-y-1">
-                <p className="text-[15px] font-bold text-text-main">
-                  로그아웃 하시겠습니까?
-                </p>
-                <p className="text-[12px] text-text-sub leading-relaxed">
-                  로그아웃하면 다시 로그인할 때까지 <br />
-                  서비스 이용이 제한됩니다.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-col border-t border-border-base divide-y divide-border-base">
-              <button 
-                onClick={handleLogout}
-                className="w-full py-4 text-error font-black text-sm hover:bg-error/5 transition-colors"
-              >
-                로그아웃
-              </button>
-              <button 
-                onClick={() => setIsLogoutConfirmOpen(false)}
-                className="w-full py-4 text-text-main font-bold text-sm hover:bg-bg-alt transition-colors"
-              >
-                취소
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -34,7 +34,7 @@ import { Group } from "@/types/group";
 import { useAuth } from "@/core/hooks/useAuth";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import { cn } from "@/lib/utils";
-import { ConfirmModal, AlertModal } from "@/components/common/UIModals";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 // Mock Messages Extended
@@ -48,6 +48,7 @@ export default function ChatRoomPage() {
   const otherId = searchParams.get("userId") || "";
 
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { showAlert, showConfirm } = useModalStore();
   const currentUserId = user?.uid || "";
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -65,8 +66,6 @@ export default function ChatRoomPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
   const [selectedNewOwner, setSelectedNewOwner] = useState<string>("");
-  const [confirmConfig, setConfirmConfig] = useState<any>({ isOpen: false });
-  const [alertConfig, setAlertConfig] = useState<any>({ isOpen: false });
 
   // Advanced Features State
   const [replyingTo, setReplyingTo] = useState<Message | null>(null);
@@ -232,10 +231,15 @@ export default function ChatRoomPage() {
 
   const handleDeleteMessage = async (msgId: string) => {
     if (!roomId) return;
-    if (confirm("메시지를 삭제하시겠습니까?")) {
-      await messageService.deleteMessage(roomId, msgId);
-      setActiveMenuMessageId(null);
-    }
+    showConfirm({
+      title: "메시지 삭제",
+      message: "메시지를 삭제하시겠습니까?",
+      isDanger: true,
+      onConfirm: async () => {
+        await messageService.deleteMessage(roomId, msgId);
+        setActiveMenuMessageId(null);
+      }
+    });
   };
 
   const startEditMessage = (msg: Message) => {
@@ -282,7 +286,7 @@ export default function ChatRoomPage() {
       }
 
       if (!finalGroupId) {
-        alert("정산 그룹을 선택하거나 새로 만들어주세요.");
+        showAlert({ title: "안내", message: "정산 그룹을 선택하거나 새로 만들어주세요.", type: "info" });
         return;
       }
 
@@ -341,10 +345,10 @@ export default function ChatRoomPage() {
         msg.settlementData.amountToPay
       );
 
-      alert("정산 완료됐습니다.");
+      showAlert({ title: "성공", message: "정산 완료됐습니다.", type: "success" });
     } catch (error) {
       console.error("Failed to settle money:", error);
-      alert("처리 중 오류가 발생했습니다.");
+      showAlert({ title: "오류", message: "처리 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
@@ -380,10 +384,10 @@ export default function ChatRoomPage() {
 
       setRoomData(prev => prev ? { ...prev, ...updateData } : null);
       setIsGroupProfileModalOpen(false);
-      setAlertConfig({ isOpen: true, title: "성공", message: "그룹 정보가 수정되었습니다.", type: "success" });
+      showAlert({ title: "성공", message: "그룹 정보가 수정되었습니다.", type: "success" });
     } catch (error) {
       console.error("Failed to update group profile:", error);
-      setAlertConfig({ isOpen: true, title: "오류", message: "수정 중 오류가 발생했습니다.", type: "error" });
+      showAlert({ title: "오류", message: "수정 중 오류가 발생했습니다.", type: "error" });
     } finally {
       setIsUpdatingRoom(false);
     }
@@ -393,24 +397,22 @@ export default function ChatRoomPage() {
     if (!roomId) return;
     try {
       await groupService.deleteGroup(roomId);
-      setAlertConfig({ 
-        isOpen: true, title: "성공", message: "정산 그룹이 삭제되었습니다.", type: "success", 
+      showAlert({ 
+        title: "성공", message: "정산 그룹이 삭제되었습니다.", type: "success", 
         onClose: () => { window.location.href = "/messages"; } 
       });
     } catch (e) {
       console.error("Delete failed:", e);
-      setAlertConfig({ isOpen: true, title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
+      showAlert({ title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
   const handleDeleteGroup = () => {
-    setConfirmConfig({
-      isOpen: true,
+    showConfirm({
       title: "그룹 삭제하기",
       message: "정말 이 정산 그룹을 삭제하시겠습니까?\n채팅방과 정산 내역이 모두 완전히 삭제됩니다.",
       isDanger: true,
       confirmText: "삭제하기",
-      onClose: () => setConfirmConfig({ isOpen: false }),
       onConfirm: executeDeleteGroup
     });
   };
@@ -421,42 +423,38 @@ export default function ChatRoomPage() {
     // Check if user is the admin
     if (groupData.ownerId === currentUserId) {
       if (groupData.members?.length > 1) {
-        setAlertConfig({ isOpen: true, title: "안내", message: "이 그룹의 관리자이시군요!\n그룹을 나가려면 먼저 다른 멤버에게 관리자 권한을 위임해야 합니다.", type: "info" });
+        showAlert({ title: "안내", message: "이 그룹의 관리자이시군요!\n그룹을 나가려면 먼저 다른 멤버에게 관리자 권한을 위임해야 합니다.", type: "info" });
         setIsMenuOpen(false);
         setIsTransferModalOpen(true);
         return;
       } else {
         // Only member left is admin
-        setConfirmConfig({
-          isOpen: true,
+        showConfirm({
           title: "그룹 파기",
           message: "혼자 남은 그룹입니다.\n나가시면 해당 그룹은 완전히 삭제됩니다.\n그래도 진행하시겠습니까?",
           isDanger: true,
           confirmText: "삭제 후 나가기",
-          onClose: () => setConfirmConfig({ isOpen: false }),
           onConfirm: executeDeleteGroup
         });
         return;
       }
     }
 
-    setConfirmConfig({
-      isOpen: true,
+    showConfirm({
       title: "그룹 나가기",
       message: "정말 이 정산 그룹에서 나가시겠습니까?\n향후 여기의 정산 내역 및 알림을 받을 수 없습니다.",
       isDanger: true,
       confirmText: "나가기",
-      onClose: () => setConfirmConfig({ isOpen: false }),
       onConfirm: async () => {
         try {
           await groupService.leaveGroup(roomId, currentUserId);
-          setAlertConfig({ 
-            isOpen: true, title: "성공", message: "정상적으로 그룹에서 나갔습니다.", type: "success",
+          showAlert({ 
+            title: "성공", message: "정상적으로 그룹에서 나갔습니다.", type: "success",
             onClose: () => router.push("/messages")
           });
         } catch (e) {
           console.error(e);
-          setAlertConfig({ isOpen: true, title: "오류", message: "요청 처리 중 오류가 발생했습니다.", type: "error" });
+          showAlert({ title: "오류", message: "요청 처리 중 오류가 발생했습니다.", type: "error" });
         }
       }
     });
@@ -468,13 +466,13 @@ export default function ChatRoomPage() {
       await groupService.transferGroupOwner(roomId, selectedNewOwner);
       // Immediately leave group after transfer
       await groupService.leaveGroup(roomId, currentUserId);
-      setAlertConfig({ 
-        isOpen: true, title: "성공", message: "관리자 권한을 성공적으로 위임하고 그룹에서 나갔습니다.", type: "success",
+      showAlert({ 
+        title: "성공", message: "관리자 권한을 성공적으로 위임하고 그룹에서 나갔습니다.", type: "success",
         onClose: () => router.push("/messages")
       });
     } catch (e) {
       console.error(e);
-      setAlertConfig({ isOpen: true, title: "오류", message: "권한 위임 및 나가기 중 오류가 발생했습니다.", type: "error" });
+      showAlert({ title: "오류", message: "권한 위임 및 나가기 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
@@ -619,20 +617,18 @@ export default function ChatRoomPage() {
                     onClick={(e) => {
                       e.stopPropagation();
                       setIsMenuOpen(false);
-                      setConfirmConfig({
-                        isOpen: true,
+                      showConfirm({
                         title: "대화 삭제",
                         message: "정말 이 대화방을 삭제하시겠습니까?\n삭제된 대화는 복구할 수 없습니다.",
                         isDanger: true,
                         confirmText: "삭제하기",
-                        onClose: () => setConfirmConfig({ isOpen: false }),
                         onConfirm: async () => {
                           try {
                             await messageService.deleteRoom(roomId);
                             router.push("/messages");
                           } catch (e) {
                             console.error(e);
-                            alert("삭제 중 오류가 발생했습니다.");
+                            showAlert({ title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
                           }
                         }
                       });
@@ -1156,21 +1152,6 @@ export default function ChatRoomPage() {
       )}
     </div>
 
-      {/* Shared Modals */}
-      <ConfirmModal 
-        {...confirmConfig} 
-        onClose={() => {
-          if (confirmConfig.onClose) confirmConfig.onClose();
-          setConfirmConfig((prev: any) => ({ ...prev, isOpen: false }));
-        }} 
-      />
-      <AlertModal 
-        {...alertConfig} 
-        onClose={() => {
-          if (alertConfig.onClose) alertConfig.onClose();
-          setAlertConfig((prev: any) => ({ ...prev, isOpen: false }));
-        }} 
-      />
 
       {/* Manager Transfer Modal */}
       {isTransferModalOpen && (

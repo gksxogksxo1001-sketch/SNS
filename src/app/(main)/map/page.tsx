@@ -9,6 +9,7 @@ import { Post } from "@/types/post";
 import { useAuth } from "@/core/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { useModalStore } from "@/store/useModalStore";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
@@ -61,6 +62,7 @@ function MapPageContent() {
   const targetLat = searchParams.get('lat');
   const targetLng = searchParams.get('lng');
   const targetName = searchParams.get('name');
+  const { showAlert } = useModalStore();
 
   const isSingleView = !!(targetLat && targetLng);
   const singlePlace = isSingleView ? {
@@ -131,13 +133,17 @@ function MapPageContent() {
 
   const handleCenterLocation = () => {
     if (!navigator.geolocation) {
-      alert("지오로케이션을 지원하지 않는 브라우저입니다.");
+      showAlert({ title: "오류", message: "지오로케이션을 지원하지 않는 브라우저입니다.", type: "error" });
       return;
     }
 
     // IP 주소 접속 시 경고 (Chrome 등 최신 브라우저 제약)
     if (window.location.hostname !== 'localhost' && window.location.protocol !== 'https:') {
-      alert("보안 정책상 'localhost' 또는 'https://' 주소에서만 위치 정보를 가져올 수 있습니다. 주소를 확인해 주세요!");
+      showAlert({ 
+        title: "보안 알림", 
+        message: "보안 정책상 'localhost' 또는 'https://' 주소에서만 위치 정보를 가져올 수 있습니다. 주소를 확인해 주세요!",
+        type: "warning"
+      });
     }
 
     navigator.geolocation.getCurrentPosition(
@@ -154,7 +160,7 @@ function MapPageContent() {
         let message = "위치 정보를 가져올 수 없습니다.";
         if (error.code === 1) message = "위치 정보 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해 주세요.";
         else if (error.code === 3) message = "위치 측정 시간이 초과되었습니다. 다시 시도해 주세요.";
-        alert(message);
+        showAlert({ title: "위치 오류", message, type: "error" });
       },
       {
         enableHighAccuracy: true,

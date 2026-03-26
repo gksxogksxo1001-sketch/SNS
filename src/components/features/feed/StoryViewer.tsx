@@ -11,6 +11,8 @@ import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
 import Image from "next/image";
 
+import { useModalStore } from "@/store/useModalStore";
+
 interface StoryViewerProps {
   groups: UserStoryGroup[];
   initialGroupIndex: number;
@@ -19,6 +21,7 @@ interface StoryViewerProps {
 }
 
 export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: StoryViewerProps) => {
+  const { showAlert, showConfirm } = useModalStore();
   const [currentGroupIndex, setCurrentGroupIndex] = useState(initialGroupIndex);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [commentText, setCommentText] = useState("");
@@ -129,36 +132,43 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
     try {
       await storyService.replyToStory(currentStory, currentUserId, commentText);
       setCommentText("");
-      alert("답장이 전송되었습니다!");
+      showAlert({ title: "답장 완료", message: "답장이 전송되었습니다!", type: "success" });
     } catch (error) {
       console.error("Reply failed:", error);
+      showAlert({ title: "오류", message: "답장 전송에 실패했습니다.", type: "error" });
     }
   };
 
   const handleDeleteStory = async () => {
     if (!currentStory || !isMe) return;
-    if (!confirm("이 스토리를 삭제하시겠습니까?")) return;
-
-    setIsLoading(true);
+    
     stopTimer();
-    try {
-      await storyService.deleteStory(currentStory.id, currentStory.mediaUrl);
-      
-      // Refresh parent data
-      if (onRefresh) onRefresh();
-
-      if (currentGroup.stories.length > 1) {
-        handleNext();
-      } else {
-        onClose();
+    showConfirm({
+      title: "스토리 삭제",
+      message: "이 스토리를 삭제하시겠습니까?",
+      isDanger: true,
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          await storyService.deleteStory(currentStory.id, currentStory.mediaUrl);
+          if (onRefresh) onRefresh();
+          if (currentGroup.stories.length > 1) {
+            handleNext();
+          } else {
+            onClose();
+          }
+        } catch (error) {
+          console.error("Delete failed:", error);
+          showAlert({ title: "오류", message: "삭제에 실패했습니다.", type: "error" });
+          startTimer();
+        } finally {
+          setIsLoading(false);
+        }
+      },
+      onCancel: () => {
+        startTimer();
       }
-    } catch (error) {
-      console.error("Delete failed:", error);
-      alert("삭제에 실패했습니다.");
-      startTimer();
-    } finally {
-      setIsLoading(false);
-    }
+    });
   };
 
   if (!currentGroup || !currentStory) return null;

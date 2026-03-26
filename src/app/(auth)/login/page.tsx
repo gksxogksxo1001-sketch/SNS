@@ -7,9 +7,11 @@ import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Chrome, MessageCircle, MapPin, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
+import { useModalStore } from "@/store/useModalStore";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { showAlert } = useModalStore();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -106,14 +108,14 @@ export default function LoginPage() {
           <div className="flex justify-center space-x-6 pt-2">
             <button 
               type="button"
-              onClick={() => alert("카카오 로그인은 준비 중입니다.")}
+              onClick={() => showAlert({ title: "준비 중", message: "카카오 로그인은 준비 중입니다." })}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FEE500] text-[#3c1e1e] hover:opacity-90"
             >
               <MessageCircle size={24} fill="currentColor" />
             </button>
             <button 
               type="button"
-              onClick={() => alert("네이버 로그인은 준비 중입니다.")}
+              onClick={() => showAlert({ title: "준비 중", message: "네이버 로그인은 준비 중입니다." })}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-[#03C75A] text-white hover:opacity-90"
             >
               <span className="text-xl font-bold">N</span>

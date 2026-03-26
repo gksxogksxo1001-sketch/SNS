@@ -19,6 +19,8 @@ import { userService } from "@/core/firebase/userService";
 import { UserProfile } from "@/types/user";
 import { messageService } from "@/core/firebase/messageService";
 
+import { useModalStore } from "@/store/useModalStore";
+
 interface PostCardProps {
   post: Post;
   priority?: boolean;
@@ -27,6 +29,8 @@ interface PostCardProps {
 export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) => {
   const router = useRouter();
   const { user } = useAuth();
+  const { showAlert, showConfirm } = useModalStore();
+  
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes || 0);
   const [showComments, setShowComments] = useState(false);
@@ -44,6 +48,11 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
+
+  // Slider state
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -108,10 +117,10 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
       await postService.addComment(post.id, commentData);
       setNewComment("");
       setCommentCount(prev => prev + 1);
-      fetchComments(); // Re-fetch comments to include the new one
+      fetchComments();
     } catch (error) {
       console.error("Failed to add comment:", error);
-      alert("댓글 추가에 실패했습니다.");
+      showAlert({ title: "오류", message: "댓글 추가에 실패했습니다.", type: "error" });
     } finally {
       setIsSubmittingComment(false);
     }
@@ -119,11 +128,10 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
 
   const handleLikeToggle = async () => {
     if (!user) {
-      alert("좋아요를 누르려면 로그인이 필요합니다.");
+      showAlert({ title: "로그인 필요", message: "좋아요를 누르려면 로그인이 필요합니다.", type: "info" });
       return;
     }
 
-    // Optimistic Update
     const newIsLiked = !isLiked;
     setIsLiked(newIsLiked);
     setLikeCount(prev => newIsLiked ? prev + 1 : prev - 1);
@@ -133,7 +141,6 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
       }
     } catch (error) {
       console.error("Failed to toggle like:", error);
-      // Rollback on failure
       setIsLiked(!newIsLiked);
       setLikeCount(prev => !newIsLiked ? prev + 1 : prev - 1);
     }
@@ -141,11 +148,10 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
   
   const handleBookmarkToggle = async () => {
     if (!user) {
-      alert("게시물을 저장하려면 로그인이 필요합니다.");
+      showAlert({ title: "로그인 필요", message: "게시물을 저장하려면 로그인이 필요합니다.", type: "info" });
       return;
     }
 
-    // Optimistic Update
     const newIsBookmarked = !isBookmarked;
     setIsBookmarked(newIsBookmarked);
 
@@ -155,14 +161,13 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
       }
     } catch (error) {
       console.error("Failed to toggle bookmark:", error);
-      // Rollback on failure
       setIsBookmarked(!newIsBookmarked);
     }
   };
 
   const handleShareClick = () => {
     if (!user) {
-      alert("게시물을 공유하려면 로그인이 필요합니다.");
+      showAlert({ title: "로그인 필요", message: "게시물을 공유하려면 로그인이 필요합니다.", type: "info" });
       return;
     }
     setIsSharePopupOpen(true);
@@ -189,13 +194,53 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
           authorName: post.user.name
         }
       );
-      alert(`${friend.nickname}님에게 게시물을 공유했습니다.`);
+      showAlert({ title: "공유 성공", message: `${friend.nickname}님에게 게시물을 공유했습니다.`, type: "success" });
       setIsSharePopupOpen(false);
     } catch (error) {
       console.error("Failed to share post:", error);
-      alert("게시물 공유에 실패했습니다.");
+      showAlert({ title: "오류", message: "게시물 공유에 실패했습니다.", type: "error" });
     } finally {
       setSharingTo(null);
+    }
+  };
+
+  // Slider handlers
+  const minSwipeDistance = 50;
+
+  const onTouchStartSlider = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMoveSlider = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEndSlider = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+    
+    if (isLeftSwipe && currentSlide < (post.images?.length || 0) - 1) {
+      setCurrentSlide(prev => prev + 1);
+    }
+    if (isRightSwipe && currentSlide > 0) {
+      setCurrentSlide(prev => prev - 1);
+    }
+  };
+
+  const nextSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentSlide < (post.images?.length || 0) - 1) {
+      setCurrentSlide(prev => prev + 1);
+    }
+  };
+
+  const prevSlide = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (currentSlide > 0) {
+      setCurrentSlide(prev => prev - 1);
     }
   };
 
@@ -239,10 +284,13 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
       }
     } catch (error: any) {
       console.error("Failed to delete post:", error);
-      alert("게시물 삭제에 실패했습니다.\n" + (error.message || error));
+      showAlert({ 
+        title: "삭제 실패", 
+        message: "게시물 삭제 중에 오류가 발생했습니다.\n" + (error.message || ""),
+        type: "error"
+      });
     } finally {
       setIsDeleting(false);
-      setShowDeleteConfirm(false);
     }
   };
 
@@ -328,7 +376,17 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
                       수정하기
                     </button>
                     <button 
-                      onClick={handleDeleteClick} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowMenu(false);
+                        showConfirm({
+                          title: "게시물을 삭제할까요?",
+                          message: "이 작업은 되돌릴 수 없으며,\n피드에서 영구적으로 사라집니다.",
+                          isDanger: true,
+                          confirmText: "삭제하기",
+                          onConfirm: executeDelete
+                        });
+                      }} 
                       className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-error hover:bg-error/5 transition-colors"
                     >
                       <Trash2 size={15} className="mr-2" /> 
@@ -338,7 +396,7 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
                 ) : (
                   <>
                     <button 
-                      onClick={() => { setShowMenu(false); alert("개발 중인 기능입니다."); }} 
+                      onClick={() => { setShowMenu(false); showAlert({ title: "안내", message: "개발 중인 기능입니다." }); }} 
                       className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-text-main hover:bg-bg-alt transition-colors"
                     >
                       <EyeOff size={15} className="mr-2 text-text-sub" /> 
@@ -369,25 +427,81 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
         </p>
       </div>
 
-      {/* Image Area */}
+      {/* Image Area with Slider */}
       {post.images && post.images.length > 0 && (
-        <div 
-          className="relative aspect-[4/3] w-full px-4 py-2 cursor-pointer group"
-          onClick={() => setLightboxIndex(0)}
-        >
-          <div className="relative h-full w-full overflow-hidden rounded-2xl bg-bg-alt">
-            <Image 
-              src={post.images[0]} 
-              alt="Post" 
-              fill
-              priority={priority}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-300" 
-            />
+        <div className="relative w-full px-4 py-2 group select-none">
+          <div 
+            className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl bg-bg-alt"
+            onTouchStart={onTouchStartSlider}
+            onTouchMove={onTouchMoveSlider}
+            onTouchEnd={onTouchEndSlider}
+          >
+            {/* Images Wrapper */}
+            <div 
+              className="flex h-full w-full transition-transform duration-500 ease-out"
+              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+            >
+              {post.images.map((img, idx) => (
+                <div 
+                  key={idx} 
+                  className="relative h-full w-full flex-shrink-0 cursor-pointer"
+                  onClick={() => setLightboxIndex(idx)}
+                >
+                  <Image 
+                    src={img} 
+                    alt={`Post Image ${idx + 1}`} 
+                    fill
+                    priority={priority && idx === 0}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover" 
+                    draggable={false}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Navigation Arrows (Desktop) */}
+            {post.images.length > 1 && (
+              <>
+                {currentSlide > 0 && (
+                  <button 
+                    onClick={prevSlide}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/20 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40 z-10"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                )}
+                {currentSlide < post.images.length - 1 && (
+                  <button 
+                    onClick={nextSlide}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/20 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all hover:bg-black/40 z-10"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Badge Indicator (Top Right) */}
+            {post.images.length > 1 && (
+              <div className="absolute right-4 top-4 rounded-full bg-black/40 px-2.5 py-1 text-[10px] font-bold text-white backdrop-blur-md z-10">
+                {currentSlide + 1} / {post.images.length}
+              </div>
+            )}
           </div>
+
+          {/* Dots Indicator (Bottom) */}
           {post.images.length > 1 && (
-            <div className="absolute right-6 top-4 rounded-full bg-black/50 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
-              +{post.images.length - 1}
+            <div className="flex justify-center space-x-1.5 mt-3">
+              {post.images.map((_, idx) => (
+                <div 
+                  key={idx}
+                  className={cn(
+                    "h-1.5 rounded-full transition-all duration-300",
+                    currentSlide === idx ? "w-4 bg-primary" : "w-1.5 bg-border-base"
+                  )}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -560,7 +674,7 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
             ) : (
               <div className="text-center py-2 px-4 bg-bg-alt rounded-xl">
                 <p className="text-xs text-text-sub">
-                  댓글을 달려면 <button onClick={() => alert("로그인이 필요합니다.")} className="text-primary font-bold">로그인</button>이 필요합니다.
+                  댓글을 달려면 <button onClick={() => showAlert({ title: "안내", message: "로그인이 필요합니다.", type: "info" })} className="text-primary font-bold">로그인</button>이 필요합니다.
                 </p>
               </div>
             )}
@@ -674,37 +788,6 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
           )}
         </div>
       </PowerPopup>
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-bg-base w-full max-w-[320px] rounded-[28px] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e74c3c]/10 mb-4">
-              <Trash2 size={24} className="text-[#e74c3c]" />
-            </div>
-            <h3 className="text-center text-lg font-black text-text-main mb-2">게시물을 삭제할까요?</h3>
-            <p className="text-center text-[13px] text-text-sub mb-6 leading-relaxed">
-              이 작업은 되돌릴 수 없으며,<br />피드에서 영구적으로 사라집니다.
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                disabled={isDeleting}
-                className="flex-1 rounded-2xl bg-bg-alt py-3.5 text-[14px] font-bold text-text-main transition-colors hover:bg-border-base/50 disabled:opacity-50"
-              >
-                취소
-              </button>
-              <button
-                onClick={executeDelete}
-                disabled={isDeleting}
-                className="flex-1 rounded-2xl bg-error py-3.5 text-[14px] font-bold text-white transition-all hover:bg-error/80 hover:shadow-lg hover:shadow-error/30 disabled:opacity-50 flex items-center justify-center"
-              >
-                {isDeleting ? <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></span> : "삭제하기"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 });

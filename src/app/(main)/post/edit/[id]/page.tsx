@@ -11,6 +11,7 @@ import { useAuth } from "@/core/hooks/useAuth";
 import { groupService } from "@/core/firebase/groupService";
 import { Group } from "@/types/group";
 import { cn } from "@/lib/utils";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
@@ -124,6 +125,7 @@ function LocationSearchModal({
 
 export default function EditPostPage() {
   const router = useRouter();
+  const { showAlert } = useModalStore();
   const params = useParams();
   const postId = params.id as string;
   
@@ -168,7 +170,7 @@ export default function EditPostPage() {
         const post = await postService.getPostById(postId);
         if (post) {
           if (post.user.uid !== currentUser.uid) {
-            alert("수정 권한이 없습니다.");
+            showAlert({ title: "권한 없음", message: "수정 권한이 없습니다.", type: "error" });
             router.push("/feed");
             return;
           }
@@ -190,12 +192,12 @@ export default function EditPostPage() {
           setVisibility(post.visibility as any || "public");
           if (post.groupId) setSelectedGroupId(post.groupId);
         } else {
-          alert("게시물을 찾을 수 없습니다.");
+          showAlert({ title: "안내", message: "게시물을 찾을 수 없습니다.", type: "warning" });
           router.push("/feed");
         }
       } catch (error) {
         console.error("Failed to fetch post", error);
-        alert("게시물 정보를 불러오는데 실패했습니다.");
+        showAlert({ title: "오류", message: "게시물 정보를 불러오는데 실패했습니다.", type: "error" });
       } finally {
         setIsFetching(false);
       }
@@ -305,11 +307,19 @@ export default function EditPostPage() {
       });
 
       images.filter(img => !img.isExisting).forEach(img => URL.revokeObjectURL(img.preview));
-      alert("게시물이 성공적으로 수정되었습니다! 🎉");
-      router.push("/feed");
+      showAlert({ 
+        title: "성공", 
+        message: "게시물이 성공적으로 수정되었습니다! 🎉", 
+        type: "success",
+        onClose: () => router.push("/feed")
+      });
     } catch (error: any) {
       console.error("[EditPost] Update Error:", error);
-      alert(error.message || "게시물 수정에 실패했습니다. 다시 시도해 주세요.");
+      showAlert({ 
+        title: "오류", 
+        message: error.message || "게시물 수정에 실패했습니다. 다시 시도해 주세요.", 
+        type: "error" 
+      });
     } finally {
       setIsSubmitting(false);
     }

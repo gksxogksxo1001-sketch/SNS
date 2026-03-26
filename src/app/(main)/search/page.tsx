@@ -9,11 +9,13 @@ import { Post } from "@/types/post";
 import { ArrowLeft, Search as SearchIcon, UserPlus, Check, Loader2, User as UserDefaultIcon, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { postService } from "@/core/firebase/postService";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 export default function SearchPage() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const { showAlert } = useModalStore();
   const [searchTerm, setSearchTerm] = useState("");
   const [userResults, setUserResults] = useState<UserProfile[]>([]);
   const [postResults, setPostResults] = useState<Post[]>([]);
@@ -44,7 +46,7 @@ export default function SearchPage() {
     if (!currentUser) return;
     try {
       await userService.sendFriendRequest(currentUser.uid, targetUid);
-      alert("친구 요청을 보냈습니다.");
+      showAlert({ title: "성공", message: "친구 요청을 보냈습니다.", type: "success" });
     } catch (err) {
       console.error(err);
     }

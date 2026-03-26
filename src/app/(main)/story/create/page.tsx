@@ -5,10 +5,12 @@ import { ChevronLeft, Camera, Image as ImageIcon, Send, X, Loader2, Globe, Users
 import { useRouter } from "next/navigation";
 import { auth } from "@/core/firebase/config";
 import { storyService } from "@/core/firebase/storyService";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 export default function StoryCreatePage() {
   const router = useRouter();
+  const { showAlert } = useModalStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export default function StoryCreatePage() {
       router.push("/feed");
     } catch (error) {
       console.error("Story upload failed:", error);
-      alert("스토리 업로드에 실패했습니다.");
+      showAlert({ title: "오류", message: "스토리 업로드에 실패했습니다.", type: "error" });
     } finally {
       setIsUploading(false);
     }

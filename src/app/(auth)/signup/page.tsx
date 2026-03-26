@@ -9,10 +9,11 @@ import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
 import { cn } from "@/lib/utils";
 import { WelcomeView } from "@/components/auth/WelcomeView";
-import { CheckCircle2 } from "lucide-react";
+import { useModalStore } from "@/store/useModalStore";
 
 export default function SignupPage() {
   const router = useRouter();
+  const { showAlert } = useModalStore();
   const [email, setEmail] = useState("");
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
@@ -146,7 +147,7 @@ export default function SignupPage() {
       }, 3000);
     } catch (err: any) {
       // General signup error (e.g., Firebase error)
-      alert(`가입 중 오류가 발생했습니다: ${err.message}`);
+      showAlert({ title: "가입 오류", message: `가입 중 오류가 발생했습니다: ${err.message}`, type: "error" });
     } finally {
       setIsLoading(false);
     }

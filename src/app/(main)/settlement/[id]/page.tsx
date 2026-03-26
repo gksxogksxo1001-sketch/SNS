@@ -12,7 +12,7 @@ import { notificationService } from "@/core/firebase/notificationService";
 import { UserProfile } from "@/types/user";
 import { Group } from "@/types/group";
 import { useAuth } from "@/core/hooks/useAuth";
-import { ConfirmModal, AlertModal } from "@/components/common/UIModals";
+import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
 export default function SettlementDetailPage() {
@@ -20,6 +20,7 @@ export default function SettlementDetailPage() {
   const groupId = params?.id as string;
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const { showAlert, showConfirm } = useModalStore();
 
   const [currentGroup, setCurrentGroup] = useState<Group | null>(null);
   const [settlementData, setSettlementData] = useState<any>(null);
@@ -29,8 +30,6 @@ export default function SettlementDetailPage() {
   const [myDebts, setMyDebts] = useState<any[]>([]);
   const [openExpenseMenuId, setOpenExpenseMenuId] = useState<string | null>(null);
 
-  const [confirmConfig, setConfirmConfig] = useState<any>({ isOpen: false });
-  const [alertConfig, setAlertConfig] = useState<any>({ isOpen: false });
 
   // For explanation modal
   const menuRef = React.useRef<HTMLDivElement>(null);
@@ -158,10 +157,10 @@ export default function SettlementDetailPage() {
       setNewTitle("");
       setNewAmount("");
       setIsAddingExpense(false);
-      setAlertConfig({ isOpen: true, title: "성공", message: "지출 내역이 성공적으로 등록되었습니다.", type: "success" });
+      showAlert({ title: "성공", message: "지출 내역이 성공적으로 등록되었습니다.", type: "success" });
     } catch (error) {
       console.error(error);
-      setAlertConfig({ isOpen: true, title: "오류", message: "등록 중 오류가 발생했습니다.", type: "error" });
+      showAlert({ title: "오류", message: "등록 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
@@ -171,10 +170,10 @@ export default function SettlementDetailPage() {
     try {
       await groupService.updateGroup(groupId, { settlementStatus: 'completed' });
       setCurrentGroup(prev => prev ? { ...prev, settlementStatus: 'completed' } : null);
-      setAlertConfig({ isOpen: true, title: "완료", message: "정산이 모두 완료 처리되었습니다.", type: "success" });
+      showAlert({ title: "완료", message: "정산이 모두 완료 처리되었습니다.", type: "success" });
     } catch (e) {
       console.error("Complete failed:", e);
-      setAlertConfig({ isOpen: true, title: "오류", message: "처리 중 오류가 발생했습니다: " + (e as any).message, type: "error" });
+      showAlert({ title: "오류", message: "처리 중 오류가 발생했습니다: " + (e as any).message, type: "error" });
     }
   };
 
@@ -198,10 +197,10 @@ export default function SettlementDetailPage() {
         );
       }
 
-      setAlertConfig({ isOpen: true, title: "정산 확인", message: "해당 정산 건이 완료되었습니다.", type: "success" });
+      showAlert({ title: "정산 확인", message: "해당 정산 건이 완료되었습니다.", type: "success" });
     } catch (e) {
       console.error("Settle split failed:", e);
-      setAlertConfig({ isOpen: true, title: "오류", message: "정산 도중 오류가 발생했습니다.", type: "error" });
+      showAlert({ title: "오류", message: "정산 도중 오류가 발생했습니다.", type: "error" });
     }
   };
 
@@ -216,21 +215,19 @@ export default function SettlementDetailPage() {
       const settlement = await settlementService.calculateGroupSettlement(groupId);
       setSettlementData(settlement);
       setOpenExpenseMenuId(null);
-      setAlertConfig({ isOpen: true, title: "삭제 완료", message: "지출 내역이 성공적으로 삭제되었습니다.", type: "success" });
+      showAlert({ title: "삭제 완료", message: "지출 내역이 성공적으로 삭제되었습니다.", type: "success" });
     } catch (e) {
       console.error("Delete failed:", e);
-      setAlertConfig({ isOpen: true, title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
+      showAlert({ title: "오류", message: "삭제 중 오류가 발생했습니다.", type: "error" });
     }
   };
 
   const handleDeleteExpense = (id: string, type: 'post' | 'direct') => {
-    setConfirmConfig({
-      isOpen: true,
+    showConfirm({
       title: "지출 내역 삭제",
       message: "이 지출 내역을 정말 삭제하시겠습니까?",
       isDanger: true,
       confirmText: "삭제하기",
-      onClose: () => setConfirmConfig({ isOpen: false }),
       onConfirm: () => executeDeleteExpense(id, type)
     });
   };
@@ -240,16 +237,14 @@ export default function SettlementDetailPage() {
 
     const myCredits = splits.filter((s: any) => s.toUserId === currentUser.uid);
     if (myCredits.length === 0) {
-      setAlertConfig({ isOpen: true, title: "안내", message: "요청할 정산 내역이 없습니다.", type: "info" });
+      showAlert({ title: "안내", message: "요청할 정산 내역이 없습니다.", type: "info" });
       return;
     }
 
-    setConfirmConfig({
-      isOpen: true,
+    showConfirm({
       title: "정산 요청 일괄 전송",
       message: `${myCredits.length}명에게 정산 요청 알림(메시지)을 일괄로 보내시겠습니까?`,
       confirmText: "전송하기",
-      onClose: () => setConfirmConfig({ isOpen: false }),
       onConfirm: executeRequestAllSettlements
     });
   };
@@ -292,7 +287,7 @@ export default function SettlementDetailPage() {
           console.error(`Failed to request from ${split.fromUserId}:`, err);
         }
       }
-      setAlertConfig({ isOpen: true, title: "성공", message: "모든 정산 요청 알림을 보냈습니다.", type: "success" });
+      showAlert({ title: "성공", message: "모든 정산 요청 알림을 보냈습니다.", type: "success" });
     } finally {
       setIsLoading(false);
     }
@@ -325,12 +320,10 @@ export default function SettlementDetailPage() {
                     currentGroup?.ownerId === currentUser?.uid && (
                       <button
                         onClick={() => {
-                          setConfirmConfig({
-                            isOpen: true,
+                          showConfirm({
                             title: "정산 마감",
                             message: "모든 정산이 완료되었습니까?\n그룹 상태를 완전히 '정산 완료'로 변경합니다.",
                             confirmText: "마감하기",
-                            onClose: () => setConfirmConfig({ isOpen: false }),
                             onConfirm: handleCompleteSettlement
                           });
                         }}
@@ -400,12 +393,10 @@ export default function SettlementDetailPage() {
                   {currentGroup?.settlementStatus !== "completed" && splits.some((s: any) => s.toUserId === currentUser?.uid) && (
                     <button 
                   onClick={() => {
-                    setConfirmConfig({
-                      isOpen: true,
+                    showConfirm({
                       title: "전체 정산 요청",
                       message: "받을 돈이 있는 모든 멤버에게 그룹 알림으로 정산 요청을 보내시겠습니까?",
                       confirmText: "요청하기",
-                      onClose: () => setConfirmConfig({ isOpen: false }),
                       onConfirm: async () => {
                         try {
                           const myCredits = splits.filter((s: any) => s.toUserId === currentUser?.uid);
@@ -424,13 +415,13 @@ export default function SettlementDetailPage() {
                             groupService.updateSplitState(currentGroup!.id, r.uid, currentUser!.uid, 'requested')
                           ));
 
-                          setAlertConfig({ 
-                            isOpen: true, title: "요청 완료", message: "모두에게 정산 요청 알림을 보냈습니다.", type: "success",
+                          showAlert({ 
+                            title: "요청 완료", message: "모두에게 정산 요청 알림을 보냈습니다.", type: "success",
                             onClose: () => window.location.reload()
                           });
                         } catch (e) {
                           console.error(e);
-                          setAlertConfig({ isOpen: true, title: "오류", message: "정산 요청 알림 전송 중 오류가 발생했습니다.", type: "error" });
+                          showAlert({ title: "오류", message: "정산 요청 알림 전송 중 오류가 발생했습니다.", type: "error" });
                         }
                       }
                     });
@@ -512,21 +503,29 @@ export default function SettlementDetailPage() {
                                     <button
                                       onClick={async () => {
                                         if (!currentUser || !currentGroup) return;
-                                        if (!confirm("입금을 완료하셨나요? 상대방에게 알림이 전송됩니다.")) return;
-                                        try {
-                                          await groupService.updateSplitState(currentGroup.id, currentUser.uid, split.toUserId, 'paid');
-                                          await notificationService.sendSettlementPaymentNotification(
-                                            split.toUserId,
-                                            { uid: currentUser.uid, nickname: currentUser.displayName || "멤버", avatarUrl: currentUser.photoURL },
-                                            currentGroup.name,
-                                            currentGroup.id,
-                                            split.amount
-                                          );
-                                          alert("입금 완료 알림을 보냈습니다. 상대방이 확인하면 정산이 종료됩니다.");
-                                          window.location.reload();
-                                        } catch (e) {
-                                          console.error(e);
-                                        }
+                                        showConfirm({
+                                          title: "입금 확인",
+                                          message: "입금을 완료하셨나요? 상대방에게 알림이 전송됩니다.",
+                                          onConfirm: async () => {
+                                            try {
+                                              await groupService.updateSplitState(currentGroup.id, currentUser.uid, split.toUserId, 'paid');
+                                              await notificationService.sendSettlementPaymentNotification(
+                                                split.toUserId,
+                                                { uid: currentUser.uid, nickname: currentUser.displayName || "멤버", avatarUrl: currentUser.photoURL },
+                                                currentGroup.name,
+                                                currentGroup.id,
+                                                split.amount
+                                              );
+                                              showAlert({ 
+                                                title: "성공", 
+                                                message: "입금 완료 알림을 보냈습니다. 상대방이 확인하면 정산이 종료됩니다.",
+                                                onClose: () => window.location.reload()
+                                              });
+                                            } catch (e) {
+                                              console.error(e);
+                                            }
+                                          }
+                                        });
                                       }}
                                       className="h-6 px-2.5 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-lg hover:opacity-90 transition-colors"
                                     >
@@ -543,13 +542,18 @@ export default function SettlementDetailPage() {
                                     <button
                                       onClick={async () => {
                                         if (!currentUser || !currentGroup) return;
-                                        if (!confirm("실제 입금을 확인하셨나요? 확인 시 최종 정산 처리됩니다.")) return;
-                                        try {
-                                          await handleSettleSplit(split.fromUserId, split.toUserId, split.amount);
-                                          await groupService.updateSplitState(currentGroup.id, split.fromUserId, currentUser.uid, null);
-                                        } catch (e) {
-                                          console.error(e);
-                                        }
+                                        showConfirm({
+                                          title: "입금 확인",
+                                          message: "실제 입금을 확인하셨나요? 확인 시 최종 정산 처리됩니다.",
+                                          onConfirm: async () => {
+                                            try {
+                                              await handleSettleSplit(split.fromUserId, split.toUserId, split.amount);
+                                              await groupService.updateSplitState(currentGroup.id, split.fromUserId, currentUser.uid, null);
+                                            } catch (e) {
+                                              console.error(e);
+                                            }
+                                          }
+                                        });
                                       }}
                                       className="h-6 px-2.5 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-lg hover:opacity-90 transition-colors shadow-sm ring-2 ring-primary/50 ring-offset-1 ring-offset-bg-base animate-pulse"
                                     >
@@ -574,11 +578,14 @@ export default function SettlementDetailPage() {
                                           await groupService.updateSplitState(currentGroup.id, split.fromUserId, currentUser!.uid, 'requested');
 
                                           const fromUserName = userProfiles[split.fromUserId]?.nickname || split.fromUserId;
-                                          alert(`${fromUserName}님에게 정산 요청 알림을 보냈습니다.`);
-                                          window.location.reload();
+                                          showAlert({ 
+                                            title: "요청 완료", 
+                                            message: `${fromUserName}님에게 정산 요청 알림을 보냈습니다.`,
+                                            onClose: () => window.location.reload()
+                                          });
                                         } catch (e) {
                                           console.error("Settlement request failed:", e);
-                                          alert("요청 중 오류가 발생했습니다.");
+                                          showAlert({ title: "오류", message: "요청 중 오류가 발생했습니다.", type: "error" });
                                         }
                                       }}
                                       className={`h-6 px-2.5 ${currentGroup?.splitStates?.[`${split.fromUserId}_${split.toUserId}`] === 'requested' ? 'bg-bg-alt text-text-sub border border-border-base' : 'bg-error text-white border border-transparent hover:opacity-90'} text-[10px] flex items-center justify-center font-bold rounded-lg transition-colors`}
@@ -945,21 +952,6 @@ export default function SettlementDetailPage() {
             </div>
           )}
 
-          {/* Shared Modals */}
-          <ConfirmModal 
-            {...confirmConfig} 
-            onClose={() => {
-              if (confirmConfig.onClose) confirmConfig.onClose();
-              setConfirmConfig((prev: any) => ({ ...prev, isOpen: false }));
-            }} 
-          />
-          <AlertModal 
-            {...alertConfig} 
-            onClose={() => {
-              if (alertConfig.onClose) alertConfig.onClose();
-              setAlertConfig((prev: any) => ({ ...prev, isOpen: false }));
-            }} 
-          />
         </div>
       );
 }
