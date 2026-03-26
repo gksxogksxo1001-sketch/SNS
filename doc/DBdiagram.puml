@@ -1,0 +1,133 @@
+@startuml
+' 스타일 설정: NoSQL 데이터베이스 다이어그램에 적합한 가독성 높은 스타일
+!define Table(name,desc) class name as "desc" << (T,#FFAAAA) >>
+skinparam Monochrome false
+skinparam ClassBackgroundColor #F9F9F9
+skinparam ClassBorderColor #333333
+skinparam Linetype ortho ' 직각 선 스타일로 가독성 향상
+
+hide methods
+hide stereotypes
+
+' --- 핵심 도메인 및 관계 ---
+
+' 1. 사용자 정보 (users 컬렉션) - 이미지의 users 테이블 기준
+Table(Users, "users (사용자)") {
+    + **uid** : String [PK]
+    --
+    email : String
+    displayName : String
+    photoURL : String
+    bio : String
+    followers : List<uid> ' FK 목록
+    following : List<uid> ' FK 목록
+    closeFriends : List<uid> ' FK 목록
+    createdAt : Timestamp
+}
+
+' 2. 게시물 정보 (posts 컬렉션) - 이미지의 posts 테이블 기준
+Table(Posts, "posts (게시물)") {
+    + **id** : String [PK]
+    --
+    + *user* : **uid** [FK] ' FK 기반, NoSQL에서 데이터 포함(embed) 가능성 높음
+    content : String
+    images : List<url>
+    tags : List<String>
+    location : GeoPoint
+    likes : List<uid> ' FK 목록
+    comments : List<comment_data> ' Embed 구조 가능성
+    bookmarkedBy : List<uid> ' FK 목록
+    visibility : Enum (Public, CloseFriends)
+    createdAt : Timestamp
+}
+
+' 3. 스토리 (stories 컬렉션) - 이미지의 stories 테이블 기준
+Table(Stories, "stories (스토리)") {
+    + **id** : String [PK]
+    --
+    + *userId* : **uid** [FK]
+    imageUrl : String
+    visibility : Enum (Public, CloseFriends)
+    createdAt : Timestamp
+    expiresAt : Timestamp
+    ' 주의: 깃허브 소스 코드에는 stories 관련 명시적인 데이터 모델이 부족할 수 있습니다.
+    ' 이 구조는 전적으로 제공해주신 이미지에 의존합니다.
+    ' 만약 실제 소스 코드가 다르면 이미지의 구조가 맞습니다.
+}
+
+' --- 부가 기능 ---
+
+' 4. 알림 (notifications 컬렉션) - 이미지 기준
+Table(Notifications, "notifications (알림)") {
+    + **id** : String [PK]
+    --
+    type : Enum (Like, Comment, Follow)
+    + *fromUser* : **uid** [FK]
+    + *toUser* : **uid** [FK]
+    + *postId* : String [FK] ' 선택 사항
+    read : Boolean
+    createdAt : Timestamp
+}
+
+' 5. 채팅방 (conversations 컬렉션) - 이미지 기준
+Table(Conversations, "conversations (대화방)") {
+    + **id** : String [PK]
+    --
+    participants : List<uid> ' FK 목록
+    lastMessage : String
+    isGroup : Boolean
+    groupName : String
+    updatedAt : Timestamp
+}
+
+' 6. 메시지 (messages 컬렉션) - 이미지 기준
+Table(Messages, "messages (메시지)") {
+    + **id** : String [PK]
+    --
+    + *conversationId* : **String** [FK]
+    + *senderId* : **uid** [FK]
+    text : String
+    imageUrl : String
+    createdAt : Timestamp
+}
+
+' 7. 정산 (settlements 컬렉션) - 이미지 기준
+Table(Settlements, "settlements (정산)") {
+    + **id** : String [PK]
+    --
+    + *groupId* : **String** [FK] ' 정산이 대화방에 종속되는 구조
+    totalAmount : Number
+    participants : List<uid> ' FK 목록
+    status : Enum (Pending, Completed)
+}
+
+' --- 관계 설정 (Relationship) ---
+
+' [이미지 다이어그램 기반 핵심 관계]
+
+' 1. 사용자-게시물 관계
+Users "1" *-- "0..*" Posts : 작성
+Posts "0..*" *-- "1" Users : 소속 ' NoSQL 특성상 bidirectional 참조 흔함
+
+' 2. 사용자-스토리 관계
+Users "1" *-- "0..*" Stories : 생성
+
+' 3. 대화방-메시지 관계 (이미지에서 가장 중요한 구조적 특징)
+Conversations "1" *-- "0..*" Messages : 포함
+
+' [이미지의 FK/List<FK> 기반 추가 관계 정의]
+
+' 4. 사용자 팔로우 관계
+Users "0..*" -- "0..*" Users : 팔로잉/팔로워 (팔로잉 목록에 상대 uid 포함)
+
+' 5. 사용자-알림 관계
+Users "1" -- "0..*" Notifications : 수신
+Users "1" -- "0..*" Notifications : 발신
+
+' 6. 대화방-사용자 참여 관계
+Users "1..*" -- "0..*" Conversations : 참여 (participants 목록에 uid 포함)
+
+' 7. 대화방-정산 관계
+Conversations "1" -- "0..1" Settlements : 정산 생성
+
+@endum

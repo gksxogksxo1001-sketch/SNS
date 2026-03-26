@@ -1,123 +1,79 @@
-@startuml SNS_UseCase
-skinparam actorStyle awesome
-skinparam packageStyle rectangle
-skinparam usecase {
-  BackgroundColor #E8F5E9
-  BorderColor #2A9D8F
-  ArrowColor #264653
-  FontColor #212529
-}
-skinparam actor {
-  BackgroundColor #2A9D8F
-  BorderColor #264653
-}
+@startuml SNS_Final_Ultimate_Fixed
+
+' --- 1. 가독성 및 레이아웃 설정 ---
+skinparam Linetype ortho
+skinparam nodesep 100
+skinparam ranksep 120
+skinparam shadowing false
+skinparam roundcorner 8
+' 일부 환경에서 awesome 스타일 오류 방지를 위해 기본 스타일 사용
+skinparam actorStyle human
+
 left to right direction
 
-actor "User" as User
-actor "Firebase Auth" as FAuth <<System>>
-actor "Firestore" as FStore <<System>>
-actor "Storage" as FStorage <<System>>
-actor "Realtime DB" as FRealtime <<System>>
-actor "Google Maps" as GMaps <<System>>
+' --- 2. 행위자 정의 (왼쪽) ---
+actor "일반 사용자" as User #White
 
-rectangle "SNS Project System" {
-  package "Auth and User" {
-    usecase "Register" as UC_Reg
-    usecase "Login" as UC_Log
-    usecase "Logout" as UC_Out
-    usecase "Edit Profile" as UC_Prof
-    usecase "Follow" as UC_Fol
-    usecase "Close Friends" as UC_CF
+' --- 3. 시스템 경계 및 유즈케이스 ---
+rectangle "SNS 프로젝트 서비스" {
+  
+  ' 각 패키지에 색상을 직접 지정하여 오류 방지
+  package "게시물 관리" #E8F5E9 {
+    usecase "게시물 작성 및 관리" as UC_Post
+    usecase "미디어 업로드" as UC_Media
+    usecase "게시물 인터랙션" as UC_PostInt
+    UC_Post ..> UC_Media : <<include>>
   }
-  package "Feed" {
-    usecase "Create Post" as UC_CP
-    usecase "View Feed" as UC_VF
-    usecase "Edit Post" as UC_EP
-    usecase "Delete Post" as UC_DP
-    usecase "Like" as UC_Lk
-    usecase "Comment" as UC_Cm
-    usecase "Bookmark" as UC_Bk
-    usecase "Share Post" as UC_SP
-    usecase "Add Location" as UC_AL
-    usecase "Add Tags" as UC_AT
-    usecase "Upload Image" as UC_UI
+
+  package "실시간 채팅" #E3F2FD {
+    usecase "채팅 참여 (1:1/그룹)" as UC_Chat
   }
-  package "Stories" {
-    usecase "Upload Story" as UC_US
-    usecase "View Story" as UC_VS
-    usecase "Visibility" as UC_SV
-    usecase "Archive" as UC_SA
+
+  package "정산 및 알림" #F3E5F5 {
+    usecase "그룹 정산 관리" as UC_Settlement
+    usecase "알림 확인 및 관리" as UC_Noti
   }
-  package "Messaging" {
-    usecase "Direct Chat" as UC_DC
-    usecase "Group Chat" as UC_GC
-    usecase "Send Image" as UC_SI
-    usecase "Share in Chat" as UC_SC
-    usecase "Settlement" as UC_ST
-    usecase "Manage Settlement" as UC_MS
+
+  package "지도 탐색" #FFFDE7 {
+    usecase "지도 기반 탐색" as UC_Map
   }
-  package "Discovery Map" {
-    usecase "Map View" as UC_MV
-    usecase "Search" as UC_MS2
-    usecase "My Location" as UC_ML
-    usecase "Marker Detail" as UC_MD
-  }
-  package "Notifications" {
-    usecase "View Notifications" as UC_VN
-    usecase "Mark Read" as UC_MR
+
+  package "인증 및 계정" #FCE4EC {
+    usecase "프로필 및 관계 관리" as UC_UserMgmt
+    usecase "회원가입/로그인" as UC_Auth
   }
 }
 
-User --> UC_Reg
-User --> UC_Log
-User --> UC_Out
-User --> UC_Prof
-User --> UC_Fol
-User --> UC_CF
-User --> UC_CP
-User --> UC_VF
-User --> UC_EP
-User --> UC_DP
-User --> UC_Lk
-User --> UC_Cm
-User --> UC_Bk
-User --> UC_SP
-User --> UC_US
-User --> UC_VS
-User --> UC_SA
-User --> UC_DC
-User --> UC_GC
-User --> UC_ST
-User --> UC_MS
-User --> UC_MV
-User --> UC_MS2
-User --> UC_ML
-User --> UC_VN
-User --> UC_MR
+' --- 4. 외부 시스템 (오른쪽: 수평 배치를 위한 순서 조정) ---
+package "외부 연동 시스템" {
+  actor "Storage" as FStorage <<System>>
+  actor "Realtime DB" as FRealtime <<System>>
+  actor "Firestore" as FStore <<System>>
+  actor "Google Maps" as GMaps <<System>>
+  actor "Firebase Auth" as FAuth <<System>>
+}
 
-UC_CP ..> UC_UI : <<include>>
-UC_CP ..> UC_AL : <<extend>>
-UC_CP ..> UC_AT : <<extend>>
-UC_US ..> UC_SV : <<include>>
-UC_US ..> UC_UI : <<include>>
-UC_DC ..> UC_SI : <<extend>>
-UC_DC ..> UC_SC : <<extend>>
-UC_GC ..> UC_SI : <<extend>>
-UC_GC ..> UC_ST : <<extend>>
-UC_MV ..> UC_MD : <<extend>>
-UC_MV ..> UC_ML : <<extend>>
-UC_SP ..> UC_SC : <<include>>
+' --- 5. 사용자 연결 ---
+User -- UC_Post
+User -- UC_PostInt
+User -- UC_Chat
+User -- UC_Settlement
+User -- UC_Noti
+User -- UC_Map
+User -- UC_UserMgmt
+User -- UC_Auth
 
-UC_Reg --> FAuth
-UC_Log --> FAuth
-UC_CP --> FStore
-UC_VF --> FStore
-UC_US --> FStore
-UC_VN --> FStore
-UC_UI --> FStorage
-UC_DC --> FRealtime
-UC_GC --> FRealtime
-UC_MV --> GMaps
-UC_MS2 --> GMaps
-UC_ML --> GMaps
+' --- 6. 시스템 -> 외부 데이터 흐름 (직각/수평 유지) ---
+UC_Media -- FStorage
+UC_Chat -- FRealtime
+
+UC_Post -- FStore
+UC_PostInt -- FStore
+UC_Settlement -- FStore
+UC_Noti -- FStore
+UC_UserMgmt -- FStore
+
+UC_Map -- GMaps
+UC_Auth -- FAuth
+
 @enduml
