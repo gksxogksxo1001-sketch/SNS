@@ -484,7 +484,7 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
                 isBookmarked ? "text-primary" : "text-text-sub hover:text-primary"
               )}
             >
-              <Heart 
+              <Bookmark 
                 size={20} 
                 className={cn(
                   "transition-transform group-active:scale-125",
