@@ -162,19 +162,19 @@ export default function PublicProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-20">
+    <div className="min-h-screen bg-bg-alt pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 flex h-14 items-center bg-white px-4 border-b">
-        <button onClick={() => router.back()} className="mr-4 p-1 text-text-main hover:bg-gray-100 rounded-full">
+      <header className="sticky top-0 z-30 flex h-14 items-center bg-bg-base px-4 border-b border-border-base">
+        <button onClick={() => router.back()} className="mr-4 p-1 text-text-main hover:bg-bg-alt rounded-full">
           <ChevronLeft size={24} />
         </button>
-        <h1 className="text-lg font-bold">{profile.nickname}님의 프로필</h1>
+        <h1 className="text-lg font-bold">profile.nickname님의 프로필</h1>
       </header>
 
       <main className="px-5 pt-6 space-y-8">
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-gray-100 flex items-center justify-center">
+          <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
             <img src={profile.avatarUrl || DEFAULT_AVATAR} alt={profile.nickname} className="h-full w-full object-cover" />
           </div>
           
@@ -210,14 +210,14 @@ export default function PublicProfilePage() {
                 <button 
                   onClick={handleAcceptFriend}
                   disabled={isRequesting}
-                  className="flex-1 py-2.5 bg-[#2A9D8F] text-white rounded-xl text-[14px] font-black shadow-md shadow-[#2A9D8F]/20 active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-primary text-white rounded-xl text-[14px] font-black shadow-md shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {isRequesting ? "처리 중..." : "수락"}
                 </button>
                 <button 
                   onClick={handleDeclineFriend}
                   disabled={isRequesting}
-                  className="flex-1 py-2.5 bg-[#F1F3F5] text-[#495057] rounded-xl text-[14px] font-black active:scale-95 transition-all disabled:opacity-50"
+                  className="flex-1 py-2.5 bg-bg-alt text-text-main rounded-xl text-[14px] font-black active:scale-95 transition-all disabled:opacity-50 border border-border-base"
                 >
                   거절
                 </button>
@@ -225,19 +225,19 @@ export default function PublicProfilePage() {
             ) : requestStatus === "friends" ? (
               <button 
                 onClick={() => setIsUnfollowConfirmOpen(true)}
-                className="w-full py-2.5 bg-gray-100 text-text-sub rounded-xl text-[14px] font-black hover:bg-gray-200 transition-colors active:scale-95"
+                className="w-full py-2.5 bg-bg-alt text-text-sub rounded-xl text-[14px] font-black hover:bg-border-base transition-colors active:scale-95 border border-border-base"
               >
                 팔로잉
               </button>
             ) : requestStatus === "pending" ? (
-              <button className="w-full py-2.5 bg-[#F1F3F5] text-[#ADB5BD] rounded-xl text-[14px] font-black cursor-default">
+              <button className="w-full py-2.5 bg-bg-alt text-text-sub/50 rounded-xl text-[14px] font-black cursor-default border border-border-base">
                 요청됨
               </button>
             ) : (
               <button 
                 onClick={handleFriendRequest}
                 disabled={isRequesting}
-                className="w-full py-2.5 bg-[#2A9D8F] text-white rounded-xl text-[14px] font-black shadow-md shadow-[#2A9D8F]/20 active:scale-95 transition-all disabled:opacity-50"
+                className="w-full py-2.5 bg-primary text-white rounded-xl text-[14px] font-black shadow-md shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
               >
                 {isRequesting ? "보내는 중..." : "친구 신청하기"}
               </button>
@@ -247,28 +247,28 @@ export default function PublicProfilePage() {
 
         {/* Tabs */}
         <div className="space-y-4">
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-border-base">
             <button
               onClick={() => setActiveTab("posts")}
               className={cn(
                 "flex-1 py-3 flex items-center justify-center space-x-2 transition-colors relative",
-                activeTab === "posts" ? "text-[#2A9D8F] font-bold" : "text-text-sub hover:text-text-main"
+                activeTab === "posts" ? "text-primary font-bold" : "text-text-sub hover:text-text-main"
               )}
             >
               <Grid size={18} />
               <span className="text-sm">게시물</span>
-              {activeTab === "posts" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F]" />}
+              {activeTab === "posts" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
             </button>
             <button
               onClick={() => setActiveTab("liked")}
               className={cn(
                 "flex-1 py-3 flex items-center justify-center space-x-2 transition-colors relative",
-                activeTab === "liked" ? "text-[#2A9D8F] font-bold" : "text-text-sub hover:text-text-main"
+                activeTab === "liked" ? "text-primary font-bold" : "text-text-sub hover:text-text-main"
               )}
             >
               <Heart size={18} />
               <span className="text-sm">좋아요</span>
-              {activeTab === "liked" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F]" />}
+              {activeTab === "liked" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
             </button>
           </div>
 
@@ -316,13 +316,13 @@ export default function PublicProfilePage() {
       {/* Visited Countries Modal (Read-only) */}
       {isCountryModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full sm:w-[400px] h-[50vh] sm:h-auto bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
-            <div className="flex items-center justify-between p-5 border-b">
+          <div className="w-full sm:w-[400px] h-[50vh] sm:h-auto bg-bg-base rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
+            <div className="flex items-center justify-between p-5 border-b border-border-base">
               <h3 className="text-lg font-black flex items-center">
                 <Globe size={20} className="mr-2 text-primary" />
                 방문한 국가
               </h3>
-              <button onClick={() => setIsCountryModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+              <button onClick={() => setIsCountryModalOpen(false)} className="p-2 hover:bg-bg-alt rounded-full text-text-sub">
                 <X size={24} />
               </button>
             </div>
@@ -330,7 +330,7 @@ export default function PublicProfilePage() {
               <div className="grid grid-cols-2 gap-3">
                 {profile.visitedCountries?.length > 0 ? (
                   profile.visitedCountries.map((country, idx) => (
-                    <div key={idx} className="p-3 bg-gray-50 rounded-2xl border border-gray-100 text-center text-sm font-bold text-text-main">
+                    <div key={idx} className="p-3 bg-bg-alt rounded-2xl border border-border-base text-center text-sm font-bold text-text-main">
                       {country}
                     </div>
                   ))
@@ -346,13 +346,13 @@ export default function PublicProfilePage() {
       {/* Friends Modal */}
       {isFriendsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full sm:w-[400px] h-[50vh] sm:h-auto bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
-            <div className="flex items-center justify-between p-5 border-b">
+          <div className="w-full sm:w-[400px] h-[50vh] sm:h-auto bg-bg-base rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
+            <div className="flex items-center justify-between p-5 border-b border-border-base">
               <h3 className="text-lg font-black flex items-center">
-                <UserIcon size={20} className="mr-2 text-[#2A9D8F]" />
+                <UserIcon size={20} className="mr-2 text-primary" />
                 팔로잉
               </h3>
-              <button onClick={() => setIsFriendsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+              <button onClick={() => setIsFriendsModalOpen(false)} className="p-2 hover:bg-bg-alt rounded-full text-text-sub">
                 <X size={24} />
               </button>
             </div>
@@ -366,9 +366,9 @@ export default function PublicProfilePage() {
       {/* Unfollow Confirmation Modal */}
       {isUnfollowConfirmOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
-          <div className="w-full max-w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100 bg-gray-50 flex items-center justify-center">
+              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base bg-bg-alt flex items-center justify-center">
                 <img src={profile.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
               </div>
               <div className="space-y-1">
@@ -382,17 +382,17 @@ export default function PublicProfilePage() {
               </div>
             </div>
             
-            <div className="flex flex-col border-t divide-y">
+            <div className="flex flex-col border-t border-border-base divide-y divide-border-base">
               <button 
                 onClick={handleUnfollow}
                 disabled={isRequesting}
-                className="w-full py-4 text-red-500 font-black text-sm hover:bg-red-50 transition-colors disabled:opacity-50"
+                className="w-full py-4 text-error font-black text-sm hover:bg-error/5 transition-colors disabled:opacity-50"
               >
                 {isRequesting ? "처리 중..." : "팔로우 취소"}
               </button>
               <button 
                 onClick={() => setIsUnfollowConfirmOpen(false)}
-                className="w-full py-4 text-text-main font-bold text-sm hover:bg-gray-50 transition-colors"
+                className="w-full py-4 text-text-main font-bold text-sm hover:bg-bg-alt transition-colors"
               >
                 아니요
               </button>

@@ -9,7 +9,7 @@ interface WelcomeViewProps {
 
 export function WelcomeView({ nickname, onConfirm }: WelcomeViewProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white p-6 animate-in fade-in duration-500">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-bg-base p-6 animate-in fade-in duration-500">
       <div className="max-w-sm w-full text-center space-y-8">
         <div className="flex justify-center">
           <div className="bg-primary/10 p-4 rounded-full animate-bounce">

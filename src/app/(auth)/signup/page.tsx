@@ -153,7 +153,7 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-bg-base">
       {isJoined && (
         <WelcomeView 
           nickname={nickname} 
@@ -161,10 +161,10 @@ export default function SignupPage() {
         />
       )}
       {/* Header */}
-      <header className="flex h-14 items-center border-b px-4">
+      <header className="flex h-14 items-center border-b border-border-base px-4">
         <button 
           onClick={() => router.back()}
-          className="mr-4 rounded-full p-2 hover:bg-gray-100"
+          className="mr-4 rounded-full p-2 hover:bg-bg-alt"
         >
           <ArrowLeft size={20} />
         </button>

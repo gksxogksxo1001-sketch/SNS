@@ -162,7 +162,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   if (!currentGroup || !currentStory) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
+    <div className="fixed inset-0 z-[100] bg-bg-base flex flex-col items-center justify-center animate-in fade-in zoom-in duration-300">
       {/* Immersive background with blur */}
       <div 
         className="absolute inset-0 z-0 opacity-10 blur-3xl scale-125"
@@ -173,7 +173,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
         }}
       />
 
-      <div className="relative w-full max-w-lg aspect-[9/16] bg-white shadow-2xl overflow-hidden sm:rounded-[40px] border border-gray-100 z-10">
+      <div className="relative w-full max-w-lg aspect-[9/16] bg-bg-base shadow-2xl overflow-hidden sm:rounded-[40px] border border-border-base z-10">
         <img 
           src={currentStory.mediaUrl} 
           alt="Story" 
@@ -184,11 +184,11 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
         <div className="absolute top-0 left-0 right-0 p-5 pt-8 z-20 space-y-5 bg-gradient-to-b from-white/90 via-white/40 to-transparent">
           <div className="flex space-x-1.5 px-0.5">
             {currentGroup.stories.map((s, idx) => (
-              <div key={idx} className="flex-1 h-1 bg-[#E9ECEF] rounded-full overflow-hidden">
+              <div key={idx} className="flex-1 h-1 bg-border-base/30 rounded-full overflow-hidden">
                 <div 
                   className={cn(
                     "h-full transition-all duration-75 ease-linear",
-                    currentGroup.stories[idx].visibility === "close_friends" ? "bg-[#2ECC71]" : "bg-[#212529]"
+                    currentGroup.stories[idx].visibility === "close_friends" ? "bg-success" : "bg-text-main"
                   )}
                   style={{ 
                     width: idx === currentStoryIndex ? `${progress}%` : idx < currentStoryIndex ? "100%" : "0%" 
@@ -202,10 +202,10 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
             <div className="flex items-center space-x-3">
               <div className={cn(
                 "w-10 h-10 rounded-[15px] p-[2px]",
-                currentStory.visibility === "close_friends" ? "bg-[#2ECC71]" : "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261]"
+                currentStory.visibility === "close_friends" ? "bg-success" : "bg-gradient-to-tr from-primary via-point to-secondary"
               )}>
-                <div className="w-full h-full rounded-[13px] bg-white p-[1.5px]">
-                  <div className="w-full h-full rounded-[11px] overflow-hidden bg-slate-50">
+                <div className="w-full h-full rounded-[13px] bg-bg-base p-[1.5px]">
+                  <div className="w-full h-full rounded-[11px] overflow-hidden bg-bg-alt">
                     {currentGroup.user.image ? (
                       <img src={currentGroup.user.image} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -218,10 +218,10 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-black text-[#212529] tracking-tight">{currentGroup.user.name}</span>
+                  <span className="text-sm font-black text-text-main tracking-tight">{currentGroup.user.name}</span>
                   <div className={cn(
                     "flex items-center p-1 rounded-md",
-                    currentStory.visibility === "close_friends" ? "text-[#2ECC71] bg-[#2ECC71]/10" : "text-[#495057] bg-gray-100"
+                    currentStory.visibility === "close_friends" ? "text-success bg-success/10" : "text-text-sub bg-bg-alt"
                   )}>
                     {currentStory.visibility === "friends" ? (
                       <Users size={10} />
@@ -230,7 +230,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                     )}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-[#868E96]">
+                <span className="text-[10px] font-bold text-text-sub">
                   {currentStory.createdAt?.seconds 
                     ? formatDistanceToNow(new Date(currentStory.createdAt.seconds * 1000), { addSuffix: true, locale: ko })
                     : "방금 전"}
@@ -242,12 +242,12 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                 <button 
                   onClick={handleDeleteStory}
                   disabled={isLoading}
-                  className="p-2.5 text-[#495057] hover:bg-gray-100 rounded-full transition-colors"
+                  className="p-2.5 text-text-sub hover:bg-bg-alt rounded-full transition-colors"
                 >
                   <Trash2 size={24} />
                 </button>
               )}
-              <button onClick={onClose} className="p-2.5 text-[#495057] hover:bg-gray-100 rounded-full transition-colors">
+              <button onClick={onClose} className="p-2.5 text-text-sub hover:bg-bg-alt rounded-full transition-colors">
                 <X size={24} />
               </button>
             </div>
@@ -261,7 +261,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
         </div>
 
         {!isMe && (
-          <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-white/90 via-white/40 to-transparent z-20">
+          <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-bg-base/90 via-bg-base/40 to-transparent z-20">
             <div className="flex items-center space-x-4">
               <form onSubmit={handleSendReply} className="flex-1 relative">
                 <input 
@@ -269,12 +269,12 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                   placeholder="댓글 전송하기..."
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  className="w-full bg-white/80 backdrop-blur-md border border-gray-200 rounded-[22px] px-6 py-4 text-sm text-[#212529] placeholder:text-[#ADB5BD] focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 transition-all pr-14 shadow-lg shadow-black/5"
+                  className="w-full bg-bg-base/80 backdrop-blur-md border border-border-base rounded-[22px] px-6 py-4 text-sm text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all pr-14 shadow-lg shadow-black/5"
                 />
                 <button 
                   type="submit"
                   disabled={!commentText.trim()}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2.5 text-[#2A9D8F] disabled:opacity-30 transition-opacity"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2.5 text-primary disabled:opacity-30 transition-opacity"
                 >
                   <Send size={18} className="-rotate-12" />
                 </button>
@@ -284,8 +284,8 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                 className={cn(
                   "w-14 h-14 rounded-[22px] flex items-center justify-center transition-all active:scale-125 shadow-lg",
                   isLiked 
-                    ? "bg-[#e74c3c] text-white shadow-[#e74c3c]/30" 
-                    : "bg-white text-[#495057] border border-gray-100 shadow-black/5"
+                    ? "bg-error text-white shadow-error/30" 
+                    : "bg-bg-base text-text-main border border-border-base shadow-black/5"
                 )}
               >
                 <Heart size={28} fill={isLiked ? "currentColor" : "none"} strokeWidth={isLiked ? 0 : 2.5} />

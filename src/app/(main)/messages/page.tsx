@@ -107,19 +107,19 @@ export default function MessagesPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-bg-alt">
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-white/80 p-4 backdrop-blur-md border-b border-[#F1F3F5]">
+      <header className="sticky top-0 z-40 flex items-center justify-between bg-bg-base/80 p-4 backdrop-blur-md border-b border-border-base">
         <div className="flex items-center space-x-3">
-          <button onClick={() => router.back()} className="text-[#212529] hover:bg-slate-50 p-1.5 rounded-full transition-colors">
+          <button onClick={() => router.back()} className="text-text-main hover:bg-bg-alt p-1.5 rounded-full transition-colors">
             <ChevronLeft size={24} />
           </button>
-          <h1 className="text-xl font-bold text-[#212529] tracking-tight">메시지</h1>
+          <h1 className="text-xl font-bold text-text-main tracking-tight">메시지</h1>
         </div>
         <button 
-          className="text-[#212529] hover:bg-slate-50 p-1.5 rounded-full transition-colors"
+          className="text-text-main hover:bg-bg-alt p-1.5 rounded-full transition-colors"
         >
-          <Edit size={22} className="text-[#2A9D8F]" />
+          <Edit size={22} className="text-primary" />
         </button>
       </header>
 
@@ -127,7 +127,7 @@ export default function MessagesPage() {
       <div className="p-4">
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search size={18} className="text-[#ADB5BD]" />
+            <Search size={18} className="text-text-sub" />
           </div>
           <input
             type="text"
@@ -137,32 +137,32 @@ export default function MessagesPage() {
               setIsSearching(e.target.value.length > 0);
             }}
             placeholder="사람 검색..."
-            className="w-full bg-[#F8F9FA] border-none rounded-xl py-2.5 pl-10 pr-4 text-[14px] text-[#212529] placeholder:text-[#ADB5BD] focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/20 transition-all font-medium"
+            className="w-full bg-bg-base border-none rounded-xl py-2.5 pl-10 pr-4 text-[14px] text-text-main placeholder:text-text-sub focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all font-medium"
           />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex px-4 border-b border-[#F1F3F5]">
+      <div className="flex px-4 border-b border-border-base bg-bg-base">
         <button
           onClick={() => setActiveTab("direct")}
           className={cn(
             "flex-1 py-3 text-sm font-bold transition-all relative",
-            activeTab === "direct" ? "text-[#2A9D8F]" : "text-[#ADB5BD] hover:text-[#868E96]"
+            activeTab === "direct" ? "text-primary" : "text-text-sub hover:text-text-main"
           )}
         >
           일반
-          {activeTab === "direct" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F] animate-in fade-in slide-in-from-bottom-1" />}
+          {activeTab === "direct" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary animate-in fade-in slide-in-from-bottom-1" />}
         </button>
         <button
           onClick={() => setActiveTab("group")}
           className={cn(
             "flex-1 py-3 text-sm font-bold transition-all relative",
-            activeTab === "group" ? "text-[#2A9D8F]" : "text-[#ADB5BD] hover:text-[#868E96]"
+            activeTab === "group" ? "text-primary" : "text-text-sub hover:text-text-main"
           )}
         >
           그룹
-          {activeTab === "group" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F] animate-in fade-in slide-in-from-bottom-1" />}
+          {activeTab === "group" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary animate-in fade-in slide-in-from-bottom-1" />}
         </button>
       </div>
 
@@ -170,18 +170,18 @@ export default function MessagesPage() {
       <div className="flex-1 overflow-y-auto">
         {isSearching ? (
           <div className="px-4 py-2">
-            <h2 className="text-[12px] font-black text-[#ADB5BD] uppercase tracking-wider mb-2">검색 결과</h2>
+            <h2 className="text-[12px] font-black text-text-sub uppercase tracking-wider mb-2">검색 결과</h2>
             {filteredUsers.length === 0 ? (
-              <p className="text-sm text-[#ADB5BD] py-4">검색 결과가 없습니다.</p>
+              <p className="text-sm text-text-sub/50 py-4">검색 결과가 없습니다.</p>
             ) : (
               filteredUsers.map(profile => (
                 <button 
                   key={profile.uid} 
                   onClick={() => startChat(profile.uid, profile.nickname, profile.avatarUrl || "")}
-                  className="w-full flex items-center space-x-4 py-3 border-b border-[#F1F3F5] hover:bg-[#F8F9FA] transition-colors"
+                  className="w-full flex items-center space-x-4 py-3 border-b border-border-base hover:bg-bg-alt transition-colors px-4"
                 >
-                  <img src={profile.avatarUrl || ""} alt={profile.nickname} className="w-12 h-12 rounded-full border border-[#F1F3F5]" />
-                  <span className="text-[15px] font-bold text-[#212529]">{profile.nickname}</span>
+                  <img src={profile.avatarUrl || ""} alt={profile.nickname} className="w-12 h-12 rounded-full border border-border-base" />
+                  <span className="text-[15px] font-bold text-text-main">{profile.nickname}</span>
                 </button>
               ))
             )}
@@ -190,8 +190,8 @@ export default function MessagesPage() {
              ? rooms.filter(r => r.type === "direct" || (!r.type && !travelGroups.some(g => g.id === r.id))) 
              : travelGroups
             ).length === 0 ? (
-          <div className="flex flex-col items-center justify-center p-12 text-[#ADB5BD] space-y-2">
-            <div className="w-16 h-16 bg-[#F8F9FA] rounded-full flex items-center justify-center">
+          <div className="flex flex-col items-center justify-center p-12 text-text-sub space-y-2">
+            <div className="w-16 h-16 bg-bg-base rounded-full flex items-center justify-center">
               <Search size={24} className="opacity-20" />
             </div>
             <span className="text-sm font-semibold">
@@ -243,12 +243,12 @@ export default function MessagesPage() {
               <Link 
                 key={item.id} 
                 href={chatUrl}
-                className="flex items-center justify-between px-4 py-3 hover:bg-[#F8F9FA] transition-colors active:bg-[#F1F3F5]"
+                className="flex items-center justify-between px-4 py-3 hover:bg-bg-alt transition-colors active:bg-bg-base"
               >
                 <div className="flex items-center space-x-4">
                   <div className="relative">
                     <div className={cn(
-                      "w-14 h-14 overflow-hidden border border-[#F1F3F5] shadow-sm",
+                      "w-14 h-14 overflow-hidden border border-border-base shadow-sm",
                       activeTab === "group" ? "rounded-2xl" : "rounded-full"
                     )}>
                       <img src={image} alt={title} className="w-full h-full object-cover" />
@@ -256,15 +256,15 @@ export default function MessagesPage() {
                   </div>
                   
                   <div className="flex flex-col">
-                    <span className="text-[15px] font-bold text-[#212529]">{title}</span>
-                    <span className="text-[13px] mt-0.5 truncate max-w-[180px] text-[#868E96]">
+                    <span className="text-[15px] font-bold text-text-main">{title}</span>
+                    <span className="text-[13px] mt-0.5 truncate max-w-[180px] text-text-sub">
                       {lastMsg}
                     </span>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end space-y-1">
-                  <span className="text-[11px] font-semibold text-[#ADB5BD]">
+                  <span className="text-[11px] font-semibold text-text-sub">
                     {lastTime}
                   </span>
                 </div>

@@ -66,7 +66,7 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12 text-slate-400">
+      <div className="flex items-center justify-center p-12 text-text-sub">
         <Loader2 className="animate-spin mr-2" size={20} />
         그룹 정보를 불러오는 중...
       </div>
@@ -76,13 +76,13 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <Users size={22} className="text-[#2A9D8F]" />
+        <h3 className="text-xl font-bold text-text-main flex items-center gap-2">
+          <Users size={22} className="text-primary" />
           내 여행 그룹
         </h3>
         <button
           onClick={onCreateClick}
-          className="flex items-center gap-1 text-sm font-bold text-[#2A9D8F] hover:bg-[#2A9D8F]/10 px-3 py-1.5 rounded-xl transition-colors"
+          className="flex items-center gap-1 text-sm font-bold text-primary hover:bg-bg-alt px-3 py-1.5 rounded-xl transition-colors"
         >
           <Plus size={16} />
           새 그룹
@@ -90,15 +90,15 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
       </div>
 
       {groups.length === 0 ? (
-        <div className="text-center py-12 px-6 bg-slate-50 rounded-[28px] border-2 border-dashed border-slate-200">
-          <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-slate-300">
+        <div className="text-center py-12 px-6 bg-bg-alt rounded-[28px] border-2 border-dashed border-border-base">
+          <div className="w-16 h-16 bg-bg-base rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-sm text-text-sub">
             <Users size={32} />
           </div>
-          <p className="text-slate-500 font-medium">아직 소속된 그룹이 없습니다.</p>
-          <p className="text-slate-400 text-sm mt-1">친구들과 함께 여행을 시작해보세요!</p>
+          <p className="text-text-main font-medium">아직 소속된 그룹이 없습니다.</p>
+          <p className="text-text-sub text-sm mt-1">친구들과 함께 여행을 시작해보세요!</p>
           <button
             onClick={onCreateClick}
-            className="mt-6 px-6 py-3 bg-[#2A9D8F] text-white font-bold rounded-2xl shadow-lg shadow-[#2A9D8F]/20 hover:scale-105 active:scale-95 transition-all"
+            className="mt-6 px-6 py-3 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
           >
             그룹 만들기
           </button>
@@ -110,13 +110,13 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
               key={group.id}
               onClick={() => onSelectGroup(group)}
               className={cn(
-                "group relative bg-white p-6 rounded-[28px] border shadow-sm transition-all cursor-pointer overflow-hidden",
+                "group relative bg-bg-base p-6 rounded-[28px] border border-border-base shadow-sm transition-all cursor-pointer overflow-hidden",
                 group.status === 'completed' 
-                  ? "border-[#F1F3F5] opacity-75 hover:bg-slate-50"
-                  : "border-slate-100 hover:shadow-xl hover:border-[#2A9D8F]/30"
+                  ? "opacity-75 hover:bg-bg-alt"
+                  : "hover:shadow-xl hover:border-primary/30"
               )}
             >
-              <div className="absolute top-0 right-0 p-3 text-slate-100 group-hover:text-[#2A9D8F]/10 transition-colors">
+              <div className="absolute top-0 right-0 p-3 text-border-base/50 group-hover:text-primary/10 transition-colors">
                 <Users size={80} />
               </div>
               
@@ -124,18 +124,18 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center space-x-2">
-                      <h4 className="text-lg font-bold text-slate-800 group-hover:text-[#2A9D8F] transition-colors">
+                      <h4 className="text-lg font-bold text-text-main group-hover:text-primary transition-colors">
                         {group.name}
                       </h4>
                       {group.status === 'completed' && (
-                        <span className="text-[10px] font-bold bg-slate-100 text-slate-400 px-2 py-0.5 rounded-md border border-slate-200">
+                        <span className="text-[10px] font-bold bg-bg-alt text-text-sub px-2 py-0.5 rounded-md border border-border-base">
                           완료됨
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-400 text-sm mt-1 line-clamp-1">{group.description || "설명 없음"}</p>
+                    <p className="text-text-sub text-sm mt-1 line-clamp-1">{group.description || "설명 없음"}</p>
                   </div>
-                  <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#2A9D8F] group-hover:text-white transition-all">
+                  <div className="w-10 h-10 rounded-2xl bg-bg-alt flex items-center justify-center text-text-sub group-hover:bg-primary group-hover:text-white transition-all">
                     <ChevronRight size={20} />
                   </div>
                 </div>
@@ -145,7 +145,7 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
                     {group.members.slice(0, 3).map((uid, i) => {
                       const profile = memberProfiles[uid];
                       return (
-                        <div key={uid} className="w-8 h-8 rounded-xl bg-slate-200 border-2 border-white flex items-center justify-center overflow-hidden">
+                        <div key={uid} className="w-8 h-8 rounded-xl bg-bg-alt border-2 border-bg-base flex items-center justify-center overflow-hidden">
                           <img 
                             src={profile?.avatarUrl || DEFAULT_AVATAR} 
                             alt="member" 
@@ -155,12 +155,12 @@ export const GroupList = ({ onSelectGroup, onCreateClick }: GroupListProps) => {
                       );
                     })}
                     {group.members.length > 3 && (
-                      <div className="w-8 h-8 z-10 rounded-xl bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-400">
+                      <div className="w-8 h-8 z-10 rounded-xl bg-bg-alt border-2 border-bg-base flex items-center justify-center text-[10px] font-bold text-text-sub">
                         +{group.members.length - 3}
                       </div>
                     )}
                   </div>
-                  <span className="text-[11px] font-bold text-slate-300 bg-slate-50 px-2.5 py-1 rounded-lg">
+                  <span className="text-[11px] font-bold text-text-sub bg-bg-alt px-2.5 py-1 rounded-lg">
                     멤버 {group.members.length}명
                   </span>
                 </div>

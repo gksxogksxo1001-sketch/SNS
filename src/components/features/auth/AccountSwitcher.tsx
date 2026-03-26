@@ -48,10 +48,10 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6 animate-in fade-in duration-200">
-      <div className="w-full max-w-[360px] bg-white rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-black text-gray-800">계정 관리</h2>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full text-gray-400 transition-colors">
+      <div className="w-full max-w-[360px] bg-bg-base rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200 border border-border-base">
+        <div className="p-6 border-b border-border-base flex items-center justify-between">
+          <h2 className="text-lg font-black text-text-main">계정 관리</h2>
+          <button onClick={onClose} className="p-2 hover:bg-bg-alt rounded-full text-text-sub transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -66,11 +66,11 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
                   "group flex items-center justify-between p-3 rounded-2xl border-2 transition-all cursor-pointer",
                   acc.uid === currentUid 
                     ? "border-primary bg-primary/5 shadow-sm" 
-                    : "border-transparent hover:border-gray-100 hover:bg-gray-50 text-gray-600"
+                    : "border-transparent hover:border-border-base hover:bg-bg-alt text-text-sub"
                 )}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-100 border border-white shadow-sm">
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-bg-alt border border-bg-base shadow-sm">
                     {acc.photoURL ? (
                       <img src={acc.photoURL} alt="" className="w-full h-full object-cover" />
                     ) : (
@@ -80,40 +80,40 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
                     )}
                   </div>
                   <div className="flex flex-col">
-                    <span className={cn("text-sm font-black", acc.uid === currentUid ? "text-primary" : "text-gray-800")}>
+                    <span className={cn("text-sm font-black", acc.uid === currentUid ? "text-primary" : "text-text-main")}>
                       {acc.displayName || "여행자"}
                       {acc.uid === currentUid && <span className="ml-1.5 text-[10px] bg-primary text-white px-1.5 py-0.5 rounded-md">현재</span>}
                     </span>
-                    <span className="text-[11px] font-bold text-gray-400">{acc.email || "이메일 정보 없음"}</span>
+                    <span className="text-[11px] font-bold text-text-sub">{acc.email || "이메일 정보 없음"}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <button 
                     onClick={(e) => handleRemove(e, acc.uid)}
-                    className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                    className="p-2 text-text-sub/40 hover:text-error hover:bg-error/10 rounded-xl transition-all"
                     title="기록 삭제"
                   >
                     <Trash2 size={16} />
                   </button>
-                  <ChevronRight size={16} className="text-gray-300" />
+                  <ChevronRight size={16} className="text-text-sub/40" />
                 </div>
               </div>
             ))
           ) : (
             <div className="py-10 text-center space-y-3">
-              <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-gray-200">
+              <div className="w-14 h-14 bg-bg-alt rounded-full flex items-center justify-center mx-auto text-text-sub/20">
                 <User size={28} />
               </div>
-              <p className="text-xs font-bold text-gray-400">저장된 계정이 없습니다.</p>
+              <p className="text-xs font-bold text-text-sub">저장된 계정이 없습니다.</p>
             </div>
           )}
         </div>
 
-        <div className="p-4 bg-gray-50">
+        <div className="p-4 bg-bg-alt/50 border-t border-border-base">
           <button 
             onClick={() => router.push("/login")}
-            className="w-full flex items-center justify-center space-x-2 py-4 bg-white border-2 border-gray-100 text-gray-800 rounded-2xl text-sm font-black hover:border-primary/20 hover:bg-gray-50 transition-all active:scale-[0.98]"
+            className="w-full flex items-center justify-center space-x-2 py-4 bg-bg-base border-2 border-border-base text-text-main rounded-2xl text-sm font-black hover:border-primary/50 hover:bg-bg-alt transition-all active:scale-[0.98]"
           >
             <LogPlus size={18} className="text-primary" />
             <span>다른 계정으로 로그인</span>

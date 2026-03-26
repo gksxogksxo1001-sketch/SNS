@@ -39,14 +39,14 @@ const getIcon = (type: Notification["type"]) => {
 
 const getIconBg = (type: Notification["type"]) => {
   switch (type) {
-    case "like": return "bg-red-500";
-    case "comment": return "bg-[#2A9D8F]";
-    case "friend_request": return "bg-blue-500";
-    case "friend_accept": return "bg-purple-500";
-    case "story_like": return "bg-pink-500";
-    case "group_invite": return "bg-[#F4A261]";
-    case "settlement_request": return "bg-[#2A9D8F]";
-    case "settlement_pay": return "bg-[#2A9D8F]";
+    case "like": return "bg-error";
+    case "comment": return "bg-primary";
+    case "friend_request": return "bg-primary";
+    case "friend_accept": return "bg-point";
+    case "story_like": return "bg-error";
+    case "group_invite": return "bg-secondary";
+    case "settlement_request": return "bg-success";
+    case "settlement_pay": return "bg-success";
   }
 };
 
@@ -203,7 +203,7 @@ function SwipeableNotificationItem({
   };
 
   return (
-    <div className="relative w-full overflow-hidden bg-[#e74c3c]">
+    <div className="relative w-full overflow-hidden bg-error">
       <div 
         className="absolute inset-y-0 right-0 w-24 flex items-center justify-end pr-6 text-white text-sm font-bold opacity-100 cursor-pointer"
         onClick={handleDeleteClick}
@@ -213,8 +213,8 @@ function SwipeableNotificationItem({
 
       <div 
         className={cn(
-          "relative bg-white flex items-start p-4 space-x-4 w-full cursor-pointer transition-transform",
-          !notif.isRead ? "bg-blue-50/50" : "hover:bg-gray-50",
+          "relative bg-bg-base flex items-start p-4 space-x-4 w-full cursor-pointer transition-transform",
+          !notif.isRead ? "bg-primary/5" : "hover:bg-bg-alt",
           !isSwiping && "duration-200"
         )}
         style={{ transform: `translateX(${translateX}px)` }}
@@ -229,11 +229,11 @@ function SwipeableNotificationItem({
       >
         {/* User Avatar & Type Icon */}
         <div className="relative flex-shrink-0 mt-0.5 pointer-events-none">
-          <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
+          <div className="h-12 w-12 overflow-hidden rounded-full bg-bg-alt border border-border-base">
             <img src={notif.fromAvatarUrl || DEFAULT_AVATAR} alt={notif.fromNickname} className="h-full w-full object-cover" draggable={false} />
           </div>
           <div className={cn(
-            "absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-white flex items-center justify-center",
+            "absolute -bottom-1 -right-1 h-5 w-5 rounded-full border-2 border-bg-base flex items-center justify-center",
             getIconBg(notif.type)
           )}>
             {getIcon(notif.type)}
@@ -242,11 +242,11 @@ function SwipeableNotificationItem({
 
         {/* Content */}
         <div className="flex-1 space-y-1.5 min-w-0 pointer-events-none">
-          <p className="text-[13px] text-[#212529] leading-snug">
+          <p className="text-[13px] text-text-main leading-snug">
             <span className="font-bold">{notif.fromNickname}</span>
             {getContent(notif)}
           </p>
-          <p className="text-[11px] font-medium text-[#ADB5BD]">{formatTime(notif.createdAt)}</p>
+          <p className="text-[11px] font-medium text-text-sub/60">{formatTime(notif.createdAt)}</p>
           
           {/* Actions */}
           <div className="pointer-events-auto">
@@ -261,7 +261,7 @@ function SwipeableNotificationItem({
                 </button>
                 <button 
                   onClick={() => onDeclineFriend(notif)}
-                  className="bg-[#F1F3F5] text-[#495057] px-4 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#E9ECEF] transition-colors"
+                  className="bg-bg-alt text-text-sub px-4 py-1.5 rounded-lg text-[12px] font-bold hover:bg-bg-base transition-colors"
                 >
                   거절
                 </button>
@@ -279,7 +279,7 @@ function SwipeableNotificationItem({
                 </button>
                 <button 
                   onClick={() => onDeclineGroup(notif)}
-                  className="bg-[#F1F3F5] text-[#495057] px-4 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#E9ECEF] transition-colors"
+                  className="bg-bg-alt text-text-sub px-4 py-1.5 rounded-lg text-[12px] font-bold hover:bg-bg-base transition-colors"
                 >
                   거절
                 </button>
@@ -289,7 +289,7 @@ function SwipeableNotificationItem({
             {/* Settlement Request Details */}
             {notif.type === "settlement_request" && notif.content && (
               <div className="mt-1">
-                <div className="bg-[#F8F9FA] p-3 rounded-xl border border-[#F1F3F5] text-[12px] text-[#495057] font-medium">
+                <div className="bg-bg-alt p-3 rounded-xl border border-border-base text-[12px] text-text-sub font-medium">
                   {notif.content}
                 </div>
                 <div className="flex items-center space-x-2 pt-2" onClick={(e) => e.stopPropagation()}>
@@ -306,7 +306,7 @@ function SwipeableNotificationItem({
             {/* Settlement Payment Details */}
             {notif.type === "settlement_pay" && notif.content && (
               <div className="mt-1">
-                <div className="bg-[#F8F9FA] p-3 rounded-xl border border-[#F1F3F5] text-[12px] text-[#495057] font-medium">
+                <div className="bg-bg-alt p-3 rounded-xl border border-border-base text-[12px] text-text-sub font-medium">
                   {notif.content}
                 </div>
               </div>
@@ -316,7 +316,7 @@ function SwipeableNotificationItem({
 
         {/* Target Image (if post related) */}
         {notif.postImage && (
-          <div className="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-100 mt-0.5 pointer-events-none">
+          <div className="h-12 w-12 flex-shrink-0 rounded-lg overflow-hidden bg-bg-alt border border-border-base mt-0.5 pointer-events-none">
             <img src={notif.postImage} alt="Post" className="h-full w-full object-cover" draggable={false} />
           </div>
         )}
@@ -480,18 +480,18 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-bg-alt pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-white px-4 border-b">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-bg-base px-4 border-b border-border-base">
         <div className="flex items-center space-x-3">
-          <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
+          <button onClick={() => router.back()} className="p-1 hover:bg-bg-alt rounded-full text-text-main">
             <ArrowLeft size={20} />
           </button>
           <h1 className="text-lg font-bold">알림</h1>
         </div>
         <div className="relative">
           <button 
-            className="p-2 text-text-sub hover:bg-gray-100 rounded-full"
+            className="p-2 text-text-sub hover:bg-bg-alt rounded-full transition-colors"
             onClick={() => setShowMenu(!showMenu)}
           >
             <MoreHorizontal size={20} />
@@ -503,10 +503,10 @@ export default function NotificationsPage() {
                 className="fixed inset-0 z-40"
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-1 w-40 bg-white rounded-xl shadow-lg border border-gray-100 py-1.5 z-50">
+              <div className="absolute right-0 top-full mt-1 w-40 bg-bg-base rounded-xl shadow-lg border border-border-base py-1.5 z-50">
                 <button
                   onClick={handleDeleteAll}
-                  className="w-full flex items-center px-4 py-2.5 text-sm text-red-500 hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center px-4 py-2.5 text-sm text-red-500 hover:bg-bg-alt transition-colors"
                 >
                   <Trash2 size={16} className="mr-2" />
                   모두 삭제
@@ -519,7 +519,7 @@ export default function NotificationsPage() {
 
       <main>
         {notifications.length > 0 ? (
-          <div className="divide-y divide-gray-50">
+          <div className="divide-y divide-border-base">
             {notifications.map((notif) => (
               <SwipeableNotificationItem 
                 key={notif.id}
@@ -535,7 +535,7 @@ export default function NotificationsPage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 px-6 text-center space-y-4">
-            <div className="h-20 w-20 rounded-full bg-gray-50 flex items-center justify-center text-gray-200">
+            <div className="h-20 w-20 rounded-full bg-bg-alt flex items-center justify-center text-text-sub/20">
               <Bell size={40} />
             </div>
             <div className="space-y-1">

@@ -55,11 +55,11 @@ export default function StoryCreatePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8F9FA] text-[#212529] p-0">
+    <div className="flex flex-col min-h-screen bg-bg-alt text-text-main p-0">
       {/* Header */}
-      <header className="flex items-center justify-between p-5 z-10 sticky top-0 bg-white/80 backdrop-blur-md border-b">
-        <button onClick={() => router.back()} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-          <ChevronLeft size={28} className="text-[#495057]" />
+      <header className="flex items-center justify-between p-5 z-10 sticky top-0 bg-bg-base/80 backdrop-blur-md border-b border-border-base">
+        <button onClick={() => router.back()} className="p-2 hover:bg-bg-alt rounded-full transition-colors">
+          <ChevronLeft size={28} className="text-text-main" />
         </button>
         <h1 className="text-lg font-black tracking-tight">새 스토리</h1>
         <div className="w-10"></div>
@@ -68,17 +68,17 @@ export default function StoryCreatePage() {
       {/* Main Content */}
       <div className="flex-1 flex flex-col p-6 space-y-8">
         {!preview ? (
-          <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center bg-white rounded-[40px] border border-gray-100 shadow-sm border-dashed p-10">
-            <div className="w-24 h-24 rounded-[32px] bg-[#F1F3F5] flex items-center justify-center text-[#ADB5BD]">
+          <div className="flex-1 flex flex-col items-center justify-center space-y-8 text-center bg-bg-base rounded-[40px] border border-border-base shadow-sm border-dashed p-10">
+            <div className="w-24 h-24 rounded-[32px] bg-bg-alt flex items-center justify-center text-text-sub">
               <Camera size={40} />
             </div>
             <div className="space-y-2">
-              <h2 className="text-2xl font-black text-[#212529]">일상을 공유하세요</h2>
-              <p className="text-[#868E96] text-sm font-medium">당신의 팔로워들과 24시간 동안<br />소중한 순간을 공유할 수 있습니다.</p>
+              <h2 className="text-2xl font-black text-text-main">일상을 공유하세요</h2>
+              <p className="text-text-sub text-sm font-medium">당신의 팔로워들과 24시간 동안<br />소중한 순간을 공유할 수 있습니다.</p>
             </div>
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="bg-[#2A9D8F] text-white px-10 py-4 rounded-2xl font-black flex items-center space-x-2 shadow-lg shadow-[#2A9D8F]/20 active:scale-95 transition-all"
+              className="bg-primary text-white px-10 py-4 rounded-2xl font-black flex items-center space-x-2 shadow-lg shadow-primary/20 active:scale-95 transition-all"
             >
               <ImageIcon size={20} />
               <span>사진 선택하기</span>
@@ -86,11 +86,11 @@ export default function StoryCreatePage() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col space-y-6">
-            <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded-[40px] overflow-hidden shadow-2xl border-4 border-white">
+            <div className="relative aspect-[9/16] w-full max-w-sm mx-auto rounded-[40px] overflow-hidden shadow-2xl border-4 border-bg-base">
               <img src={preview} alt="Preview" className="w-full h-full object-cover" />
               <button 
                 onClick={removeFile}
-                className="absolute top-5 right-5 p-2 bg-white/20 backdrop-blur-md rounded-full text-white hover:bg-white/40 transition-colors border border-white/20"
+                className="absolute top-5 right-5 p-2 bg-bg-base/20 backdrop-blur-md rounded-full text-white hover:bg-bg-base/40 transition-colors border border-border-base/20"
               >
                 <X size={20} />
               </button>
@@ -98,8 +98,8 @@ export default function StoryCreatePage() {
 
             {/* Privacy Section */}
             <div className="space-y-4 pt-4">
-              <p className="text-xs font-black text-[#495057] ml-1 uppercase tracking-widest">공유 대상</p>
-              <div className="flex p-1.5 bg-white rounded-3xl border border-gray-200 shadow-sm">
+              <p className="text-xs font-black text-text-sub ml-1 uppercase tracking-widest">공유 대상</p>
+              <div className="flex p-1.5 bg-bg-base rounded-3xl border border-border-base shadow-sm">
                 {[
                   { id: "friends", label: "친구만", icon: Users },
                   { id: "close_friends", label: "친한친구", icon: Star },
@@ -110,9 +110,9 @@ export default function StoryCreatePage() {
                     className={`flex-1 flex items-center justify-center space-x-2 py-4 rounded-[22px] text-sm font-black transition-all ${
                       visibility === item.id 
                         ? (item.id === "close_friends" 
-                            ? "bg-[#2ECC71] text-white shadow-md shadow-[#2ECC71]/20" 
-                            : "bg-[#212529] text-white shadow-md shadow-black/20")
-                        : "text-[#ADB5BD] hover:text-[#495057]"
+                            ? "bg-success text-white shadow-md shadow-success/20" 
+                            : "bg-primary text-white shadow-md shadow-primary/20")
+                        : "text-text-sub hover:text-text-main"
                     }`}
                   >
                     <item.icon size={16} className={visibility === item.id && item.id === "close_friends" ? "fill-current" : ""} />
@@ -127,7 +127,7 @@ export default function StoryCreatePage() {
               <button 
                 onClick={handleUpload}
                 disabled={isUploading}
-                className="w-full bg-[#2A9D8F] text-white py-5 rounded-[26px] font-black flex items-center justify-center space-x-2 shadow-xl shadow-[#2A9D8F]/20 disabled:opacity-50 active:scale-[0.98] transition-all"
+                className="w-full bg-primary text-white py-5 rounded-[26px] font-black flex items-center justify-center space-x-2 shadow-xl shadow-primary/20 disabled:opacity-50 active:scale-[0.98] transition-all"
               >
                 {isUploading ? (
                   <>

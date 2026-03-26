@@ -53,22 +53,22 @@ export default function FeedPage() {
   }, [user]);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F8F9FA]">
+    <div className="flex flex-col min-h-screen bg-bg-alt">
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-white/80 p-4 backdrop-blur-md border-b border-[#F1F3F5]">
-        <h1 className="text-xl font-bold text-[#2A9D8F]">HANS</h1>
+      <header className="sticky top-0 z-40 flex items-center justify-between bg-bg-base/80 p-4 backdrop-blur-md border-b border-border-base">
+        <h1 className="text-xl font-bold text-primary">HANS</h1>
         {/* 모바일에서만 표시 (PC는 사이드바/우측패널에 있음) */}
         <div className="flex items-center space-x-5 md:hidden">
-          <Link href="/search" className="text-[#212529] hover:text-[#2A9D8F] transition-colors block">
+          <Link href="/search" className="text-text-main hover:text-primary transition-colors block">
             <Search size={24} />
           </Link>
           
           <div className="relative">
-            <Link href="/notifications" className="text-[#212529] hover:text-[#2A9D8F] transition-colors block">
+            <Link href="/notifications" className="text-text-main hover:text-primary transition-colors block">
               <Bell size={24} />
             </Link>
             {unreadNotifCount > 0 && (
-              <span className="absolute -right-1 -top-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-[#E76F51] text-[8px] font-bold text-white ring-2 ring-white">
+              <span className="absolute -right-1 -top-1 px-1 min-w-[14px] h-[14px] flex items-center justify-center rounded-full bg-error text-[8px] font-bold text-white ring-2 ring-white">
                 {unreadNotifCount >= 10 ? "10+" : unreadNotifCount}
               </span>
             )}
@@ -103,11 +103,11 @@ export default function FeedPage() {
           ))
         ) : (
           <div className="flex flex-col items-center justify-center py-32 text-center px-10">
-            <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-sm mb-6">
-              <MessageSquarePlus size={32} className="text-[#2A9D8F] opacity-20" />
+            <div className="w-20 h-20 bg-bg-base rounded-3xl flex items-center justify-center shadow-sm mb-6">
+              <MessageSquarePlus size={32} className="text-primary opacity-20" />
             </div>
-            <h3 className="text-lg font-bold text-[#212529] mb-2">피드가 비어있어요</h3>
-            <p className="text-sm text-[#6C757D] mb-8 leading-relaxed">
+            <h3 className="text-lg font-bold text-text-main mb-2">피드가 비어있어요</h3>
+            <p className="text-sm text-text-sub mb-8 leading-relaxed">
               아직 작성된 게시물이 없습니다.<br />
               첫 번째 여행 이야기를 들려주세요!
             </p>

@@ -64,7 +64,7 @@ export const TravelPathMap = ({ posts, center }: TravelPathMapProps) => {
   }, [map, mapsLib, locatedPosts.length]);
 
   return (
-    <div className="w-full h-full rounded-[32px] overflow-hidden shadow-inner bg-slate-100 relative border-4 border-white">
+    <div className="w-full h-full rounded-[32px] overflow-hidden shadow-inner bg-bg-alt relative border-4 border-bg-base">
       <Map
         mapId="HANS_TRAVEL_MAP"
         defaultCenter={center || { lat: 37.5665, lng: 126.9780 }}
@@ -78,12 +78,12 @@ export const TravelPathMap = ({ posts, center }: TravelPathMapProps) => {
             position={{ lat: post.location!.lat, lng: post.location!.lng }}
           >
             <div className="flex flex-col items-center group">
-               <div className="bg-white px-2 py-1 rounded-lg shadow-md mb-1 border border-slate-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <p className="text-[10px] font-bold text-slate-700 whitespace-nowrap">{post.location!.name}</p>
-               </div>
-               <Pin background={"#2A9D8F"} borderColor={"#FFFFFF"} glyphColor={"#FFFFFF"}>
-                 <span className="text-[10px] font-black text-white">{index + 1}</span>
-               </Pin>
+                <div className="bg-bg-base/90 backdrop-blur-md px-2 py-1 rounded-lg shadow-md mb-1 border border-border-base opacity-0 group-hover:opacity-100 transition-opacity">
+                  <p className="text-[10px] font-bold text-text-main whitespace-nowrap">{post.location!.name}</p>
+                </div>
+                <Pin background={"var(--primary)"} borderColor={"var(--bg-base)"} glyphColor={"var(--text-main)"}>
+                  <span className="text-[10px] font-black text-white">{index + 1}</span>
+                </Pin>
             </div>
           </AdvancedMarker>
         ))}
@@ -91,14 +91,14 @@ export const TravelPathMap = ({ posts, center }: TravelPathMapProps) => {
       
       {/* Legend / Overlay */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start pointer-events-none">
-        <div className="bg-white/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 pointer-events-auto">
+        <div className="bg-bg-base/90 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-border-base/50 pointer-events-auto">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-[#2A9D8F] flex items-center justify-center text-white shadow-sm shadow-[#2A9D8F]/20">
+            <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center text-white shadow-sm shadow-primary/20">
               <Navigation size={16} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">이동 경로</p>
-              <p className="text-sm font-black text-slate-800 tracking-tight">총 {locatedPosts.length}개의 장소</p>
+              <p className="text-[10px] font-bold text-text-sub uppercase tracking-wider">이동 경로</p>
+              <p className="text-sm font-black text-text-main tracking-tight">총 {locatedPosts.length}개의 장소</p>
             </div>
           </div>
         </div>

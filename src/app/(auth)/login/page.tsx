@@ -56,9 +56,8 @@ export default function LoginPage() {
           <p className="mt-2 text-text-sub">여행의 순간을 기록해보세요</p>
         </div>
 
-        {/* Login Form */}
         <form className="mt-8 space-y-4" onSubmit={handleLogin}>
-          {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+          {error && <p className="text-sm text-error text-center">{error}</p>}
           <Input 
             label="아이디" 
             placeholder="아이디를 입력하세요" 
@@ -99,9 +98,9 @@ export default function LoginPage() {
         {/* social Login */}
         <div className="mt-8">
           <div className="relative flex items-center py-5">
-            <div className="flex-grow border-t border-gray-200"></div>
+            <div className="flex-grow border-t border-border-base"></div>
             <span className="mx-4 flex-shrink text-xs text-text-sub">다른 계정으로 로그인</span>
-            <div className="flex-grow border-t border-gray-200"></div>
+            <div className="flex-grow border-t border-border-base"></div>
           </div>
 
           <div className="flex justify-center space-x-6 pt-2">
@@ -122,9 +121,9 @@ export default function LoginPage() {
             <button 
               type="button"
               onClick={handleGoogleLogin}
-              className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-200 bg-white hover:bg-gray-50"
+              className="flex h-12 w-12 items-center justify-center rounded-full border border-border-base bg-bg-base hover:bg-bg-alt"
             >
-              <Chrome size={24} className="text-gray-600" />
+              <Chrome size={24} className="text-text-main" />
             </button>
           </div>
         </div>

@@ -1,0 +1,72 @@
+@startuml HANS_Modern_Architecture
+
+' --- 스타일 설정 (Modern Flat Design) ---
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam componentStyle uml2
+skinparam defaultFontName "Segoe UI"
+skinparam linetype ortho
+
+skinparam package {
+    BackgroundColor #F8F9FA
+    BorderColor #DEE2E6
+    FontColor #495057
+}
+
+skinparam component {
+    BackgroundColor #FFFFFF
+    BorderColor #ADB5BD
+    ArrowColor #6C757D
+}
+
+title <size:20>HANS SNS System Architecture (2026)</size>
+
+' --- 레이어 정의 ---
+
+package "User Interface" {
+    [Next.js Web App] as Client <<Next.js 16 / React 19>>
+    note bottom of Client : TailwindCSS 4\nZustand State Mgmt
+}
+
+package "Firebase Cloud Platform (BaaS)" #E3F2FD {
+    component "Authentication" as Auth #FFF9C4
+    database "Cloud Firestore" as DB #C8E6C9
+    database "Realtime DB" as RDB #C8E6C9
+    [Cloud Storage] as Storage #FFCCBC
+    [Cloud Functions] as Functions #E1BEE7
+}
+
+package "External Integration" #F3E5F5 {
+    [Google Maps Platform] as MapsAPI #BBDEFB
+    [Payment / Exchange API] as FinanceAPI #F0F4C3
+    [Nodemailer / FCM] as Noti #FFCDD2
+}
+
+package "DevOps & Infrastructure" #ECEFF1 {
+    [GitHub Repository] as Git
+    [Vercel Edge Network] as Vercel
+}
+
+' --- 관계 연결 (Flow) ---
+
+' 1. 배포 흐름
+Git -right-> Vercel : CI/CD Pipeline
+Vercel -down-> Client : Deploy & Hosting
+
+' 2. 인증 및 데이터
+Client <--> Auth : Firebase Auth (Social/Email)
+Client <--> DB : Firestore (Feed/Profile)
+Client <--> RDB : Real-time Chat
+Client --> Storage : Image/Media Upload
+
+' 3. 비즈니스 로직 및 외부 연동
+Client -down-> MapsAPI : Discovery / Geocoding
+Functions -up-> DB : DB Triggers
+Functions -right-> Noti : Push/Email Delivery
+Functions -down-> MapsAPI : Distance/Matrix Calc
+Functions -down-> FinanceAPI : Settlement / Live Rates
+
+' 4. 클라이언트 전용 연동
+Client -right-> FinanceAPI : Currency Conversion
+
+@enduml

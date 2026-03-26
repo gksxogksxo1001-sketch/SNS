@@ -50,10 +50,10 @@ export default function SearchPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      <header className="sticky top-0 z-30 bg-white border-b px-4 pt-3">
+    <div className="min-h-screen bg-bg-alt pb-20">
+      <header className="sticky top-0 z-30 bg-bg-base border-b border-border-base px-4 pt-3">
         <div className="flex items-center space-x-3 mb-4">
-          <button onClick={() => router.back()} className="p-1 hover:bg-gray-100 rounded-full">
+          <button onClick={() => router.back()} className="p-1 hover:bg-bg-alt rounded-full text-text-main">
             <ArrowLeft size={20} />
           </button>
           <form onSubmit={handleSearch} className="flex-1 relative">
@@ -63,13 +63,13 @@ export default function SearchPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={activeTab === "users" ? "친구를 찾아보세요 (닉네임)" : "장소를 찾아보세요 (위치 이름)"}
               autoFocus
-              className="w-full bg-[#F8F9FA] rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 border-none placeholder:text-text-sub/50"
+              className="w-full bg-bg-alt rounded-2xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 border-none placeholder:text-text-sub/50 text-text-main"
             />
-            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[#ADB5BD]" size={18} />
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-text-sub" size={18} />
           </form>
         </div>
 
-        <div className="flex border-b">
+        <div className="flex border-b border-border-base">
           <button 
             onClick={() => setActiveTab("users")}
             className={cn(
@@ -104,15 +104,15 @@ export default function SearchPage() {
               {userResults.map((profile) => (
                 <div 
                   key={profile.uid} 
-                  className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer"
+                  className="flex items-center justify-between p-3 hover:bg-bg-alt rounded-2xl transition-colors cursor-pointer"
                   onClick={() => router.push(`/profile/${profile.uid}`)}
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="h-12 w-12 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
+                    <div className="h-12 w-12 overflow-hidden rounded-full bg-bg-alt border border-border-base">
                       {profile.avatarUrl ? (
                         <img src={profile.avatarUrl} alt={profile.nickname} className="h-full w-full object-cover" />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center text-gray-400">
+                        <div className="flex h-full w-full items-center justify-center text-text-sub">
                           <UserDefaultIcon size={24} />
                         </div>
                       )}
@@ -131,7 +131,7 @@ export default function SearchPage() {
                     className={cn(
                       "p-2 rounded-xl transition-all",
                       profile.friends?.includes(currentUser?.uid || "") 
-                        ? "bg-gray-100 text-text-sub" 
+                        ? "bg-bg-alt text-text-sub" 
                         : "bg-primary/10 text-primary hover:bg-primary/20"
                     )}
                   >
@@ -155,14 +155,10 @@ export default function SearchPage() {
               {postResults.map((post) => (
                 <div 
                   key={post.id} 
-                  className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer"
-                  onClick={() => {
-                    if (post.location) {
-                      router.push(`/map?lat=${post.location.lat}&lng=${post.location.lng}&name=${encodeURIComponent(post.location.name)}`);
-                    }
-                  }}
+                  className="flex items-center space-x-3 p-3 hover:bg-bg-alt rounded-2xl transition-colors cursor-pointer"
+                  onClick={() => router.push(`/post/${post.id}`)}
                 >
-                  <div className="h-16 w-16 overflow-hidden rounded-xl bg-gray-100">
+                  <div className="h-16 w-16 overflow-hidden rounded-xl bg-bg-alt">
                     <img src={post.images[0]} alt={post.location?.name} className="h-full w-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -185,7 +181,7 @@ export default function SearchPage() {
 
         {!searchTerm && !isLoading && (
           <div className="text-center py-20 space-y-4 opacity-30">
-            <div className="mx-auto w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center">
+            <div className="mx-auto w-20 h-20 bg-bg-alt rounded-full flex items-center justify-center text-text-sub">
               {activeTab === "users" ? <UserDefaultIcon size={40} /> : <MapPin size={40} />}
             </div>
             <p className="text-sm font-medium">

@@ -19,7 +19,7 @@ export const BottomNav = () => {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t bg-white px-2 pb-safe shadow-[0_-4px_6px_rgba(0,0,0,0.02)] mx-auto w-full max-w-md sm:border-x sm:border-[#F1F3F5] md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-16 items-center justify-around border-t border-border-base bg-bg-base px-2 pb-safe shadow-[0_-4px_6px_rgba(0,0,0,0.02)] mx-auto w-full max-w-md sm:border-x sm:border-border-base md:hidden">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         const Icon = item.icon;
@@ -30,7 +30,7 @@ export const BottomNav = () => {
             href={item.href}
             className={cn(
               "flex flex-col items-center justify-center space-y-1 transition-colors",
-              isActive ? "text-[#2A9D8F]" : "text-[#6C757D] hover:text-[#2A9D8F]"
+              isActive ? "text-primary" : "text-text-sub hover:text-primary"
             )}
           >
             <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />

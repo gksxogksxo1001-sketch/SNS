@@ -4,21 +4,24 @@ import React from "react";
 import { Info, AlertCircle, CheckCircle2 } from "lucide-react";
 
 interface EfficiencyBadgeProps {
-  type: "info" | "warning" | "success";
+  type: "high" | "medium" | "low" | "info"; // Updated type to match new styles
   message: string;
 }
 
 export const EfficiencyBadge: React.FC<EfficiencyBadgeProps> = ({ type, message }) => {
   const styles = {
-    info: "bg-blue-50 text-blue-600 border-blue-100",
-    warning: "bg-orange-50 text-orange-600 border-orange-100",
-    success: "bg-teal-50 text-teal-600 border-teal-100",
+    high: "bg-success/10 text-success border-success/20",
+    medium: "bg-secondary/10 text-secondary border-secondary/20",
+    low: "bg-error/10 text-error border-error/20",
+    info: "bg-primary/10 text-primary border-primary/20",
   };
 
   const icons = {
     info: <Info size={14} />,
-    warning: <AlertCircle size={14} />,
-    success: <CheckCircle2 size={14} />,
+    // Assuming 'high' maps to success, 'medium' to warning, 'low' to alertCircle
+    high: <CheckCircle2 size={14} />,
+    medium: <AlertCircle size={14} />,
+    low: <AlertCircle size={14} />,
   };
 
   return (

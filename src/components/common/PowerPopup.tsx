@@ -48,27 +48,27 @@ export const PowerPopup: React.FC<PowerPopupProps> = ({
     >
       <div 
         className={cn(
-          "relative w-full sm:max-w-xl bg-white/90 backdrop-blur-xl rounded-t-[40px] sm:rounded-[40px] shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] border border-white/20 transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
+          "relative w-full sm:max-w-xl bg-bg-base/90 backdrop-blur-xl rounded-t-[40px] sm:rounded-[40px] shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] border border-border-base transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)]",
           isOpen ? "translate-y-0 opacity-100 scale-100" : "translate-y-full sm:translate-y-10 opacity-0 sm:scale-95"
         )}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Drag Indicator for Mobile */}
         <div className="w-full flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-12 h-1 bg-gray-200/50 rounded-full" />
+          <div className="w-12 h-1 bg-border-base rounded-full" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-gray-100/50">
+        <div className="flex items-center justify-between px-8 py-6 border-b border-border-base">
           <div className="flex items-center space-x-3">
             {icon && <div className="p-2.5 bg-primary/10 rounded-2xl text-primary">{icon}</div>}
-            <h3 className="text-[20px] font-black tracking-tight text-gray-900">{title}</h3>
+            <h3 className="text-[20px] font-black tracking-tight text-text-main">{title}</h3>
           </div>
           <button 
             onClick={onClose} 
-            className="p-3 bg-gray-50/50 hover:bg-gray-100/50 rounded-full transition-all group active:scale-90"
+            className="p-3 bg-bg-alt hover:bg-bg-base rounded-full transition-all group active:scale-90"
           >
-            <X size={20} className="text-gray-400 group-hover:text-gray-900" />
+            <X size={20} className="text-text-sub group-hover:text-text-main" />
           </button>
         </div>
 

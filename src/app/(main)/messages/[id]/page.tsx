@@ -500,11 +500,11 @@ export default function ChatRoomPage() {
 
   return (
     <>
-      <div className="flex flex-col h-screen bg-[#F8F9FA] pb-safe" onClick={() => { if(isMenuOpen) setIsMenuOpen(false) }}>
+      <div className="flex flex-col h-screen bg-bg-alt pb-safe" onClick={() => { if(isMenuOpen) setIsMenuOpen(false) }}>
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-white/90 p-3 backdrop-blur-md border-b border-[#F1F3F5] shadow-sm">
+      <header className="sticky top-0 z-40 flex items-center justify-between bg-bg-base/90 p-3 backdrop-blur-md border-b border-border-base shadow-sm">
         <div className="flex items-center space-x-3">
-          <button onClick={() => router.back()} className="text-[#212529] hover:bg-slate-50 p-1.5 rounded-full transition-colors">
+          <button onClick={() => router.back()} className="text-text-main hover:bg-bg-alt p-1.5 rounded-full transition-colors">
             <ChevronLeft size={24} />
           </button>
           
@@ -513,10 +513,10 @@ export default function ChatRoomPage() {
               onClick={() => router.push(`/profile/${otherId}`)}
               className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity text-left"
             >
-              <img src={otherProfile?.avatarUrl || otherImage || DEFAULT_AVATAR} alt={otherProfile?.nickname || otherName} className="w-9 h-9 rounded-full object-cover border border-[#F1F3F5]" />
+              <img src={otherProfile?.avatarUrl || otherImage || DEFAULT_AVATAR} alt={otherProfile?.nickname || otherName} className="w-9 h-9 rounded-full object-cover border border-border-base" />
               <div className="flex flex-col">
-                <span className="text-[15px] font-bold text-[#212529] leading-tight">{otherProfile?.nickname || otherName}</span>
-                <span className="text-[11px] font-semibold text-[#2A9D8F]">현재 접속 중</span>
+                <span className="text-[15px] font-bold text-text-main leading-tight">{otherProfile?.nickname || otherName}</span>
+                <span className="text-[11px] font-semibold text-primary">현재 접속 중</span>
               </div>
             </button>
           ) : (
@@ -525,14 +525,14 @@ export default function ChatRoomPage() {
               className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity text-left"
             >
               <div className="relative">
-                <img src={roomData?.groupImage || DEFAULT_AVATAR} alt={roomData?.name} className="w-9 h-9 rounded-full object-cover border border-[#F1F3F5]" />
-                <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full border border-slate-100">
-                  <Camera size={10} className="text-slate-400" />
+                <img src={roomData?.groupImage || DEFAULT_AVATAR} alt={roomData?.name} className="w-9 h-9 rounded-full object-cover border border-border-base" />
+                <div className="absolute -bottom-1 -right-1 bg-bg-base p-0.5 rounded-full border border-border-base">
+                  <Camera size={10} className="text-text-sub" />
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="text-[15px] font-bold text-[#212529] leading-tight">{roomData?.name || otherName}</span>
-                <span className="text-[11px] font-semibold text-[#6C757D]">
+                <span className="text-[15px] font-bold text-text-main leading-tight">{roomData?.name || otherName}</span>
+                <span className="text-[11px] font-semibold text-text-sub">
                   멤버 {groupData?.members?.length || roomData?.participants?.length || 0}명
                 </span>
               </div>
@@ -545,13 +545,13 @@ export default function ChatRoomPage() {
               e.stopPropagation();
               setIsMenuOpen(!isMenuOpen)
             }}
-            className={`p-1.5 rounded-full transition-colors ${isMenuOpen ? "bg-slate-100 text-[#2A9D8F]" : "text-[#212529] hover:bg-slate-50"}`}
+            className={`p-1.5 rounded-full transition-colors ${isMenuOpen ? "bg-bg-alt text-primary" : "text-text-main hover:bg-bg-alt"}`}
           >
             <Settings size={20} />
           </button>
           
           {isMenuOpen && (
-            <div className="absolute top-full right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl shadow-black/5 border border-[#F1F3F5] overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="absolute top-full right-0 mt-2 w-48 bg-bg-base rounded-2xl shadow-xl shadow-black/5 border border-border-base overflow-hidden z-[100] animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="py-2">
                 {!otherId && groupData && (
                   <>
@@ -564,7 +564,7 @@ export default function ChatRoomPage() {
                               setIsMenuOpen(false);
                               handleLeaveGroup();
                             }}
-                            className="w-full text-left px-4 py-3 text-[13px] font-bold text-[#495057] hover:bg-slate-50 flex items-center transition-colors"
+                            className="w-full text-left px-4 py-3 text-[13px] font-bold text-text-sub hover:bg-bg-alt flex items-center transition-colors"
                           >
                             <LogOut size={16} className="mr-2.5" />
                             그룹 나가기
@@ -576,7 +576,7 @@ export default function ChatRoomPage() {
                             setIsMenuOpen(false);
                             handleDeleteGroup();
                           }}
-                          className="w-full text-left px-4 py-3 text-[13px] font-bold text-[#e74c3c] hover:bg-red-50 flex items-center transition-colors border-t border-[#F1F3F5]"
+                          className="w-full text-left px-4 py-3 text-[13px] font-bold text-error hover:bg-error/10 flex items-center transition-colors border-t border-border-base"
                         >
                           <Trash2 size={16} className="mr-2.5" />
                           그룹 삭제하기
@@ -589,7 +589,7 @@ export default function ChatRoomPage() {
                           setIsMenuOpen(false);
                           handleLeaveGroup();
                         }}
-                        className="w-full text-left px-4 py-3 text-[13px] font-bold text-[#e74c3c] hover:bg-red-50 flex items-center transition-colors"
+                        className="w-full text-left px-4 py-3 text-[13px] font-bold text-error hover:bg-error/10 flex items-center transition-colors"
                       >
                         <LogOut size={16} className="mr-2.5" />
                         그룹 나가기
@@ -604,15 +604,15 @@ export default function ChatRoomPage() {
       </header>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[#F4F6F8]">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-bg-alt">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-3 opacity-90 mt-20 animate-in fade-in zoom-in-95 duration-500">
-            <div className="w-20 h-20 bg-white rounded-3xl rotate-12 flex items-center justify-center shadow-lg shadow-black/5 mb-3 text-[#ADB5BD]">
+            <div className="w-20 h-20 bg-bg-base rounded-3xl rotate-12 flex items-center justify-center shadow-lg shadow-black/5 mb-3 text-text-sub">
               <MessageCircle size={36} className="-rotate-12" strokeWidth={1.5} />
             </div>
-            <p className="text-[15px] font-black text-[#868E96] tracking-tight">
+            <p className="text-[15px] font-black text-text-sub tracking-tight">
               아직 메시지가 없습니다.<br/>
-              <span className="text-[13px] font-medium text-[#ADB5BD]">따뜻한 첫 인사를 건네며 대화를 시작해보세요! 👋</span>
+              <span className="text-[13px] font-medium text-text-sub/50">따뜻한 첫 인사를 건네며 대화를 시작해보세요! 👋</span>
             </p>
           </div>
         )}
@@ -628,7 +628,7 @@ export default function ChatRoomPage() {
             <React.Fragment key={msg.id}>
               {showDateHeader && currentDate && (
                 <div className="flex justify-center my-6 animate-in fade-in slide-in-from-top-1 duration-300">
-                  <span className="bg-[#F8F9FA] px-4 py-1.5 rounded-full text-[11px] font-bold text-[#ADB5BD] border border-[#F1F3F5] shadow-sm">
+                  <span className="bg-bg-alt px-4 py-1.5 rounded-full text-[11px] font-bold text-text-sub border border-border-base shadow-sm">
                     {currentDate}
                   </span>
                 </div>
@@ -645,7 +645,7 @@ export default function ChatRoomPage() {
                       <img 
                         src={profiles[msg.senderId]?.avatarUrl || (otherId ? otherImage : DEFAULT_AVATAR)} 
                         alt={profiles[msg.senderId]?.nickname || otherName} 
-                        className="w-7 h-7 rounded-full object-cover border border-[#F1F3F5] mb-1" 
+                        className="w-7 h-7 rounded-full object-cover border border-border-base mb-1" 
                       />
                     </button>
                   )}
@@ -653,12 +653,12 @@ export default function ChatRoomPage() {
                   {/* Bubble & Sender Name Container */}
                   <div className="flex flex-col space-y-1 relative">
                     {!isMe && !otherId && (
-                       <span className="text-[10px] font-bold text-slate-500 ml-1">{profiles[msg.senderId]?.nickname || "멤버"}</span>
+                       <span className="text-[10px] font-bold text-text-sub ml-1">{profiles[msg.senderId]?.nickname || "멤버"}</span>
                     )}
 
                     {/* Reply To Reference */}
                     {msg.replyTo && (
-                      <div className={`text-[12px] opacity-70 mb-1 px-3 py-1.5 rounded-xl border ${isMe ? "bg-white/10 border-white/20 text-white" : "bg-black/5 border-black/10 text-[#495057]"
+                      <div className={`text-[12px] opacity-70 mb-1 px-3 py-1.5 rounded-xl border ${isMe ? "bg-white/10 border-white/20 text-white" : "bg-bg-alt border-border-base text-text-sub"
                         } flex flex-col`}>
                         <span className="font-bold text-[10px] mb-0.5">{msg.replyTo.senderName}</span>
                         <span className="line-clamp-1">{msg.replyTo.text}</span>
@@ -666,15 +666,15 @@ export default function ChatRoomPage() {
                     )}
 
                     <div className={`px-4 py-2.5 rounded-2xl max-w-[260px] relative group ${isMe
-                      ? "bg-[#2A9D8F] text-white rounded-br-[4px] shadow-[0_2px_12px_rgba(42,157,143,0.2)]"
-                      : "bg-white text-[#212529] rounded-bl-[4px] shadow-sm border border-black/[0.02]"
+                      ? "bg-primary text-white rounded-br-[4px] shadow-[0_2px_12px_rgba(42,157,143,0.2)]"
+                      : "bg-bg-base text-text-main rounded-bl-[4px] shadow-sm border border-border-base/50"
                       } ${msg.isDeleted ? "opacity-60 italic" : ""}`}>
 
                       {/* Message Context Menu Trigger (Only for non-deleted) */}
                       {!msg.isDeleted && (
                         <button
                           onClick={() => setActiveMenuMessageId(activeMenuMessageId === msg.id ? null : msg.id)}
-                          className={`absolute -top-2 ${isMe ? "-left-6" : "-right-6"} p-1 text-[#ADB5BD] opacity-0 group-hover:opacity-100 transition-opacity`}
+                          className={`absolute -top-2 ${isMe ? "-left-6" : "-right-6"} p-1 text-text-sub opacity-0 group-hover:opacity-100 transition-opacity`}
                         >
                           <MoreHorizontal size={14} />
                         </button>
@@ -682,19 +682,19 @@ export default function ChatRoomPage() {
 
                       {/* Context Menu Popover */}
                       {activeMenuMessageId === msg.id && (
-                        <div className={`absolute z-10 top-0 ${isMe ? "right-full mr-2" : "left-full ml-2"} bg-white border border-[#F1F3F5] rounded-xl shadow-xl py-1 flex flex-col min-w-[94px] animate-in fade-in zoom-in-95 duration-100`}>
-                          <button onClick={() => startReplyMessage(msg)} className="flex items-center space-x-2 px-3 py-1.5 hover:bg-[#F8F9FA] text-[12px] font-bold text-[#495057] whitespace-nowrap">
+                        <div className={`absolute z-10 top-0 ${isMe ? "right-full mr-2" : "left-full ml-2"} bg-bg-base border border-border-base rounded-xl shadow-xl py-1 flex flex-col min-w-[94px] animate-in fade-in zoom-in-95 duration-100`}>
+                          <button onClick={() => startReplyMessage(msg)} className="flex items-center space-x-2 px-3 py-1.5 hover:bg-bg-alt text-[12px] font-bold text-text-sub whitespace-nowrap text-left">
                             <Reply size={12} /> <span>답글</span>
                           </button>
-                          <button onClick={() => handleLikeMessage(msg)} className={`flex items-center space-x-2 px-3 py-1.5 hover:bg-[#F8F9FA] text-[12px] font-bold whitespace-nowrap ${msg.likes?.includes(currentUserId) ? "text-[#E63946]" : "text-[#495057]"}`}>
-                            <Heart size={12} fill={msg.likes?.includes(currentUserId) ? "#E63946" : "none"} /> <span>좋아요</span>
+                          <button onClick={() => handleLikeMessage(msg)} className={`flex items-center space-x-2 px-3 py-1.5 text-left hover:bg-bg-alt text-[12px] font-bold whitespace-nowrap ${msg.likes?.includes(currentUserId) ? "text-error" : "text-text-sub"}`}>
+                            <Heart size={12} fill={msg.likes?.includes(currentUserId) ? "currentColor" : "none"} /> <span>좋아요</span>
                           </button>
                           {isMe && !msg.isDeleted && (
                             <>
-                              <button onClick={() => startEditMessage(msg)} className="flex items-center space-x-2 px-3 py-1.5 hover:bg-[#F8F9FA] text-[12px] font-bold text-[#495057] whitespace-nowrap">
+                              <button onClick={() => startEditMessage(msg)} className="flex items-center space-x-2 px-3 py-1.5 hover:bg-bg-alt text-[12px] font-bold text-text-sub whitespace-nowrap text-left">
                                 <Edit2 size={12} /> <span>수정</span>
                               </button>
-                              <button onClick={() => handleDeleteMessage(msg.id)} className="flex items-center space-x-2 px-3 py-1.5 hover:bg-red-50 text-[12px] font-bold text-[#E63946] whitespace-nowrap">
+                              <button onClick={() => handleDeleteMessage(msg.id)} className="flex items-center space-x-2 px-3 py-1.5 hover:bg-error/10 text-[12px] font-bold text-error whitespace-nowrap text-left">
                                 <Trash2 size={12} /> <span>삭제</span>
                               </button>
                             </>
@@ -721,7 +721,7 @@ export default function ChatRoomPage() {
                             onClick={() => !msg.settlementData?.isSettled && !isMe && handleSettleMoney(msg.id)}
                             className={`w-full mt-2 py-2.5 text-[13px] font-black rounded-xl shadow-sm transition-colors active:scale-95 ${msg.settlementData?.isSettled
                               ? "bg-white/20 text-white cursor-default"
-                              : "bg-white text-[#2A9D8F] hover:bg-slate-50"
+                              : "bg-white text-primary hover:bg-bg-alt"
                               }`}
                           >
                             {msg.settlementData?.isSettled ? "송금 완료" : (isMe ? "요청 완료" : "송금하기")}
@@ -729,7 +729,7 @@ export default function ChatRoomPage() {
                         </div>
                       ) : msg.type === "storyReply" && msg.storyData ? (
                         <div className="flex flex-col space-y-2">
-                          <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border border-black/5 bg-gray-100">
+                          <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border border-border-base bg-bg-alt">
                             <img
                               src={msg.storyData.mediaUrl}
                               alt="Story Preview"
@@ -742,11 +742,11 @@ export default function ChatRoomPage() {
                           </p>
                         </div>
                       ) : msg.type === "postShare" && msg.postShareData ? (
-                        <div 
-                          onClick={() => router.push(`/post/${msg.postShareData!.postId}`)}
-                          className="flex flex-col space-y-2 cursor-pointer group/post min-w-[200px]"
-                        >
-                          <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-black/5 bg-gray-100/50">
+                          <div 
+                           onClick={() => router.push(`/post/${msg.postShareData!.postId}`)}
+                           className="flex flex-col space-y-2 cursor-pointer group/post min-w-[200px]"
+                         >
+                           <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border-base bg-bg-alt">
                             <img 
                               src={msg.postShareData.postImage} 
                               alt="Shared Post" 
@@ -761,29 +761,29 @@ export default function ChatRoomPage() {
                             <p className={cn("text-[10px] font-black mb-0.5", isMe ? "text-white/80" : "text-primary")}>
                               {msg.postShareData.authorName}님의 게시물
                             </p>
-                            <p className={cn("text-[13px] leading-tight font-bold line-clamp-2", isMe ? "text-white" : "text-gray-800")}>
+                            <p className={cn("text-[13px] leading-tight font-bold line-clamp-2", isMe ? "text-white" : "text-text-main")}>
                               {msg.postShareData.postTitle}...
                             </p>
-                            <div className={cn("mt-2 flex items-center text-[10px] font-bold", isMe ? "text-white/60" : "text-gray-400")}>
+                            <div className={cn("mt-2 flex items-center text-[10px] font-bold", isMe ? "text-white/60" : "text-text-sub")}>
                               자세히 보기 <ChevronLeft size={10} className="rotate-180 ml-0.5" />
                             </div>
                           </div>
                         </div>
                       ) : msg.type === "settlementSummary" && msg.settlementSummaryData ? (
                         <div className="flex flex-col space-y-3 min-w-[220px]">
-                          <div className={`flex items-center space-x-2 pb-2 border-b ${isMe ? "border-white/20 text-white" : "border-slate-100 text-[#2A9D8F]"}`}>
+                          <div className={`flex items-center space-x-2 pb-2 border-b ${isMe ? "border-white/20 text-white" : "border-border-base text-primary"}`}>
                             <Wallet size={16} />
                             <span className="text-[12px] font-black">정산 결과 요약</span>
                           </div>
                           <div className="space-y-1">
-                            <p className={`text-[11px] font-bold ${isMe ? "text-white/80" : "text-slate-400"}`}>
+                            <p className={`text-[11px] font-bold ${isMe ? "text-white/80" : "text-text-sub"}`}>
                               {msg.settlementSummaryData.groupName}
                             </p>
-                            <p className={`text-[20px] font-black tracking-tight ${isMe ? "text-white" : "text-[#212529]"}`}>
+                            <p className={`text-[20px] font-black tracking-tight ${isMe ? "text-white" : "text-text-main"}`}>
                               {formatMoney(msg.settlementSummaryData.totalAmount)}
                             </p>
                           </div>
-                          <div className={`p-3 rounded-xl border text-[12px] leading-relaxed ${isMe ? "bg-white/10 border-white/20 text-white" : "bg-slate-50 border-slate-100 text-[#495057]"}`}>
+                          <div className={`p-3 rounded-xl border text-[12px] leading-relaxed ${isMe ? "bg-white/10 border-white/20 text-white" : "bg-bg-alt border-border-base text-text-sub"}`}>
                             <p className="font-medium whitespace-pre-wrap">{msg.text}</p>
                           </div>
 
@@ -794,7 +794,7 @@ export default function ChatRoomPage() {
                             {msg.isDeleted ? "삭제된 메시지입니다." : msg.text}
                           </p>
                           {msg.isEdited && !msg.isDeleted && (
-                            <span className={`text-[9px] mt-1 ${isMe ? "text-white/60" : "text-[#ADB5BD]"}`}>(수정됨)</span>
+                            <span className={`text-[9px] mt-1 ${isMe ? "text-white/60" : "text-text-sub/50"}`}>(수정됨)</span>
                           )}
                         </div>
                       )}
@@ -802,15 +802,15 @@ export default function ChatRoomPage() {
 
                     {/* Likes Indicator */}
                     {msg.likes && msg.likes.length > 0 && (
-                      <div className={`absolute -bottom-2 ${isMe ? "left-0" : "right-0"} bg-white border border-[#F1F3F5] rounded-full px-1.5 py-0.5 flex items-center space-x-1 shadow-sm`}>
+                      <div className={`absolute -bottom-2 ${isMe ? "left-0" : "right-0"} bg-bg-base border border-border-base rounded-full px-1.5 py-0.5 flex items-center space-x-1 shadow-sm`}>
                         <Heart size={10} fill="#E63946" className="text-[#E63946]" />
-                        <span className="text-[9px] font-black text-[#495057]">{msg.likes.length}</span>
+                        <span className="text-[9px] font-black text-text-sub">{msg.likes.length}</span>
                       </div>
                     )}
                   </div>
 
                   {/* Time */}
-                  <span className="text-[10px] font-semibold text-[#ADB5BD] px-1 mb-1 whitespace-nowrap">
+                  <span className="text-[10px] font-semibold text-text-sub px-1 mb-1 whitespace-nowrap">
                     {formatMessageTime(msg.createdAt)}
                   </span>
 
@@ -824,15 +824,15 @@ export default function ChatRoomPage() {
       </div>
 
       {/* Input Area (with Reply/Edit Preview) */}
-      <div className="bg-white border-t border-[#F1F3F5] p-3 pb-6 sm:pb-3 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-10 relative">
+      <div className="bg-bg-base border-t border-border-base p-3 pb-6 sm:pb-3 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-10 relative">
         {/* Reply/Edit Overlay */}
         {(replyingTo || editingMessage) && (
-          <div className="flex items-center justify-between bg-[#F1F3F5]/60 px-4 py-2 mb-2 rounded-xl border-l-4 border-[#2A9D8F] animate-in slide-in-from-bottom-2 duration-200">
+          <div className="flex items-center justify-between bg-bg-alt/60 px-4 py-2 mb-2 rounded-xl border-l-4 border-primary animate-in slide-in-from-bottom-2 duration-200">
             <div className="flex flex-col overflow-hidden">
-              <span className="text-[10px] font-bold text-[#2A9D8F]">
+              <span className="text-[10px] font-bold text-primary">
                 {editingMessage ? "메시지 수정" : `${replyingTo?.senderId === currentUserId ? "나" : (otherProfile?.nickname || "상대방")}에게 답글 남기는 중`}
               </span>
-              <p className="text-[12px] text-[#495057] line-clamp-1 italic">
+              <p className="text-[12px] text-text-sub line-clamp-1 italic">
                 {editingMessage ? editingMessage.text : replyingTo?.text}
               </p>
             </div>
@@ -842,7 +842,7 @@ export default function ChatRoomPage() {
                 setEditingMessage(null);
                 if (editingMessage) setInputText("");
               }}
-              className="p-1 text-[#ADB5BD] hover:text-[#212529]"
+              className="p-1 text-text-sub hover:text-text-main"
             >
               <X size={16} />
             </button>
@@ -850,13 +850,13 @@ export default function ChatRoomPage() {
         )}
 
         <form onSubmit={handleSend} className="flex items-center space-x-1 sm:space-x-2">
-          <button type="button" className="p-2 sm:p-2.5 text-[#ADB5BD] hover:text-[#2A9D8F] bg-[#F8F9FA] rounded-full transition-colors">
+          <button type="button" className="p-2 sm:p-2.5 text-text-sub hover:text-primary bg-bg-alt rounded-full transition-colors">
             <ImageIcon size={22} />
           </button>
           <button
             type="button"
             onClick={() => setIsSettlementModalOpen(true)}
-            className="p-2 sm:p-2.5 text-white bg-[#2A9D8F] hover:bg-[#21867a] shadow-md shadow-[#2A9D8F]/20 rounded-full transition-all active:scale-95 flex items-center justify-center shrink-0 mr-1"
+            className="p-2 sm:p-2.5 text-white bg-primary hover:opacity-90 shadow-md shadow-primary/20 rounded-full transition-all active:scale-95 flex items-center justify-center shrink-0 mr-1"
           >
             <Wallet size={20} className="mr-0.5" />
           </button>
@@ -867,12 +867,12 @@ export default function ChatRoomPage() {
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               placeholder="메시지 입력..."
-              className="w-full bg-[#F8F9FA] border border-[#F1F3F5] rounded-full py-2.5 pl-4 pr-12 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#2A9D8F]/30 transition-all font-medium"
+              className="w-full bg-bg-alt border border-border-base rounded-full py-2.5 pl-4 pr-12 text-[14px] text-text-main focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all font-medium"
             />
             <button
               type="submit"
               disabled={!inputText.trim()}
-              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-white bg-[#2A9D8F] rounded-full disabled:bg-[#DEE2E6] disabled:text-[#868E96] transition-colors"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 p-1.5 text-white bg-primary rounded-full disabled:bg-bg-alt disabled:text-text-sub transition-colors"
             >
               <Send size={16} className="-rotate-12 ml-px" />
             </button>
@@ -883,14 +883,14 @@ export default function ChatRoomPage() {
       {/* Settlement Modal Overlay */}
       {isSettlementModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full sm:w-[400px] h-[85vh] sm:h-auto bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col slide-in-from-bottom-full sm:slide-in-from-bottom-0 overflow-hidden">
+          <div className="w-full sm:w-[400px] h-[85vh] sm:h-auto bg-bg-base rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col slide-in-from-bottom-full sm:slide-in-from-bottom-0 overflow-hidden">
 
-            <div className="flex items-center justify-between p-5 border-b border-[#F1F3F5]">
-              <h2 className="text-lg font-black text-[#212529] flex items-center">
-                <Wallet size={20} className="mr-2 text-[#2A9D8F]" />
+            <div className="flex items-center justify-between p-5 border-b border-border-base">
+              <h2 className="text-lg font-black text-text-main flex items-center">
+                <Wallet size={20} className="mr-2 text-primary" />
                 정산 요청하기
               </h2>
-              <button onClick={() => setIsSettlementModalOpen(false)} className="p-1.5 text-[#ADB5BD] hover:bg-slate-50 rounded-full">
+              <button onClick={() => setIsSettlementModalOpen(false)} className="p-1.5 text-text-sub hover:bg-bg-alt rounded-full">
                 <X size={22} />
               </button>
             </div>
@@ -899,8 +899,8 @@ export default function ChatRoomPage() {
               {/* Group Selection Section */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[13px] font-bold text-[#495057]">정산 그룹 선택</label>
-                  <Link href="/settlement" className="text-[11px] font-bold text-[#2A9D8F] hover:underline flex items-center">
+                  <label className="text-[13px] font-bold text-text-sub">정산 그룹 선택</label>
+                  <Link href="/settlement" className="text-[11px] font-bold text-primary hover:underline flex items-center">
                     대시보드 가기 <ChevronLeft size={12} className="rotate-180 ml-0.5" />
                   </Link>
                 </div>
@@ -917,16 +917,16 @@ export default function ChatRoomPage() {
                           setSelectedGroupId(e.target.value);
                         }
                       }}
-                      className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3.5 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none transition-all appearance-none cursor-pointer"
+                      className="w-full bg-bg-alt border border-border-base p-3.5 rounded-2xl text-[14px] font-medium text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all appearance-none cursor-pointer"
                       required={!showNewGroupInput}
                     >
                       <option value="" disabled>기존 그룹에서 선택</option>
                       {allUserGroups.map(group => (
                         <option key={group.id} value={group.id}>{group.name}</option>
                       ))}
-                      <option value="new" className="text-[#2A9D8F] font-bold">+ 새 정산 그룹 만들기</option>
+                      <option value="new" className="text-primary font-bold">+ 새 정산 그룹 만들기</option>
                     </select>
-                    <p className="text-[11px] text-[#868E96] pl-2 font-medium">* 이 정산 내역이 기록될 그룹을 선택하세요.</p>
+                    <p className="text-[11px] text-text-sub pl-2 font-medium">* 이 정산 내역이 기록될 그룹을 선택하세요.</p>
                   </div>
                 ) : (
                   <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
@@ -936,7 +936,7 @@ export default function ChatRoomPage() {
                         value={newGroupName}
                         onChange={(e) => setNewGroupName(e.target.value)}
                         placeholder="새 그룹 이름 (예: 제주도 여행)"
-                        className="flex-1 bg-[#F8F9FA] border border-[#2A9D8F]/30 p-3.5 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none transition-all"
+                        className="flex-1 bg-bg-alt border border-primary/30 p-3.5 rounded-2xl text-[14px] font-medium text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all"
                         required={showNewGroupInput}
                       />
                       <button
@@ -945,7 +945,7 @@ export default function ChatRoomPage() {
                           setShowNewGroupInput(false);
                           setNewGroupName("");
                         }}
-                        className="p-3.5 text-[#ADB5BD] hover:bg-slate-50 rounded-2xl transition-colors"
+                        className="p-3.5 text-text-sub hover:bg-bg-alt rounded-2xl transition-colors"
                       >
                         <X size={20} />
                       </button>
@@ -954,22 +954,22 @@ export default function ChatRoomPage() {
                 )}
               </div>
 
-              <div className="h-px bg-[#F1F3F5] w-full"></div>
+              <div className="h-px bg-border-base w-full"></div>
 
               <div className="space-y-2">
-                <label className="text-[13px] font-bold text-[#495057]">결제 내역</label>
+                <label className="text-[13px] font-bold text-text-sub">결제 내역</label>
                 <input
                   type="text"
                   value={settleTitle}
                   onChange={(e) => setSettleTitle(e.target.value)}
                   placeholder="예: 흑돼지 삼겹살"
-                  className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3.5 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none transition-all placeholder:text-[#ADB5BD]"
+                  className="w-full bg-bg-alt border border-border-base p-3.5 rounded-2xl text-[14px] font-medium text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all placeholder:text-text-sub"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[13px] font-bold text-[#495057]">총 결제 금액</label>
+                <label className="text-[13px] font-bold text-text-sub">총 결제 금액</label>
                 <div className="relative">
                   <input
                     type="text"
@@ -980,41 +980,41 @@ export default function ChatRoomPage() {
                       setSettleAmount(val ? parseInt(val).toLocaleString('ko-KR') : '');
                     }}
                     placeholder="0"
-                    className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3.5 pr-8 rounded-2xl text-[18px] font-black tracking-tight focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none transition-all placeholder:text-[#ADB5BD]"
+                    className="w-full bg-bg-alt border border-border-base p-3.5 pr-8 rounded-2xl text-[18px] font-black tracking-tight text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all placeholder:text-text-sub"
                     required
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[14px] font-bold text-[#495057]">원</span>
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[14px] font-bold text-text-sub">원</span>
                 </div>
                 {settleAmount && (
-                  <p className="text-[12px] font-bold text-[#2A9D8F] text-right mt-1.5 animate-in slide-in-from-top-1">
+                  <p className="text-[12px] font-bold text-primary text-right mt-1.5 animate-in slide-in-from-top-1">
                     인당 청구 금액: {formatMoney(Math.round(parseInt(settleAmount.replace(/[^0-9]/g, '')) / 2))}
                   </p>
                 )}
               </div>
 
-              <div className="pt-2 border-t border-dashed border-[#DEE2E6]">
-                <h3 className="text-[14px] font-bold text-[#212529] mb-4">입금 받을 계좌 정보</h3>
+              <div className="pt-2 border-t border-dashed border-border-base">
+                <h3 className="text-[14px] font-bold text-text-main mb-4">입금 받을 계좌 정보</h3>
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-1 space-y-2">
-                    <label className="text-[11px] font-semibold text-[#868E96]">은행</label>
+                    <label className="text-[11px] font-semibold text-text-sub">은행</label>
                     <input
                       type="text"
                       value={settleBank}
                       onChange={(e) => setSettleBank(e.target.value)}
                       placeholder="신한은행"
-                      className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3 rounded-xl text-[13px] font-medium focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none"
+                      className="w-full bg-bg-alt border border-border-base p-3 rounded-xl text-[13px] font-medium text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none placeholder:text-text-sub"
                       required
                     />
                   </div>
                   <div className="col-span-2 space-y-2">
-                    <label className="text-[11px] font-semibold text-[#868E96]">계좌번호</label>
+                    <label className="text-[11px] font-semibold text-text-sub">계좌번호</label>
                     <input
                       type="text"
                       inputMode="numeric"
                       value={settleAccount}
                       onChange={(e) => setSettleAccount(e.target.value.replace(/[^0-9-]/g, ''))}
                       placeholder="- 없이 입력"
-                      className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3 rounded-xl text-[13px] font-medium focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none"
+                      className="w-full bg-bg-alt border border-border-base p-3 rounded-xl text-[13px] font-medium text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none placeholder:text-text-sub"
                       required
                     />
                   </div>
@@ -1022,13 +1022,13 @@ export default function ChatRoomPage() {
               </div>
 
               <div className="pt-6 pb-4 sm:pb-0">
-                <button
-                  type="submit"
-                  className="w-full flex items-center justify-center space-x-2 bg-[#212529] text-white py-4 rounded-2xl text-[15px] font-black shadow-xl hover:bg-[#343a40] active:scale-95 transition-all"
-                >
-                  <Send size={18} className="-rotate-12" />
-                  <span>정산 요청 보내기</span>
-                </button>
+                 <button
+                   type="submit"
+                   className="w-full flex items-center justify-center space-x-2 bg-text-main text-bg-base py-4 rounded-2xl text-[15px] font-black shadow-xl hover:opacity-90 active:scale-95 transition-all"
+                 >
+                   <Send size={18} className="-rotate-12" />
+                   <span>정산 요청 보내기</span>
+                 </button>
               </div>
             </form>
 
@@ -1038,15 +1038,15 @@ export default function ChatRoomPage() {
       {/* Group Profile Modal */}
       {isGroupProfileModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setIsGroupProfileModalOpen(false)}>
-          <div className="w-[90%] max-w-[400px] bg-white rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+          <div className="w-[90%] max-w-[400px] bg-bg-base rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-black text-slate-800">그룹 정보 수정</h3>
-              <button onClick={() => setIsGroupProfileModalOpen(false)} className="text-slate-400 hover:bg-slate-50 p-1 rounded-full"><X size={20}/></button>
+              <h3 className="text-xl font-black text-text-main">그룹 정보 수정</h3>
+              <button onClick={() => setIsGroupProfileModalOpen(false)} className="text-text-sub hover:bg-bg-alt p-1 rounded-full"><X size={20}/></button>
             </div>
             
             <div className="flex flex-col items-center mb-8">
               <div className="relative group cursor-pointer" onClick={() => document.getElementById("room-image-input")?.click()}>
-                <img src={roomData?.groupImage || DEFAULT_AVATAR} alt="group" className="w-24 h-24 rounded-full object-cover border-4 border-[#F8F9FA] shadow-md" />
+                <img src={roomData?.groupImage || DEFAULT_AVATAR} alt="group" className="w-24 h-24 rounded-full object-cover border-4 border-bg-alt shadow-md" />
                 <div className="absolute inset-0 bg-black/20 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera size={24} className="text-white" />
                 </div>
@@ -1061,17 +1061,17 @@ export default function ChatRoomPage() {
                   }}
                 />
               </div>
-              <p className="text-[11px] font-bold text-slate-400 mt-3">이미지 클릭하여 변경</p>
+              <p className="text-[11px] font-bold text-text-sub mt-3">이미지 클릭하여 변경</p>
             </div>
 
             <div className="space-y-4 mb-8">
               <div>
-                <label className="text-xs font-bold text-slate-400 mb-1 block ml-1">그룹 이름</label>
+                <label className="text-xs font-bold text-text-sub mb-1 block ml-1">그룹 이름</label>
                 <input 
                   type="text" 
                   value={newRoomName} 
                   onChange={(e) => setNewRoomName(e.target.value)} 
-                  className="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 text-sm font-bold focus:ring-2 focus:ring-[#2A9D8F]/30 outline-none" 
+                  className="w-full bg-bg-alt border-none rounded-2xl p-4 text-sm font-bold text-text-main focus:ring-2 focus:ring-primary/30 outline-none" 
                   placeholder="그룹 이름을 입력하세요"
                 />
               </div>
@@ -1080,7 +1080,7 @@ export default function ChatRoomPage() {
             <button 
               onClick={() => handleUpdateGroupProfile()}
               disabled={isUpdatingRoom}
-              className="w-full py-4 bg-[#2A9D8F] text-white font-black rounded-2xl shadow-lg shadow-[#2A9D8F]/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-2"
+              className="w-full py-4 bg-primary text-white font-black rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center space-x-2"
             >
               {isUpdatingRoom ? (
                 <MoreHorizontal className="animate-pulse" />
@@ -1115,14 +1115,14 @@ export default function ChatRoomPage() {
       {/* Manager Transfer Modal */}
       {isTransferModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-0 sm:p-4">
-          <div className="w-full max-w-sm bg-white rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom-[100%] sm:zoom-in-95">
+          <div className="w-full max-w-sm bg-bg-base rounded-t-[32px] sm:rounded-[32px] shadow-2xl flex flex-col p-6 animate-in slide-in-from-bottom-[100%] sm:zoom-in-95">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-[17px] font-black text-[#212529]">관리자 위임</h2>
-              <button onClick={() => setIsTransferModalOpen(false)} className="text-[#ADB5BD] hover:text-[#495057]">
+              <h2 className="text-[17px] font-black text-text-main">관리자 위임</h2>
+              <button onClick={() => setIsTransferModalOpen(false)} className="text-text-sub hover:text-text-main">
                 <X size={24} />
               </button>
             </div>
-            <p className="text-[13px] text-[#495057] mb-6">
+            <p className="text-[13px] text-text-sub mb-6">
               그룹을 나가기 위해 새로운 관리자를 지정해주세요.
             </p>
             <div className="space-y-3 max-h-[40vh] overflow-y-auto mb-6">
@@ -1136,7 +1136,7 @@ export default function ChatRoomPage() {
                     key={uid}
                     onClick={() => setSelectedNewOwner(uid)}
                     className={`w-full flex items-center p-3 rounded-2xl border-2 transition-all ${
-                      isSelected ? 'border-[#2A9D8F] bg-[#2A9D8F]/5' : 'border-[#F1F3F5] hover:border-[#DEE2E6]'
+                      isSelected ? 'border-primary bg-primary/5' : 'border-border-base hover:bg-bg-alt'
                     }`}
                   >
                     <img 
@@ -1144,7 +1144,7 @@ export default function ChatRoomPage() {
                       alt="Profile" 
                       className="w-10 h-10 rounded-full object-cover mr-3"
                     />
-                    <span className={`font-bold text-[14px] ${isSelected ? 'text-[#2A9D8F]' : 'text-[#212529]'}`}>
+                    <span className={`font-bold text-[14px] ${isSelected ? 'text-primary' : 'text-text-main'}`}>
                       {profile?.nickname?.split('(')[0] || "알 수 없는 유저"}
                     </span>
                   </button>
@@ -1154,14 +1154,14 @@ export default function ChatRoomPage() {
             <div className="flex space-x-3">
               <button 
                 onClick={() => setIsTransferModalOpen(false)}
-                className="flex-1 py-3.5 bg-[#F8F9FA] text-[#495057] font-bold rounded-2xl hover:bg-[#F1F3F5]"
+                className="flex-1 py-3.5 bg-bg-alt text-text-sub font-bold rounded-2xl"
               >
                 취소
               </button>
               <button 
                 onClick={handleTransferOwner}
                 disabled={!selectedNewOwner}
-                className="flex-1 py-3.5 bg-[#2A9D8F] text-white font-bold rounded-2xl hover:bg-[#21867a] disabled:bg-[#ADB5BD]"
+                className="flex-1 py-3.5 bg-primary text-white font-bold rounded-2xl hover:opacity-90 disabled:bg-bg-alt disabled:text-text-sub"
               >
                 위임 및 나가기
               </button>

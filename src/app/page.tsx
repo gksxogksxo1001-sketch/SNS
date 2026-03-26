@@ -13,7 +13,7 @@ export default function Home() {
       if (user) {
         router.push("/feed");
       } else {
-        router.push("/login");
+        router.push("/feed"); // Redirect to /feed even if not logged in to show the modal
       }
     }
   }, [user, isLoading, router]);

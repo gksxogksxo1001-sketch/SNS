@@ -45,8 +45,8 @@ export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="bg-white w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="px-8 pt-8 pb-6 flex justify-between items-center bg-gradient-to-r from-[#2A9D8F] to-[#264653] text-white">
+      <div className="bg-bg-base w-full max-w-md rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
+        <div className="px-8 pt-8 pb-6 flex justify-between items-center bg-gradient-to-r from-primary to-primary/80 text-white">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
               <Users size={24} />
@@ -64,51 +64,51 @@ export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">그룹 이름</label>
+            <label className="text-sm font-bold text-text-main ml-1">그룹 이름</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="예: 2026 제주도 우정여행"
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none"
+              className="w-full px-5 py-4 bg-bg-alt border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all outline-none text-text-main"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-bold text-slate-700 ml-1">설명 (선택)</label>
+            <label className="text-sm font-bold text-text-main ml-1">설명 (선택)</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="이번 여행의 목적이나 간단한 설명을 적어주세요"
-              className="w-full px-5 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none resize-none h-20"
+              className="w-full px-5 py-4 bg-bg-alt border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all outline-none resize-none h-20 text-text-main"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">가는 날</label>
+              <label className="text-sm font-bold text-text-main ml-1">가는 날</label>
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none text-slate-700"
+                className="w-full px-5 py-3.5 bg-bg-alt border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all outline-none text-text-main"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-bold text-slate-700 ml-1">오는 날</label>
+              <label className="text-sm font-bold text-text-main ml-1">오는 날</label>
               <input
                 type="date"
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
                 min={startDate}
-                className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-[#2A9D8F] transition-all outline-none text-slate-700"
+                className="w-full px-5 py-3.5 bg-bg-alt border-none rounded-2xl focus:ring-2 focus:ring-primary transition-all outline-none text-text-main"
               />
             </div>
           </div>
 
           {error && (
-            <div className="p-4 bg-rose-50 text-rose-500 text-sm rounded-xl border border-rose-100 animate-in slide-in-from-top-2">
+            <div className="p-4 bg-error/10 text-error text-sm rounded-xl border border-error/20 animate-in slide-in-from-top-2">
               {error}
             </div>
           )}
@@ -117,7 +117,7 @@ export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-4 font-bold text-slate-500 bg-slate-100 rounded-2xl hover:bg-slate-200 transition-colors"
+              className="flex-1 py-4 font-bold text-text-sub bg-bg-alt rounded-2xl hover:bg-border-base transition-colors"
             >
               취소
             </button>
@@ -127,8 +127,8 @@ export const GroupCreate = ({ onClose, onSuccess }: GroupCreateProps) => {
               className={cn(
                 "flex-[2] py-4 font-bold text-white rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2",
                 isSubmitting || !name.trim() 
-                  ? "bg-slate-300 cursor-not-allowed" 
-                  : "bg-gradient-to-r from-[#2A9D8F] to-[#264653] hover:scale-[1.02] active:scale-95 shadow-[#2A9D8F]/20"
+                  ? "bg-text-sub/30 cursor-not-allowed" 
+                  : "bg-gradient-to-r from-primary to-primary/80 hover:scale-[1.02] active:scale-95 shadow-primary/20"
               )}
             >
               {isSubmitting ? (

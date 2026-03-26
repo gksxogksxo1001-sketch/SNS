@@ -303,20 +303,20 @@ export default function SettlementDetailPage() {
       }
 
       return (
-        <div className="flex flex-col min-h-screen bg-[#F8F9FA] pb-24">
+        <div className="flex flex-col min-h-screen bg-bg-alt pb-24">
           {/* Header */}
-          <header className="sticky top-0 z-40 flex items-center justify-between bg-white/80 p-4 backdrop-blur-md border-b border-[#F1F3F5]">
+          <header className="sticky top-0 z-40 flex items-center justify-between bg-bg-base/80 p-4 backdrop-blur-md border-b border-border-base">
             <div className="flex items-center space-x-3">
-              <button onClick={() => router.back()} className="text-[#212529] hover:bg-slate-50 p-1.5 rounded-full transition-colors">
+              <button onClick={() => router.back()} className="text-text-main hover:bg-bg-alt p-1.5 rounded-full transition-colors">
                 <ChevronLeft size={24} />
               </button>
               <div className="flex flex-col">
                 <div className="flex items-center">
-                  <h1 className="text-[17px] font-black text-[#212529] truncate max-w-[150px]">
+                  <h1 className="text-[17px] font-black text-text-main truncate max-w-[150px]">
                     {currentGroup?.name || "정산 상세"}
                   </h1>
                   {currentGroup?.settlementStatus === "completed" ? (
-                    <span className="ml-2 text-[10px] font-black bg-[#2A9D8F]/10 text-[#21867a] px-2.5 py-1 rounded-lg border border-[#2A9D8F]/20 shadow-sm flex items-center">
+                    <span className="ml-2 text-[10px] font-black bg-primary/10 text-primary px-2.5 py-1 rounded-lg border border-primary/20 shadow-sm flex items-center">
                       <CheckCircle2 size={12} className="mr-1.5" />
                       정산 완료
                     </span>
@@ -333,7 +333,7 @@ export default function SettlementDetailPage() {
                             onConfirm: handleCompleteSettlement
                           });
                         }}
-                        className="ml-2 text-[11px] font-black bg-[#2A9D8F] text-white px-3 py-1.5 rounded-lg hover:bg-[#21867a] transition-all shadow-md shadow-[#2A9D8F]/20 active:scale-95 flex items-center border border-[#2A9D8F]/20"
+                        className="ml-2 text-[11px] font-black bg-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition-all shadow-md shadow-primary/20 active:scale-95 flex items-center border border-primary/20"
                       >
                         <CheckCircle2 size={12} className="mr-1.5" />
                         정산 마감하기
@@ -341,7 +341,7 @@ export default function SettlementDetailPage() {
                     )
                   )}
                 </div>
-                <span className="text-[11px] font-semibold text-[#2A9D8F]">참여자 {currentGroup?.members.length || 0}명</span>
+                <span className="text-[11px] font-semibold text-primary">참여자 {currentGroup?.members.length || 0}명</span>
               </div>
             </div>
           </header>
@@ -349,15 +349,15 @@ export default function SettlementDetailPage() {
           <div className="p-4 space-y-6 relative overflow-hidden">
             {/* 'Settled' Stamp Effect */}
             {currentGroup?.settlementStatus === "completed" && (
-              <div className="absolute top-10 right-10 pointer-events-none select-none opacity-[0.2] -rotate-[15deg] border-[8px] border-[#2A9D8F] rounded-3xl px-8 py-4 flex flex-col items-center justify-center z-50 scale-150 transition-all">
-                <span className="text-[40px] font-black text-[#2A9D8F] tracking-tighter leading-none">SETTLED</span>
-                <div className="w-full h-[3px] bg-[#2A9D8F] my-2 opacity-60"></div>
-                <span className="text-[14px] font-bold text-[#2A9D8F] tracking-[0.5em]">정산완료</span>
+              <div className="absolute top-10 right-10 pointer-events-none select-none opacity-[0.2] -rotate-[15deg] border-[8px] border-primary rounded-3xl px-8 py-4 flex flex-col items-center justify-center z-50 scale-150 transition-all">
+                <span className="text-[40px] font-black text-primary tracking-tighter leading-none">SETTLED</span>
+                <div className="w-full h-[3px] bg-primary my-2 opacity-60"></div>
+                <span className="text-[14px] font-bold text-primary tracking-[0.5em]">정산완료</span>
               </div>
             )}
 
             {/* Main Dashboard Card */}
-            <div className="bg-[#2A9D8F] rounded-3xl p-6 text-white shadow-lg shadow-[#2A9D8F]/20 relative overflow-hidden">
+            <div className="bg-primary rounded-3xl p-6 text-white shadow-lg shadow-primary/20 relative overflow-hidden">
               {/* Decorative shapes */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/3"></div>
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-black/10 rounded-full blur-xl translate-y-1/3 -translate-x-1/4"></div>
@@ -378,7 +378,7 @@ export default function SettlementDetailPage() {
                         {currentGroup?.settlementStatus === "completed" ? "정산 완료" : formatMoney(Math.abs(myNetBalance))}
                       </span>
                       {myNetBalance !== 0 && (
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${myNetBalance > 0 ? "bg-white/20 text-white" : "bg-[#e74c3c] text-white"}`}>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${myNetBalance > 0 ? "bg-white/20 text-white" : "bg-error text-white"}`}>
                           {myNetBalance > 0 ? "받을 돈" : "보낼 돈"}
                         </span>
                       )}
@@ -392,10 +392,10 @@ export default function SettlementDetailPage() {
             </div>
 
             {/* Dutch Pay Calculator Preview */}
-            <div className="bg-white rounded-3xl p-5 shadow-sm border border-[#F1F3F5]">
+            <div className="bg-bg-base rounded-3xl p-5 shadow-sm border border-border-base">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-2">
-                  <h3 className="text-[15px] font-bold text-[#212529]">정산 결과 요약</h3>
+                  <h3 className="text-[15px] font-bold text-text-main">정산 결과 요약</h3>
                   {currentGroup?.settlementStatus !== "completed" && splits.some((s: any) => s.toUserId === currentUser?.uid) && (
                     <button 
                   onClick={() => {
@@ -434,7 +434,7 @@ export default function SettlementDetailPage() {
                       }
                     });
                   }}
-                  className="px-2 py-0.5 bg-[#e74c3c]/10 text-[#e74c3c] text-[10px] font-bold rounded-md hover:bg-[#e74c3c]/20 transition-colors"
+                  className="px-2 py-0.5 bg-error/10 text-error text-[10px] font-bold rounded-md hover:bg-error/20 transition-colors"
                 >
                   전체 요청
                 </button>
@@ -442,7 +442,7 @@ export default function SettlementDetailPage() {
             </div>
             <button
               onClick={() => setShowExplanation(true)}
-                  className="text-[#2A9D8F] text-[12px] font-bold px-3 py-1.5 rounded-xl bg-[#2A9D8F]/10 hover:bg-[#2A9D8F]/20 transition-colors"
+                  className="text-primary text-[12px] font-bold px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 transition-colors"
                 >
                   상세 보기
                 </button>
@@ -450,7 +450,7 @@ export default function SettlementDetailPage() {
 
               <div className="space-y-3">
                 {splits.length === 0 ? (
-                  <p className="text-sm font-medium text-[#ADB5BD] text-center py-4">모든 정산이 완료되었습니다!</p>
+                  <p className="text-sm font-medium text-text-sub text-center py-4">모든 정산이 완료되었습니다!</p>
                 ) : (
                   splits.map((split: any, idx: number) => {
                     const fromUser = userProfiles[split.fromUserId];
@@ -459,28 +459,28 @@ export default function SettlementDetailPage() {
                     const fromUserName = fromUser?.nickname || split.fromUserId;
                     const toUserName = toUser?.nickname || split.toUserId;
 
-                    const fromAvatar = fromUser?.avatarUrl || `https://ui-avatars.com/api/?name=${fromUserName}&background=2A9D8F&color=fff`;
-                    const toAvatar = toUser?.avatarUrl || `https://ui-avatars.com/api/?name=${toUserName}&background=F1F3F5&color=6C757D`;
+                    const fromAvatar = fromUser?.avatarUrl || `https://ui-avatars.com/api/?name=${fromUserName}&background=var(--primary-hex)&color=fff`;
+                    const toAvatar = toUser?.avatarUrl || `https://ui-avatars.com/api/?name=${toUserName}&background=var(--bg-alt-hex)&color=var(--text-sub-hex)`;
                     const isMyDebt = split.fromUserId === currentUser?.uid;
                     const isMyCredit = split.toUserId === currentUser?.uid;
 
                     return (
-                      <div key={idx} className={`flex items-center justify-between p-3 rounded-2xl ${isMyDebt ? "bg-[#e74c3c]/5 border border-[#e74c3c]/10" :
-                          isMyCredit ? "bg-[#2A9D8F]/5 border border-[#2A9D8F]/10" : "bg-[#F8F9FA]"
+                      <div key={idx} className={`flex items-center justify-between p-3 rounded-2xl ${isMyDebt ? "bg-error/5 border border-error/10" :
+                          isMyCredit ? "bg-primary/5 border border-primary/10" : "bg-bg-alt"
                         }`}>
                         <div className="flex items-center space-x-3">
                           <div className="flex -space-x-2">
-                            <img src={fromAvatar} alt={fromUserName} className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" />
-                            <img src={toAvatar} alt={toUserName} className="w-8 h-8 rounded-full border-2 border-white object-cover shadow-sm" />
+                            <img src={fromAvatar} alt={fromUserName} className="w-8 h-8 rounded-full border-2 border-bg-base object-cover shadow-sm" />
+                            <img src={toAvatar} alt={toUserName} className="w-8 h-8 rounded-full border-2 border-bg-base object-cover shadow-sm" />
                           </div>
-                          <div className="flex items-center space-x-1.5 text-[13px] font-semibold text-[#495057]">
-                            <span className="text-[#212529] font-bold">{fromUserName.split('(')[0]}</span>
-                            <ArrowRight size={14} className="text-[#ADB5BD]" />
-                            <span className="text-[#212529] font-bold">{toUserName.split('(')[0]}</span>
+                          <div className="flex items-center space-x-1.5 text-[13px] font-semibold text-text-sub">
+                            <span className="text-text-main font-bold">{fromUserName.split('(')[0]}</span>
+                            <ArrowRight size={14} className="text-text-sub" />
+                            <span className="text-text-main font-bold">{toUserName.split('(')[0]}</span>
                           </div>
                         </div>
                         <div className="flex flex-col items-end space-y-1.5 ml-2">
-                          <p className="text-[14px] font-black text-[#212529] whitespace-nowrap">{formatMoney(split.amount)}</p>
+                          <p className="text-[14px] font-black text-text-main whitespace-nowrap">{formatMoney(split.amount)}</p>
                           {currentGroup?.settlementStatus !== "completed" && (
                             <div className="flex items-center space-x-1">
 
@@ -488,7 +488,7 @@ export default function SettlementDetailPage() {
                               {isMyDebt && (
                                 <>
                                   {currentGroup?.splitStates?.[`${split.fromUserId}_${split.toUserId}`] === 'paid' ? (
-                                    <div className="h-6 px-2.5 bg-[#F1F3F5] text-[#868E96] text-[10px] flex items-center justify-center font-bold rounded-lg cursor-not-allowed">
+                                    <div className="h-6 px-2.5 bg-bg-alt text-text-sub text-[10px] flex items-center justify-center font-bold rounded-lg cursor-not-allowed border border-border-base">
                                       입금확인 대기중
                                     </div>
                                   ) : (
@@ -511,7 +511,7 @@ export default function SettlementDetailPage() {
                                           console.error(e);
                                         }
                                       }}
-                                      className="h-6 px-2.5 bg-[#2A9D8F] text-white text-[10px] flex items-center justify-center font-bold rounded-lg hover:bg-[#21867a] transition-colors"
+                                      className="h-6 px-2.5 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-lg hover:opacity-90 transition-colors"
                                     >
                                       입금완료
                                     </button>
@@ -534,7 +534,7 @@ export default function SettlementDetailPage() {
                                           console.error(e);
                                         }
                                       }}
-                                      className="h-6 px-2.5 bg-[#2A9D8F] text-white text-[10px] flex items-center justify-center font-bold rounded-lg hover:bg-[#21867a] transition-colors shadow-sm ring-2 ring-[#2A9D8F]/50 ring-offset-1 ring-offset-white animate-pulse"
+                                      className="h-6 px-2.5 bg-primary text-white text-[10px] flex items-center justify-center font-bold rounded-lg hover:opacity-90 transition-colors shadow-sm ring-2 ring-primary/50 ring-offset-1 ring-offset-bg-base animate-pulse"
                                     >
                                       정산확인
                                     </button>
@@ -564,7 +564,7 @@ export default function SettlementDetailPage() {
                                           alert("요청 중 오류가 발생했습니다.");
                                         }
                                       }}
-                                      className={`h-6 px-2.5 ${currentGroup?.splitStates?.[`${split.fromUserId}_${split.toUserId}`] === 'requested' ? 'bg-[#F1F3F5] text-[#868E96] border border-[#DEE2E6]' : 'bg-[#e74c3c] text-white border border-transparent hover:bg-[#c0392b]'} text-[10px] flex items-center justify-center font-bold rounded-lg transition-colors`}
+                                      className={`h-6 px-2.5 ${currentGroup?.splitStates?.[`${split.fromUserId}_${split.toUserId}`] === 'requested' ? 'bg-bg-alt text-text-sub border border-border-base' : 'bg-error text-white border border-transparent hover:opacity-90'} text-[10px] flex items-center justify-center font-bold rounded-lg transition-colors`}
                                     >
                                       {currentGroup?.splitStates?.[`${split.fromUserId}_${split.toUserId}`] === 'requested' ? "요청됨" : "요청"}
                                     </button>
@@ -585,45 +585,45 @@ export default function SettlementDetailPage() {
             {/* Expenses Timeline */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-[15px] font-bold text-[#212529] flex items-center">
-                  <Receipt size={18} className="mr-2 text-[#2A9D8F]" />
+                <h3 className="text-[15px] font-bold text-text-main flex items-center">
+                  <Receipt size={18} className="mr-2 text-primary" />
                   상세 지출 내역
                 </h3>
-                <span className="text-[12px] font-semibold text-[#868E96]">집계 완료</span>
+                <span className="text-[12px] font-semibold text-text-sub">집계 완료</span>
               </div>
 
               <div className="space-y-3">
                 {aggregatedExpenses.length === 0 ? (
-                  <p className="text-xs text-slate-400 text-center py-8 italic bg-white rounded-3xl border border-dashed border-slate-200">
+                  <p className="text-xs text-text-sub text-center py-8 italic bg-bg-base/50 rounded-3xl border border-dashed border-border-base">
                     아직 등록된 지출 내역이 없습니다.
                   </p>
                 ) : (
                   aggregatedExpenses.map((exp: any, idx: number) => (
-                    <div key={idx} className="bg-white p-4 rounded-2xl border border-[#F1F3F5] flex items-center justify-between shadow-sm">
+                    <div key={idx} className="bg-bg-base p-4 rounded-2xl border border-border-base flex items-center justify-between shadow-sm">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 ${exp.title === "정산 완료" ? "bg-[#2A9D8F]/10" : "bg-[#F8F9FA]"} rounded-full flex items-center justify-center text-lg`}>
+                        <div className={`w-10 h-10 ${exp.title === "정산 완료" ? "bg-primary/10" : "bg-bg-alt"} rounded-full flex items-center justify-center text-lg`}>
                           {exp.title === "정산 완료" ? "✅" : getCategoryIcon(exp.category || "기타")}
                         </div>
                         <div>
                           <div className="flex items-center space-x-2">
-                            <h4 className={`text-[14px] font-bold ${exp.title === "정산 완료" ? "text-[#2A9D8F]" : "text-[#212529]"}`}>{exp.title}</h4>
+                            <h4 className={`text-[14px] font-bold ${exp.title === "정산 완료" ? "text-primary" : "text-text-main"}`}>{exp.title}</h4>
                             {exp.title === "정산 완료" && (
-                              <span className="bg-[#2A9D8F] text-white text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter">정산완료</span>
+                              <span className="bg-primary text-white text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-tighter">정산완료</span>
                             )}
                           </div>
                           <div className="flex items-center space-x-2 mt-0.5">
-                            <span className="text-[11px] font-semibold text-[#ADB5BD]">
+                            <span className="text-[11px] font-semibold text-text-sub">
                               {userProfiles[exp.paidBy || exp.user?.uid]?.nickname?.split('(')[0] || "관리자"} ➡️ {userProfiles[exp.participants?.[0]]?.nickname?.split('(')[0] || "상대방"}
                             </span>
                             {exp.title !== "정산 완료" && (
                               <>
-                                <span className="text-[11px] text-[#DEE2E6]">•</span>
+                                <span className="text-[11px] text-border-base">•</span>
                                 <div className="flex -space-x-1">
                                   {(exp.participants || currentGroup?.members || []).map((pId: string, pIdx: number) => (
                                     <img
                                       key={pId}
-                                      src={userProfiles[pId]?.avatarUrl || `https://ui-avatars.com/api/?name=${userProfiles[pId]?.nickname || pId}&background=2A9D8F&color=fff`}
-                                      className="w-4 h-4 rounded-full border border-white object-cover"
+                                      src={userProfiles[pId]?.avatarUrl || `https://ui-avatars.com/api/?name=${userProfiles[pId]?.nickname || pId}&background=var(--primary-hex)&color=fff`}
+                                      className="w-4 h-4 rounded-full border border-bg-base object-cover"
                                       title={userProfiles[pId]?.nickname}
                                     />
                                   ))}
@@ -635,7 +635,7 @@ export default function SettlementDetailPage() {
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <span className={`text-[15px] font-black ${exp.title === "정산 완료" ? "text-[#2A9D8F]" : "text-[#212529]"}`}>
+                        <span className={`text-[15px] font-black ${exp.title === "정산 완료" ? "text-primary" : "text-text-main"}`}>
                           {formatMoney(exp.amount || exp.totalExpense || 0)}
                         </span>
 
@@ -652,13 +652,13 @@ export default function SettlementDetailPage() {
                             </button>
 
                             {openExpenseMenuId === exp.id && (
-                              <div className="absolute right-0 mt-1 w-32 bg-white rounded-xl shadow-xl border border-[#F1F3F5] overflow-hidden z-[50] animate-in fade-in zoom-in-95 duration-100">
+                              <div className="absolute right-0 mt-1 w-32 bg-bg-base rounded-xl shadow-xl border border-border-base overflow-hidden z-[50] animate-in fade-in zoom-in-95 duration-100">
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeleteExpense(exp.id, exp.type);
                                   }}
-                                  className="w-full text-left px-4 py-2.5 text-[12px] font-bold text-[#e74c3c] hover:bg-[#e74c3c]/5 flex items-center"
+                                  className="w-full text-left px-4 py-2.5 text-[12px] font-bold text-error hover:bg-error/5 flex items-center"
                                 >
                                   <X size={14} className="mr-2" />
                                   삭제하기
@@ -682,7 +682,7 @@ export default function SettlementDetailPage() {
                 setSelectedParticipants(currentGroup?.members || []);
                 setIsAddExpenseModalOpen(true);
               }}
-              className="fixed bottom-28 right-6 w-14 h-14 bg-[#212529] text-white rounded-full flex items-center justify-center shadow-xl shadow-black/20 hover:scale-105 active:scale-95 transition-all z-40"
+              className="fixed bottom-28 right-6 w-14 h-14 bg-primary text-white rounded-full flex items-center justify-center shadow-xl shadow-primary/20 hover:scale-105 active:scale-95 transition-all z-40"
             >
               <Plus size={24} />
             </button>
@@ -691,10 +691,10 @@ export default function SettlementDetailPage() {
           {/* Explanation Modal */}
           {showExplanation && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-4" onClick={() => setShowExplanation(false)}>
-              <div className="w-full max-w-md bg-white rounded-[32px] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden max-h-[80vh]" onClick={e => e.stopPropagation()}>
-                <div className="flex items-center justify-between p-6 border-b border-[#F1F3F5]">
-                  <h2 className="text-lg font-black text-[#212529]">정산 상세 내역</h2>
-                  <button onClick={() => setShowExplanation(false)} className="p-1.5 text-[#ADB5BD] hover:bg-slate-50 rounded-full">
+              <div className="w-full max-w-md bg-bg-base rounded-[32px] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                <div className="flex items-center justify-between p-6 border-b border-border-base">
+                  <h2 className="text-lg font-black text-text-main">정산 상세 내역</h2>
+                  <button onClick={() => setShowExplanation(false)} className="p-1.5 text-text-sub hover:bg-bg-alt rounded-full">
                     <X size={22} />
                   </button>
                 </div>
@@ -753,27 +753,27 @@ export default function SettlementDetailPage() {
                     }
 
                     return (
-                      <div key={idx} className="space-y-3 bg-[#F8F9FA] p-4 rounded-2xl border border-[#F1F3F5]">
+                      <div key={idx} className="space-y-3 bg-bg-alt p-4 rounded-2xl border border-border-base">
                         <div className="flex items-center justify-between font-black text-[14px]">
                           <div className="flex items-center space-x-2">
-                            <span className="text-[#e74c3c]">{fromName.split('(')[0]}</span>
-                            <ArrowRight size={14} className="text-[#ADB5BD]" />
-                            <span className="text-[#2A9D8F]">{toName.split('(')[0]}</span>
+                            <span className="text-error">{fromName.split('(')[0]}</span>
+                            <ArrowRight size={14} className="text-text-sub" />
+                            <span className="text-primary">{toName.split('(')[0]}</span>
                           </div>
-                          <span className="text-[#212529]">{formatMoney(split.amount)}</span>
+                          <span className="text-text-main">{formatMoney(split.amount)}</span>
                         </div>
-                        <div className="h-px bg-[#DEE2E6] w-full my-2"></div>
+                        <div className="h-px bg-border-base w-full my-2"></div>
                         <div className="space-y-1.5">
-                          <p className="text-[11px] font-bold text-[#868E96] mb-2">정산 근거 (관련 지출)</p>
+                          <p className="text-[11px] font-bold text-text-sub mb-2">정산 근거 (관련 지출)</p>
                           {displayExpenses.length > 0 ? displayExpenses.map((item, eIdx) => {
                             return (
-                              <div key={eIdx} className="flex justify-between text-[12px] font-medium text-[#495057]">
+                              <div key={eIdx} className="flex justify-between text-[12px] font-medium text-text-main">
                                 <span className="truncate flex-1 mr-2">• {item.exp.title}</span>
-                                <span className="text-[#ADB5BD] shrink-0">{formatMoney(item.remainingShare)}</span>
+                                <span className="text-text-sub shrink-0">{formatMoney(item.remainingShare)}</span>
                               </div>
                             );
                           }) : (
-                            <p className="text-[11px] text-[#ADB5BD]">최적화된 정산 결과입니다.</p>
+                            <p className="text-[11px] text-text-sub">최적화된 정산 결과입니다.</p>
                           )}
                         </div>
                       </div>
@@ -781,7 +781,7 @@ export default function SettlementDetailPage() {
                   })}
                 </div>
                 <div className="p-6 pt-0">
-                  <button onClick={() => setShowExplanation(false)} className="w-full py-4 bg-[#212529] text-white font-black rounded-2xl">확인</button>
+                  <button onClick={() => setShowExplanation(false)} className="w-full py-4 bg-primary text-white font-black rounded-2xl shadow-lg shadow-primary/20 hover:opacity-90 active:scale-95 transition-all">확인</button>
                 </div>
               </div>
             </div>
@@ -790,20 +790,20 @@ export default function SettlementDetailPage() {
           {/* Add Expense Modal Overlay */}
           {isAddExpenseModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-              <div className="w-full max-w-md bg-white rounded-[32px] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
-                <div className="flex items-center justify-between p-6 border-b border-[#F1F3F5]">
-                  <h2 className="text-lg font-black text-[#212529] flex items-center">
-                    <Receipt size={20} className="mr-2 text-[#2A9D8F]" />
+              <div className="w-full max-w-md bg-bg-base rounded-[32px] shadow-2xl flex flex-col animate-in zoom-in-95 overflow-hidden">
+                <div className="flex items-center justify-between p-6 border-b border-border-base">
+                  <h2 className="text-lg font-black text-text-main flex items-center">
+                    <Receipt size={20} className="mr-2 text-primary" />
                     새 지출 추가
                   </h2>
-                  <button onClick={() => setIsAddExpenseModalOpen(false)} className="p-1.5 text-[#ADB5BD] hover:bg-slate-50 rounded-full">
+                  <button onClick={() => setIsAddExpenseModalOpen(false)} className="p-1.5 text-text-sub hover:bg-bg-alt rounded-full">
                     <X size={22} />
                   </button>
                 </div>
 
                 <form onSubmit={handleAddExpense} className="p-6 space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[13px] font-bold text-[#495057]">카테고리</label>
+                    <label className="text-[13px] font-bold text-text-sub">카테고리</label>
                     <div className="grid grid-cols-5 gap-2">
                       {["식비", "숙박", "교통", "액티비티", "기타"].map((cat) => (
                         <button
@@ -811,8 +811,8 @@ export default function SettlementDetailPage() {
                           type="button"
                           onClick={() => setNewCategory(cat)}
                           className={`py-2 rounded-xl text-[12px] font-bold border transition-colors ${newCategory === cat
-                              ? "bg-[#2A9D8F] text-white border-[#2A9D8F]"
-                              : "bg-[#F8F9FA] text-[#868E96] border-[#F1F3F5] hover:border-[#ADB5BD]"
+                              ? "bg-primary text-white border-primary"
+                              : "bg-bg-alt text-text-sub border-border-base hover:border-text-sub"
                             }`}
                         >
                           {cat}
@@ -823,7 +823,7 @@ export default function SettlementDetailPage() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-[13px] font-bold text-[#495057]">정산 인원 조정</label>
+                      <label className="text-[13px] font-bold text-text-sub">정산 인원 조정</label>
                       <button
                         type="button"
                         onClick={() => {
@@ -835,7 +835,7 @@ export default function SettlementDetailPage() {
                             }
                           }
                         }}
-                        className="text-[11px] font-bold text-[#2A9D8F]"
+                        className="text-[11px] font-bold text-primary"
                       >
                         {selectedParticipants.length === currentGroup?.members.length ? "전체 해제" : "전체 선택"}
                       </button>
@@ -852,15 +852,15 @@ export default function SettlementDetailPage() {
                             key={memberId}
                             type="button"
                             onClick={() => {
-                              setSelectedParticipants(prev =>
+                             setSelectedParticipants(prev =>
                                 prev.includes(memberId)
                                   ? prev.filter(id => id !== memberId)
                                   : [...prev, memberId]
                               );
                             }}
                             className={`flex items-center space-x-2 px-3 py-2 rounded-xl border transition-all ${isSelected
-                                ? "bg-[#2A9D8F]/10 border-[#2A9D8F] text-[#2A9D8F]"
-                                : "bg-[#F8F9FA] border-[#F1F3F5] text-[#ADB5BD]"
+                                ? "bg-primary/10 border-primary text-primary"
+                                : "bg-bg-alt border-border-base text-text-sub"
                               }`}
                           >
                             <img src={avatar} alt={name} className={`w-5 h-5 rounded-full object-cover ${!isSelected && "grayscale opacity-50"}`} />
@@ -872,19 +872,19 @@ export default function SettlementDetailPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[13px] font-bold text-[#495057]">지출 내역</label>
+                    <label className="text-[13px] font-bold text-text-sub">지출 내역</label>
                     <input
                       type="text"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       placeholder="무엇을 결제하셨나요?"
-                      className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3.5 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none transition-all placeholder:text-[#ADB5BD]"
+                      className="w-full bg-bg-alt border border-border-base p-3.5 rounded-2xl text-[14px] font-medium focus:ring-2 focus:ring-primary/30 text-text-main focus:outline-none transition-all placeholder:text-text-sub/50"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-[13px] font-bold text-[#495057]">결제 금액</label>
+                    <label className="text-[13px] font-bold text-text-sub">결제 금액</label>
                     <div className="relative">
                       <input
                         type="text"
@@ -895,10 +895,10 @@ export default function SettlementDetailPage() {
                           setNewAmount(val ? parseInt(val).toLocaleString('ko-KR') : '');
                         }}
                         placeholder="0"
-                        className="w-full bg-[#F8F9FA] border border-[#F1F3F5] p-3.5 pr-8 rounded-2xl text-[18px] font-black tracking-tight focus:ring-2 focus:ring-[#2A9D8F]/30 focus:outline-none transition-all placeholder:text-[#ADB5BD]"
+                        className="w-full bg-bg-alt border border-border-base p-3.5 pr-8 rounded-2xl text-[18px] font-black tracking-tight text-text-main focus:ring-2 focus:ring-primary/30 focus:outline-none transition-all placeholder:text-text-sub/50"
                         required
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[14px] font-bold text-[#495057]">원</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[14px] font-bold text-text-sub">원</span>
                     </div>
                   </div>
 
@@ -906,7 +906,7 @@ export default function SettlementDetailPage() {
                     <button
                       type="submit"
                       disabled={selectedParticipants.length === 0}
-                      className={`w-full flex items-center justify-center space-x-2 bg-[#212529] text-white py-4 rounded-2xl text-[15px] font-black shadow-xl transition-all ${selectedParticipants.length === 0 ? "opacity-30 cursor-not-allowed" : "hover:bg-[#343a40] active:scale-95"
+                      className={`w-full flex items-center justify-center space-x-2 bg-text-main text-bg-base py-4 rounded-2xl text-[15px] font-black shadow-xl transition-all ${selectedParticipants.length === 0 ? "opacity-30 cursor-not-allowed" : "hover:opacity-90 active:scale-95"
                         }`}
                     >
                       <span>지출 내역 등록하기</span>

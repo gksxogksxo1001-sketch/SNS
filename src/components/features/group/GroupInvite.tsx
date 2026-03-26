@@ -45,18 +45,18 @@ export const GroupInvite = ({ groupId, groupName, onClose }: GroupInviteProps) =
   };
 
   return (
-    <div className="p-6 bg-slate-50 rounded-[28px] border border-slate-100">
+    <div className="p-6 bg-bg-alt rounded-[28px] border border-border-base">
       <div className="flex justify-between items-center mb-4">
-        <h4 className="font-bold text-slate-800 flex items-center gap-2">
-          <Mail size={18} className="text-[#2A9D8F]" />
+        <h4 className="font-bold text-text-main flex items-center gap-2">
+          <Mail size={18} className="text-primary" />
           멤버 초대하기
         </h4>
-        <button onClick={onClose} className="p-1 hover:bg-slate-200 rounded-lg text-slate-400 transition-colors">
+        <button onClick={onClose} className="p-1 hover:bg-bg-alt rounded-lg text-text-sub transition-colors">
           <X size={18} />
         </button>
       </div>
 
-      <p className="text-xs text-slate-500 mb-4">
+      <p className="text-xs text-text-sub mb-4">
         함께 여행할 친구의 이메일을 입력하세요. <br/>
         가입된 사용자라면 실시간 알림이 발송됩니다.
       </p>
@@ -70,13 +70,13 @@ export const GroupInvite = ({ groupId, groupName, onClose }: GroupInviteProps) =
             placeholder="example@email.com"
             disabled={status === 'success'}
             className={cn(
-              "w-full px-4 py-3 text-sm bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#2A9D8F] outline-none transition-all",
-              status === 'success' && "border-emerald-200 bg-emerald-50 text-emerald-700"
+              "w-full px-4 py-3 text-sm bg-bg-base border border-border-base rounded-xl focus:ring-2 focus:ring-primary outline-none transition-all",
+              status === 'success' && "border-success/20 bg-success/5 text-success"
             )}
             required
           />
           {status === 'success' && (
-            <Check size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500" />
+            <Check size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-success" />
           )}
         </div>
         <button
@@ -85,8 +85,8 @@ export const GroupInvite = ({ groupId, groupName, onClose }: GroupInviteProps) =
           className={cn(
             "px-5 py-3 rounded-xl font-bold text-sm transition-all flex items-center gap-2",
             isSubmitting || !email.trim() || status === 'success'
-              ? "bg-slate-200 text-slate-400 cursor-not-allowed"
-              : "bg-[#2A9D8F] text-white hover:bg-[#264653] shadow-md shadow-[#2A9D8F]/10 active:scale-95"
+              ? "bg-bg-alt text-text-sub cursor-not-allowed"
+              : "bg-primary text-white hover:opacity-90 shadow-md shadow-primary/10 active:scale-95"
           )}
         >
           {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />}
@@ -95,14 +95,14 @@ export const GroupInvite = ({ groupId, groupName, onClose }: GroupInviteProps) =
       </form>
 
       {status === 'error' && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-rose-500 font-medium animate-in slide-in-from-top-1">
+        <div className="mt-3 flex items-center gap-2 text-xs text-error font-medium animate-in slide-in-from-top-1">
           <AlertCircle size={14} />
           {message}
         </div>
       )}
       
       {status === 'success' && (
-        <div className="mt-3 flex items-center gap-2 text-xs text-emerald-600 font-medium animate-in slide-in-from-top-1">
+        <div className="mt-3 flex items-center gap-2 text-xs text-success font-medium animate-in slide-in-from-top-1">
           <Check size={14} />
           {message}
         </div>

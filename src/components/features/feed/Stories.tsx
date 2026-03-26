@@ -62,7 +62,7 @@ export const Stories = () => {
   const otherGroups = storyGroups.filter(g => g.userId !== auth.currentUser?.uid);
 
   return (
-    <div className="bg-white py-6 border-b border-[#F1F3F5] overflow-hidden">
+    <div className="bg-bg-base py-6 border-b border-border-base overflow-hidden">
       <div className="flex space-x-5 overflow-x-auto px-6 scrollbar-hide">
         {/* My Story Item */}
         <div className="flex flex-col items-center flex-shrink-0 space-y-2 group cursor-pointer">
@@ -82,14 +82,14 @@ export const Stories = () => {
                 myGroup 
                   ? (myGroup.hasUnread 
                       ? (myGroup.stories.some(s => s.visibility === "close_friends")
-                          ? "bg-[#2ECC71] p-[3px] scale-100 shadow-lg shadow-[#2ECC71]/10" // 친한친구 녹색 링
-                          : "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10")
-                      : "bg-slate-200 p-[1.5px]") // 읽음 상태일 때 회색 링
-                  : "bg-slate-100 p-[1.5px]"
+                          ? "bg-success p-[3px] scale-100 shadow-lg shadow-success/10" // 친한친구 녹색 링
+                          : "bg-gradient-to-tr from-primary via-secondary to-point p-[3px] scale-100 shadow-lg shadow-primary/10")
+                      : "bg-border-base p-[1.5px]") // 읽음 상태일 때 회색 링
+                  : "bg-bg-alt p-[1.5px]"
               )}
             >
-              <div className="w-full h-full rounded-[23px] bg-white p-[2px]">
-                <div className="w-full h-full rounded-[21px] overflow-hidden bg-slate-50 flex items-center justify-center">
+              <div className="w-full h-full rounded-[23px] bg-bg-base p-[2px]">
+                <div className="w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
                   <img src={auth.currentUser?.photoURL || DEFAULT_AVATAR} alt="Me" className="w-full h-full object-cover" />
                 </div>
               </div>
@@ -98,12 +98,12 @@ export const Stories = () => {
             <Link 
               href="/story/create"
               onClick={(e) => e.stopPropagation()}
-              className="absolute -right-1 -bottom-1 w-6 h-6 rounded-xl bg-[#2A9D8F] border-2 border-white flex items-center justify-center text-white shadow-sm hover:scale-110 transition-transform"
+              className="absolute -right-1 -bottom-1 w-6 h-6 rounded-xl bg-primary border-2 border-bg-base flex items-center justify-center text-white shadow-sm hover:scale-110 transition-transform"
             >
               <Plus size={14} strokeWidth={3} />
             </Link>
           </div>
-          <span className="text-[10px] font-bold tracking-tight text-[#ADB5BD]">내 스토리</span>
+          <span className="text-[10px] font-bold tracking-tight text-text-sub">내 스토리</span>
         </div>
 
         {/* Other User Stories */}
@@ -122,13 +122,13 @@ export const Stories = () => {
                 "w-[68px] h-[68px] rounded-[26px] flex items-center justify-center transition-all duration-300 group-hover:scale-105",
                 group.hasUnread 
                   ? (group.stories.some(s => s.visibility === "close_friends")
-                      ? "bg-[#2ECC71] p-[3px] scale-100 shadow-lg shadow-[#2ECC71]/10" 
-                      : "bg-gradient-to-tr from-[#2A9D8F] via-[#E9C46A] to-[#F4A261] p-[3px] scale-100 shadow-lg shadow-[#2A9D8F]/10")
-                  : "bg-slate-200 p-[1.5px]"
+                      ? "bg-success p-[3px] scale-100 shadow-lg shadow-success/10" 
+                      : "bg-gradient-to-tr from-primary via-secondary to-point p-[3px] scale-100 shadow-lg shadow-primary/10")
+                  : "bg-border-base p-[1.5px]"
               )}>
                 {/* Avatar Container */}
-                <div className="w-full h-full rounded-[23px] bg-white p-[2px]">
-                  <div className="w-full h-full rounded-[21px] overflow-hidden bg-slate-50 flex items-center justify-center">
+                <div className="w-full h-full rounded-[23px] bg-bg-base p-[2px]">
+                  <div className="w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
                     <img src={group.user.image || DEFAULT_AVATAR} alt={group.user.name} className="w-full h-full object-cover" />
                   </div>
                 </div>
@@ -136,7 +136,7 @@ export const Stories = () => {
             </div>
             <span className={cn(
               "text-[10px] font-bold tracking-tight transition-colors w-16 truncate",
-              group.hasUnread ? "text-[#212529]" : "text-[#ADB5BD]"
+              group.hasUnread ? "text-text-main" : "text-text-sub"
             )}>
               {group.user.name}
             </span>

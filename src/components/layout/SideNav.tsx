@@ -123,11 +123,11 @@ export const SideNav = () => {
         onClick={onClick}
         className={cn(
           "relative flex items-center gap-4 px-3 py-3 rounded-2xl font-medium group overflow-hidden transition-all duration-200",
-          isActive ? "bg-[#2A9D8F]/10 text-[#2A9D8F]" : "text-[#495057] hover:bg-[#2A9D8F]/8 hover:text-[#2A9D8F]"
+          isActive ? "bg-primary/10 text-primary" : "text-text-main hover:bg-primary/5 hover:text-primary"
         )}
       >
         {/* 활성 사이드바 */}
-        {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-[#2A9D8F] rounded-full" />}
+        {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-primary rounded-full" />}
 
         {/* 아이콘 */}
         <div className={cn(
@@ -136,7 +136,7 @@ export const SideNav = () => {
         )}>
           <Icon size={24} strokeWidth={isActive ? 2.5 : 2} className={item.iconClass} />
           {badge && (
-            <span className="absolute -right-1.5 -top-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-[#e74c3c] text-[8px] font-bold text-white">
+            <span className="absolute -right-1.5 -top-1.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full bg-error text-[8px] font-bold text-white">
               {badge >= 10 ? "10+" : badge}
             </span>
           )}
@@ -158,7 +158,7 @@ export const SideNav = () => {
   return (
     <>
       {/* ───── PC 고정 사이드바 (md 이상에서 보임) ───── */}
-      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full z-50 border-r border-[#F1F3F5] bg-white py-6 transition-all duration-200 overflow-hidden"
+      <aside className="hidden md:flex flex-col fixed left-0 top-0 h-full z-50 border-r border-border-base bg-bg-base py-6 transition-all duration-200 overflow-hidden"
         style={{ width: "64px" }}
       >
         {/* 로고 / 열기 버튼 */}
@@ -168,8 +168,8 @@ export const SideNav = () => {
             className="flex flex-col items-center gap-0.5 group"
             title="메뉴 열기"
           >
-            <span className="text-xl font-black text-[#2A9D8F] group-hover:opacity-70 transition-opacity">H</span>
-            <ChevronRight size={12} className="text-[#ADB5BD] group-hover:text-[#2A9D8F] transition-colors" />
+            <span className="text-xl font-black text-primary group-hover:opacity-70 transition-opacity">H</span>
+            <ChevronRight size={12} className="text-text-sub group-hover:text-primary transition-colors" />
           </button>
         </div>
 
@@ -183,7 +183,7 @@ export const SideNav = () => {
         {user && (
           <div className="px-2 mt-4">
             <button onClick={openDrawer} className="w-full flex justify-center py-1">
-              <img src={user.photoURL || DEFAULT_AVATAR} alt="profile" className="w-9 h-9 rounded-full object-cover border border-gray-200 hover:scale-105 transition-transform" />
+              <img src={user.photoURL || DEFAULT_AVATAR} alt="profile" className="w-9 h-9 rounded-full object-cover border border-border-base hover:scale-105 transition-transform" />
             </button>
           </div>
         )}
@@ -201,7 +201,7 @@ export const SideNav = () => {
 
       {/* ───── 드로어 패널 ───── */}
       <aside
-        className="fixed top-0 left-0 h-full z-[70] bg-white flex flex-col px-4 py-6 shadow-2xl"
+        className="fixed top-0 left-0 h-full z-[70] bg-bg-base flex flex-col px-4 py-6 shadow-2xl"
         style={{
           width: DRAWER_WIDTH,
           transform: dragging.current
@@ -212,9 +212,9 @@ export const SideNav = () => {
       >
         {/* 헤더 */}
         <div className="flex items-center justify-between mb-8">
-          <span className="text-2xl font-black text-[#2A9D8F]">HANS</span>
-          <button onClick={closeDrawer} className="p-1.5 rounded-full hover:bg-gray-100 transition-colors">
-            <X size={20} className="text-[#6C757D]" />
+          <span className="text-2xl font-black text-primary">HANS</span>
+          <button onClick={closeDrawer} className="p-1.5 rounded-full hover:bg-bg-alt transition-colors">
+            <X size={20} className="text-text-sub" />
           </button>
         </div>
 
@@ -230,16 +230,16 @@ export const SideNav = () => {
           <Link
             href="/profile"
             onClick={closeDrawer}
-            className="group flex items-center gap-3 px-3 py-3 rounded-2xl mt-4 transition-all duration-200 hover:bg-gray-100"
+            className="group flex items-center gap-3 px-3 py-3 rounded-2xl mt-4 transition-all duration-200 hover:bg-bg-alt"
           >
             <img
               src={user.photoURL || DEFAULT_AVATAR}
               alt="profile"
-              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-gray-200 group-hover:scale-105 transition-transform duration-200"
+              className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-border-base group-hover:scale-105 transition-transform duration-200"
             />
             <div className="overflow-hidden">
-              <p className="text-[13px] font-bold text-[#212529] truncate">{user.displayName || "사용자"}</p>
-              <p className="text-[11px] text-[#ADB5BD] truncate">{user.email}</p>
+              <p className="text-[13px] font-bold text-text-main truncate">{user.displayName || "사용자"}</p>
+              <p className="text-[11px] text-text-sub truncate">{user.email}</p>
             </div>
           </Link>
         )}
@@ -248,7 +248,7 @@ export const SideNav = () => {
       {/* ───── 모바일 전용: 좌측 엣지 드래그 힌트 탭 ───── */}
       <div
         className="fixed left-0 top-1/2 -translate-y-1/2 z-[55] md:hidden"
-        style={{ width: 4, height: 48, background: "rgba(42,157,143,0.3)", borderRadius: "0 4px 4px 0" }}
+        style={{ width: 4, height: 48, background: "rgba(var(--primary-rgb), 0.3)", borderRadius: "0 4px 4px 0" }}
       />
     </>
   );

@@ -215,10 +215,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
   const getExpenseIcon = (category: string) => {
     switch (category) {
-      case "flight": return <Plane size={14} className="text-[#2A9D8F]" />;
+      case "flight": return <Plane size={14} className="text-secondary" />;
       case "hotel": return <Hotel size={14} className="text-[#F4A261]" />;
-      case "food": return <Utensils size={14} className="text-[#E76F51]" />;
-      default: return <Wallet size={14} className="text-[#264653]" />;
+      case "food": return <Utensils size={14} className="text-error" />;
+      default: return <Wallet size={14} className="text-primary" />;
     }
   };
 
@@ -247,7 +247,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
   if (isDeleted) return null;
 
   return (
-    <div className="mb-4 overflow-hidden rounded-3xl bg-white shadow-sm border border-[#F1F3F5] transition-all hover:shadow-md">
+    <div className="mb-4 overflow-hidden rounded-3xl bg-bg-base shadow-sm border border-border-base transition-all hover:shadow-md">
       {/* Header */}
       <div className="flex items-center justify-between p-4 pb-2">
         <button 
@@ -260,22 +260,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           }}
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
-          <div className="h-10 w-10 overflow-hidden rounded-full bg-[#F8F9FA] border border-[#F1F3F5]">
+          <div className="h-10 w-10 overflow-hidden rounded-full bg-bg-alt border border-border-base">
             <img src={post.user.image || DEFAULT_AVATAR} alt={post.user.name || "User"} className="h-full w-full object-cover" />
           </div>
           <div className="text-left">
             <div className="flex items-center space-x-2">
-              <span className="text-sm font-bold text-[#212529]">{post.user.name || "익명 여행자"}</span>
+              <span className="text-sm font-bold text-text-main">{post.user.name || "익명 여행자"}</span>
               {post.user.group && (
-                <span className="rounded-full bg-[#2A9D8F]/10 px-2 py-0.5 text-[10px] font-bold text-[#2A9D8F]">
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
                   {post.user.group}
                 </span>
               )}
             </div>
             <div className="flex items-center space-x-1.5 mt-0.5">
-              <span className="text-[10px] font-medium text-[#ADB5BD]">{getFormattedDate()}</span>
-              <span className="text-[10px] text-[#DEE2E6]">•</span>
-              <div className="flex items-center text-[#ADB5BD]">
+              <span className="text-[10px] font-medium text-text-sub">{getFormattedDate()}</span>
+              <span className="text-[10px] text-border-base">•</span>
+              <div className="flex items-center text-text-sub">
                 {post.visibility === "friends" ? (
                   <Users size={10} className="mr-0.5" />
                 ) : post.visibility === "close_friends" ? (
@@ -293,7 +293,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         <div className="relative">
           <button 
             onClick={() => setShowMenu(!showMenu)} 
-            className="text-[#ADB5BD] p-1.5 hover:bg-slate-50 transition-colors rounded-full"
+            className="text-text-sub p-1.5 hover:bg-bg-alt transition-colors rounded-full"
           >
             <MoreHorizontal size={20} />
           </button>
@@ -305,22 +305,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                 className="fixed inset-0 z-10" 
                 onClick={() => setShowMenu(false)}
               />
-              <div className="absolute right-0 top-full mt-1 w-36 rounded-2xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-[#F1F3F5] py-1.5 z-20 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-                <div className="px-3 py-1.5 mb-1 text-[10px] font-bold text-[#ADB5BD] border-b border-[#F8F9FA]">
+              <div className="absolute right-0 top-full mt-1 w-36 rounded-2xl bg-bg-base shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-border-base py-1.5 z-20 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+                <div className="px-3 py-1.5 mb-1 text-[10px] font-bold text-text-sub border-b border-border-base">
                   게시물 옵션
                 </div>
                 {user && post.user.uid === user.uid ? (
                   <>
                     <button 
                       onClick={(e) => { e.stopPropagation(); setShowMenu(false); router.push(`/post/edit/${post.id}`); }} 
-                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-[#495057] hover:bg-[#F8F9FA] transition-colors"
+                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-text-main hover:bg-bg-alt transition-colors"
                     >
-                      <Edit2 size={15} className="mr-2 text-[#ADB5BD]" /> 
+                      <Edit2 size={15} className="mr-2 text-text-sub" /> 
                       수정하기
                     </button>
                     <button 
                       onClick={handleDeleteClick} 
-                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-[#e74c3c] hover:bg-[#e74c3c]/5 transition-colors"
+                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-error hover:bg-error/5 transition-colors"
                     >
                       <Trash2 size={15} className="mr-2" /> 
                       삭제하기
@@ -330,18 +330,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   <>
                     <button 
                       onClick={() => { setShowMenu(false); alert("개발 중인 기능입니다."); }} 
-                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-[#495057] hover:bg-[#F8F9FA] transition-colors"
+                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-text-main hover:bg-bg-alt transition-colors"
                     >
-                      <EyeOff size={15} className="mr-2 text-[#ADB5BD]" /> 
+                      <EyeOff size={15} className="mr-2 text-text-sub" /> 
                       관심 없음
                     </button>
                     <button 
                       onClick={() => { setShowMenu(false); handleBookmarkToggle(); }} 
-                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-[#495057] hover:bg-[#F8F9FA] transition-colors"
+                      className="flex w-full items-center px-4 py-2.5 text-[13px] font-semibold text-text-main hover:bg-bg-alt transition-colors"
                     >
                       <Bookmark 
                         size={15} 
-                        className={cn("mr-2", isBookmarked ? "text-[#F4A261] fill-current" : "text-[#ADB5BD]")} 
+                        className={cn("mr-2", isBookmarked ? "text-primary fill-current" : "text-text-sub")} 
                       /> 
                       {isBookmarked ? "저장 취소" : "저장하기"}
                     </button>
@@ -355,7 +355,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
 
       {/* Content Area */}
       <div className="px-4 py-2">
-        <p className="text-[15px] leading-relaxed text-[#212529] whitespace-pre-wrap">
+        <p className="text-[15px] leading-relaxed text-text-main whitespace-pre-wrap">
           {post.content}
         </p>
       </div>
@@ -366,7 +366,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           className="relative aspect-[4/3] w-full px-4 py-2 cursor-pointer group"
           onClick={() => setLightboxIndex(0)}
         >
-          <div className="h-full w-full overflow-hidden rounded-2xl bg-[#F8F9FA]">
+          <div className="h-full w-full overflow-hidden rounded-2xl bg-bg-alt">
             <img src={post.images[0]} alt="Post" className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
           </div>
           {post.images.length > 1 && (
@@ -383,7 +383,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         {post.tags && post.tags.length > 0 && (
           <div className="mb-3 flex flex-wrap gap-1.5">
             {post.tags.map((tag) => (
-              <span key={tag} className="text-[12px] font-bold text-[#2A9D8F]">
+              <span key={tag} className="text-[12px] font-bold text-primary">
                 {tag}
               </span>
             ))}
@@ -396,19 +396,19 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {post.location && (
               <button 
                 onClick={() => router.push(`/map?lat=${post.location!.lat}&lng=${post.location!.lng}&name=${encodeURIComponent(post.location!.name)}`)}
-                className="flex items-center space-x-1.5 text-[12px] font-bold text-[#6C757D] hover:text-[#2A9D8F] transition-colors group cursor-pointer"
+                className="flex items-center space-x-1.5 text-[12px] font-bold text-text-sub hover:text-primary transition-colors group cursor-pointer"
                 title="지도에서 보기"
               >
-                <MapPin size={14} className="text-[#2A9D8F] group-hover:scale-110 transition-transform" />
+                <MapPin size={14} className="text-primary group-hover:scale-110 transition-transform" />
                 <span className="line-clamp-1 group-hover:underline">{post.location.name}</span>
               </button>
             )}
             {expenseList.length > 0 && (
               <div className="flex items-center space-x-2">
                 {expenseList.slice(0, 3).map((exp, idx) => (
-                  <div key={idx} className="flex items-center space-x-1 bg-[#F8F9FA] px-2 py-1 rounded-full border border-[#F1F3F5] hover:bg-white hover:shadow-sm transition-all duration-300">
+                  <div key={idx} className="flex items-center space-x-1 bg-bg-alt px-2 py-1 rounded-full border border-border-base hover:bg-bg-base hover:shadow-sm transition-all duration-300">
                     <span className="scale-90">{getExpenseIcon(exp.category)}</span>
-                    <span className="text-[10px] font-bold text-[#495057] whitespace-nowrap">
+                    <span className="text-[10px] font-bold text-text-main whitespace-nowrap">
                       {exp.amount.toLocaleString()}
                     </span>
                   </div>
@@ -418,8 +418,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
           </div>
           {post.totalExpense > 0 && (
             <div className="flex flex-col items-end">
-              <span className="text-[10px] font-bold text-[#ADB5BD] uppercase tracking-tighter mb-0.5">Total</span>
-              <span className="text-[16px] font-black text-[#264653]">
+              <span className="text-[10px] font-bold text-text-sub uppercase tracking-tighter mb-0.5">Total</span>
+              <span className="text-[16px] font-black text-text-main">
                 {post.totalExpense.toLocaleString()}원
               </span>
             </div>
@@ -427,13 +427,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
         </div>
  
         {/* Interaction */}
-        <div className="flex items-center justify-between pt-3 border-t border-[#F8F9FA]">
+        <div className="flex items-center justify-between pt-3 border-t border-border-base">
           <div className="flex items-center space-x-5">
             <button 
               onClick={handleLikeToggle}
               className={cn(
                 "flex items-center space-x-1.5 transition-colors group",
-                isLiked ? "text-[#e74c3c]" : "text-[#6C757D] hover:text-[#e74c3c]"
+                isLiked ? "text-error" : "text-text-sub hover:text-error"
               )}
             >
               <Heart 
@@ -449,7 +449,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               onClick={() => setShowComments(!showComments)}
               className={cn(
                 "flex items-center space-x-1.5 transition-colors",
-                showComments ? "text-[#2A9D8F]" : "text-[#6C757D] hover:text-[#2A9D8F]"
+                showComments ? "text-primary" : "text-text-sub hover:text-primary"
               )}
             >
               <MessageCircle size={20} />
@@ -457,7 +457,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </button>
             <button 
               onClick={handleShareClick}
-              className="flex items-center space-x-1.5 text-[#6C757D] transition-colors hover:text-[#3498db]"
+              className="flex items-center space-x-1.5 text-text-sub transition-colors hover:text-blue-500"
             >
               <Share2 size={20} />
             </button>
@@ -465,10 +465,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               onClick={handleBookmarkToggle}
               className={cn(
                 "flex items-center space-x-1.5 transition-colors group",
-                isBookmarked ? "text-[#F4A261]" : "text-[#6C757D] hover:text-[#F4A261]"
+                isBookmarked ? "text-primary" : "text-text-sub hover:text-primary"
               )}
             >
-              <Bookmark 
+              <Heart 
                 size={20} 
                 className={cn(
                   "transition-transform group-active:scale-125",
@@ -487,7 +487,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
               {comments.length > 0 ? (
                 comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
-                    <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
+                    <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
                       <img src={comment.user.image || DEFAULT_AVATAR} alt={comment.user.name} className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1 space-y-1">
@@ -509,7 +509,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             {/* Comment Input */}
             {user ? (
               <form onSubmit={handleCommentSubmit} className="flex items-center space-x-2 pt-2">
-                <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-gray-100 border border-gray-100">
+                <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
                   <img src={user.photoURL || DEFAULT_AVATAR} alt={user.displayName || ""} className="h-full w-full object-cover" />
                 </div>
                 <div className="relative flex-1">
@@ -518,19 +518,19 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="댓글을 입력하세요..."
-                    className="w-full bg-[#F8F9FA] rounded-full py-2 px-4 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-[#2A9D8F]/30 border-none placeholder:text-text-sub/50"
+                    className="w-full bg-bg-alt rounded-full py-2 px-4 pr-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary/30 border-none placeholder:text-text-sub/50"
                   />
                   <button
                     type="submit"
                     disabled={!newComment.trim() || isSubmittingComment}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[#2A9D8F] disabled:text-text-sub/30 transition-colors"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-primary disabled:text-text-sub/30 transition-colors"
                   >
                     <Send size={18} />
                   </button>
                 </div>
               </form>
             ) : (
-              <div className="text-center py-2 px-4 bg-[#F8F9FA] rounded-xl">
+              <div className="text-center py-2 px-4 bg-bg-alt rounded-xl">
                 <p className="text-xs text-text-sub">
                   댓글을 달려면 <button onClick={() => alert("로그인이 필요합니다.")} className="text-primary font-bold">로그인</button>이 필요합니다.
                 </p>
@@ -612,15 +612,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
                   key={friend.uid}
                   onClick={() => handleShareToFriend(friend)}
                   disabled={sharingTo === friend.uid}
-                  className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-gray-50 transition-all border border-transparent hover:border-gray-100 active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+                   className="w-full flex items-center justify-between p-3 rounded-2xl hover:bg-bg-alt transition-all border border-transparent hover:border-border-base active:scale-95 disabled:opacity-50 disabled:active:scale-100"
                 >
                   <div className="flex items-center space-x-3">
-                    <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 border flex items-center justify-center">
+                    <div className="h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center">
                       <img src={friend.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-black text-gray-900">{friend.nickname}</p>
-                      <p className="text-[10px] text-gray-400 capitalize">{friend.travelStyle || "여행을 즐기는 중"}</p>
+                      <p className="text-sm font-black text-text-main">{friend.nickname}</p>
+                      <p className="text-[10px] text-text-sub capitalize">{friend.travelStyle || "여행을 즐기는 중"}</p>
                     </div>
                   </div>
                   <div className="p-2 bg-primary/5 rounded-xl text-primary font-bold text-[11px]">
@@ -631,37 +631,37 @@ export const PostCard: React.FC<PostCardProps> = ({ post }) => {
             </div>
           ) : (
             <div className="text-center py-10 space-y-3">
-              <div className="mx-auto w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+              <div className="mx-auto w-12 h-12 bg-bg-alt rounded-full flex items-center justify-center text-text-sub">
                 <Users size={24} />
               </div>
-              <p className="text-xs text-gray-400 font-bold">공유할 친구가 없습니다.</p>
+              <p className="text-xs text-text-sub font-bold">공유할 친구가 없습니다.</p>
             </div>
           )}
         </div>
       </PowerPopup>
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-[320px] rounded-[28px] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-bg-base w-full max-w-[320px] rounded-[28px] p-6 shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#e74c3c]/10 mb-4">
               <Trash2 size={24} className="text-[#e74c3c]" />
             </div>
-            <h3 className="text-center text-lg font-black text-[#212529] mb-2">게시물을 삭제할까요?</h3>
-            <p className="text-center text-[13px] text-[#6C757D] mb-6 leading-relaxed">
+            <h3 className="text-center text-lg font-black text-text-main mb-2">게시물을 삭제할까요?</h3>
+            <p className="text-center text-[13px] text-text-sub mb-6 leading-relaxed">
               이 작업은 되돌릴 수 없으며,<br />피드에서 영구적으로 사라집니다.
             </p>
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={isDeleting}
-                className="flex-1 rounded-2xl bg-[#F8F9FA] py-3.5 text-[14px] font-bold text-[#495057] transition-colors hover:bg-[#E9ECEF] disabled:opacity-50"
+                className="flex-1 rounded-2xl bg-bg-alt py-3.5 text-[14px] font-bold text-text-main transition-colors hover:bg-border-base/50 disabled:opacity-50"
               >
                 취소
               </button>
               <button
                 onClick={executeDelete}
                 disabled={isDeleting}
-                className="flex-1 rounded-2xl bg-[#e74c3c] py-3.5 text-[14px] font-bold text-white transition-all hover:bg-[#c0392b] hover:shadow-lg hover:shadow-[#e74c3c]/30 disabled:opacity-50 flex items-center justify-center"
+                className="flex-1 rounded-2xl bg-error py-3.5 text-[14px] font-bold text-white transition-all hover:bg-error/80 hover:shadow-lg hover:shadow-error/30 disabled:opacity-50 flex items-center justify-center"
               >
                 {isDeleting ? <span className="animate-spin w-5 h-5 border-2 border-white/30 border-t-white rounded-full"></span> : "삭제하기"}
               </button>

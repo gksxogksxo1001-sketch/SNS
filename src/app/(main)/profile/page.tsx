@@ -48,6 +48,7 @@ export default function ProfilePage() {
   const [archivedStories, setArchivedStories] = useState<Story[]>([]);
   const [isLoadingStories, setIsLoadingStories] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
+  const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [friendsModalTab, setFriendsModalTab] = useState<"all" | "close">("all");
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -188,16 +189,16 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8F9FA] pb-20">
+    <div className="min-h-screen bg-bg-alt pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-white px-4 border-b">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-bg-base px-4 border-b border-border-base">
         <h1 className="text-lg font-bold">프로필</h1>
         <div className="relative flex items-center">
           <button 
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             className={cn(
               "p-2 rounded-full transition-all",
-              isSettingsOpen ? "bg-primary text-white" : "text-text-sub hover:bg-gray-100"
+              isSettingsOpen ? "bg-primary text-white" : "text-text-sub hover:bg-bg-alt"
             )}
           >
             <Settings size={20} />
@@ -212,9 +213,9 @@ export default function ProfilePage() {
                 onClick={() => setIsSettingsOpen(false)}
               ></div>
               
-              <div className="absolute top-12 right-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="absolute top-12 right-0 w-56 bg-bg-base rounded-2xl shadow-xl border border-border-base py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="px-4 py-2 mb-1">
-                  <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">설정 및 관리</p>
+                  <p className="text-[10px] font-black text-text-sub uppercase tracking-widest">설정 및 관리</p>
                 </div>
                 
                 <button 
@@ -235,10 +236,10 @@ export default function ProfilePage() {
                       }
                     }
                   }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-bg-alt transition-colors group"
                 >
-                  <History size={18} className="text-[#2A9D8F]" />
-                  <span className="text-sm font-bold text-gray-700">스토리 보관함</span>
+                  <History size={18} className="text-primary" />
+                  <span className="text-sm font-bold text-text-main">스토리 보관함</span>
                 </button>
 
                 <button 
@@ -246,10 +247,10 @@ export default function ProfilePage() {
                     setIsSettingsOpen(false);
                     setIsBookmarkPopupOpen(true);
                   }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-bg-alt transition-colors group"
                 >
-                  <Bookmark size={18} className="text-[#2196F3]" />
-                  <span className="text-sm font-bold text-gray-700">북마크</span>
+                  <Bookmark size={18} className="text-primary" />
+                  <span className="text-sm font-bold text-text-main">북마크</span>
                 </button>
 
                 <button 
@@ -258,10 +259,10 @@ export default function ProfilePage() {
                     setIsFriendsModalOpen(true);
                     setIsSettingsOpen(false);
                   }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-bg-alt transition-colors group"
                 >
-                  <Users size={18} className="text-[#E9C46A]" />
-                  <span className="text-sm font-bold text-gray-700">친한친구</span>
+                  <Users size={18} className="text-secondary" />
+                  <span className="text-sm font-bold text-text-main">친한친구</span>
                 </button>
 
                 <button 
@@ -269,20 +270,20 @@ export default function ProfilePage() {
                     setIsAccountSwitcherOpen(true);
                     setIsSettingsOpen(false);
                   }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 transition-colors group"
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-bg-alt transition-colors group"
                 >
-                  <UserCog size={18} className="text-[#F4A261]" />
-                  <span className="text-sm font-bold text-gray-700">계정 관리</span>
+                  <UserCog size={18} className="text-point" />
+                  <span className="text-sm font-bold text-text-main">계정 관리</span>
                 </button>
 
-                <div className="h-px bg-gray-100 my-1 mx-4"></div>
+                <div className="h-px bg-border-base my-1 mx-4"></div>
 
                 <button 
                   onClick={() => {
-                    handleLogout();
+                    setIsLogoutConfirmOpen(true);
                     setIsSettingsOpen(false);
                   }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 text-red-500 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-error hover:bg-error/5 transition-colors"
                 >
                   <LogOut size={18} />
                   <span className="text-sm font-bold">로그아웃</span>
@@ -297,7 +298,7 @@ export default function ProfilePage() {
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative group">
-            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-white shadow-md bg-gray-100 relative flex items-center justify-center">
+            <div className="h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt relative flex items-center justify-center">
               <img src={profile?.avatarUrl || DEFAULT_AVATAR} alt={user.displayName || ""} className="h-full w-full object-cover" />
               {isUpdatingPhoto && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
@@ -307,7 +308,7 @@ export default function ProfilePage() {
             </div>
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="absolute bottom-0 right-0 p-2 bg-[#2A9D8F] text-white rounded-full border-2 border-white shadow-sm hover:scale-110 active:scale-95 transition-all"
+              className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full border-2 border-bg-base shadow-sm hover:scale-110 active:scale-95 transition-all"
             >
               <Camera size={14} />
             </button>
@@ -352,7 +353,7 @@ export default function ProfilePage() {
 
         {/* Tabs */}
         <div className="space-y-4">
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-border-base">
             <button
               onClick={() => setActiveTab("posts")}
               className={cn(
@@ -411,7 +412,7 @@ export default function ProfilePage() {
 
                 return (
                   <div className="text-center py-20 space-y-4">
-                    <div className="mx-auto w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center text-gray-300">
+                    <div className="mx-auto w-16 h-16 bg-bg-alt rounded-full flex items-center justify-center text-text-sub/50">
                       {activeTab === "posts" ? <Grid size={32} /> : <Heart size={32} />}
                     </div>
                     <div className="space-y-1">
@@ -432,9 +433,9 @@ export default function ProfilePage() {
 
       {/* Visited Countries Modal */}
       {isCountryModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full sm:w-[400px] h-[70vh] sm:h-auto max-h-[85vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
-            <div className="flex items-center justify-between p-5 border-b">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
+          <div className="w-full sm:w-[400px] h-[70vh] sm:h-auto max-h-[85vh] bg-bg-base rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
+            <div className="flex items-center justify-between p-5 border-b border-border-base">
               <h3 className="text-lg font-black flex items-center">
                 <Globe size={20} className="mr-2 text-primary" />
                 나의 방문 국가
@@ -453,7 +454,7 @@ export default function ProfilePage() {
                   onChange={(e) => setNewCountry(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddCountry()}
                   placeholder="새로운 나라 추가 (예: 일본)" 
-                  className="flex-1 bg-[#F8F9FA] border border-[#F1F3F5] p-3 rounded-2xl text-[14px] focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  className="flex-1 bg-bg-alt border border-border-base p-3 rounded-2xl text-[14px] focus:ring-2 focus:ring-primary/20 focus:outline-none text-text-main"
                 />
                 <button 
                   onClick={handleAddCountry}
@@ -467,7 +468,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-3">
                 {profile?.visitedCountries && profile.visitedCountries.length > 0 ? (
                   profile.visitedCountries.map((country, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-2xl border border-gray-100 group">
+                    <div key={idx} className="flex items-center justify-between p-3 bg-bg-alt rounded-2xl border border-border-base group">
                       <span className="text-sm font-bold text-text-main">{country}</span>
                       <button 
                         onClick={() => handleDeleteCountry(country)}
@@ -479,7 +480,7 @@ export default function ProfilePage() {
                   ))
                 ) : (
                   <div className="col-span-2 py-10 text-center space-y-2">
-                    <Globe size={32} className="mx-auto text-gray-200" />
+                    <Globe size={32} className="mx-auto text-text-sub/30" />
                     <p className="text-xs text-text-sub">아직 등록된 국가가 없습니다.</p>
                   </div>
                 )}
@@ -498,7 +499,7 @@ export default function ProfilePage() {
       {/* Friends Modal */}
       {isFriendsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4">
-          <div className="w-full sm:w-[400px] h-[70vh] sm:h-auto max-h-[85vh] bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
+          <div className="w-full sm:w-[400px] h-[70vh] sm:h-auto max-h-[85vh] bg-bg-base rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-full duration-300">
             <div className="flex items-center justify-between p-5 border-b">
               <h3 className="text-lg font-black flex items-center">
                 {friendsModalTab === "all" ? (
@@ -508,32 +509,32 @@ export default function ProfilePage() {
                 )}
                 {friendsModalTab === "all" ? "팔로잉" : "친한 친구"}
               </h3>
-              <button onClick={() => setIsFriendsModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full">
+              <button onClick={() => setIsFriendsModalOpen(false)} className="p-2 hover:bg-bg-alt rounded-full text-text-sub">
                 <X size={24} />
               </button>
             </div>
 
             {/* Modal Tabs */}
-            <div className="flex border-b border-gray-100">
+            <div className="flex border-b border-border-base">
               <button 
                 onClick={() => setFriendsModalTab("all")}
                 className={cn(
                   "flex-1 py-3 text-[13px] font-bold transition-all relative",
-                  friendsModalTab === "all" ? "text-[#2A9D8F]" : "text-[#ADB5BD] hover:text-[#495057]"
+                  friendsModalTab === "all" ? "text-primary" : "text-text-sub hover:text-text-main"
                 )}
               >
                 전체 팔로잉
-                {friendsModalTab === "all" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#2A9D8F]" />}
+                {friendsModalTab === "all" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
               </button>
               <button 
                 onClick={() => setFriendsModalTab("close")}
                 className={cn(
                   "flex-1 py-3 text-[13px] font-bold transition-all relative",
-                  friendsModalTab === "close" ? "text-[#E76F51]" : "text-[#ADB5BD] hover:text-[#495057]"
+                  friendsModalTab === "close" ? "text-success" : "text-text-sub hover:text-text-main"
                 )}
               >
                 친한 친구 ⭐
-                {friendsModalTab === "close" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#E76F51]" />}
+                {friendsModalTab === "close" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-success" />}
               </button>
             </div>
             
@@ -549,20 +550,20 @@ export default function ProfilePage() {
                       {displayedFriends.map((friend, idx) => (
                         <div 
                           key={idx} 
-                          className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-2xl transition-colors cursor-pointer group"
+                          className="flex items-center justify-between p-2 hover:bg-bg-alt rounded-2xl transition-colors cursor-pointer group"
                           onClick={() => {
                             setIsFriendsModalOpen(false);
                             router.push(`/profile/${friend.uid}`);
                           }}
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 border border-gray-100 flex items-center justify-center text-gray-400">
+                            <div className="h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center text-text-sub">
                               <img src={friend.avatarUrl || DEFAULT_AVATAR} alt={friend.nickname} className="h-full w-full object-cover" />
                             </div>
                             <div className="flex flex-col text-left">
-                              <span className="text-sm font-bold">{friend.nickname}</span>
+                              <span className="text-sm font-bold text-text-main">{friend.nickname}</span>
                               {profile?.closeFriends?.includes(friend.uid) && (
-                                <span className="text-[9px] font-black text-[#E76F51] flex items-center">
+                                <span className="text-[9px] font-black text-success flex items-center">
                                   <Star size={8} className="mr-0.5 fill-current" /> 친한친구
                                 </span>
                               )}
@@ -577,8 +578,8 @@ export default function ProfilePage() {
                               className={cn(
                                 "p-2 rounded-xl transition-all active:scale-95",
                                 profile?.closeFriends?.includes(friend.uid)
-                                  ? "bg-[#E76F51]/10 text-[#E76F51]"
-                                  : "bg-gray-100 text-[#ADB5BD] hover:bg-gray-200"
+                                  ? "bg-success/10 text-success"
+                                  : "bg-bg-alt text-text-sub hover:bg-border-base"
                               )}
                               title={profile?.closeFriends?.includes(friend.uid) ? "친한친구 해제" : "친한친구 추가"}
                             >
@@ -590,7 +591,7 @@ export default function ProfilePage() {
                                 setUserToUnfollow(friend);
                                 setIsUnfollowConfirmOpen(true);
                               }}
-                              className="px-3 py-1.5 bg-gray-100 text-[12px] font-bold rounded-xl text-text-sub hover:bg-gray-200 transition-colors"
+                              className="px-3 py-1.5 bg-bg-alt text-[12px] font-bold rounded-xl text-text-sub hover:bg-border-base transition-colors"
                             >
                               팔로잉
                             </button>
@@ -603,7 +604,7 @@ export default function ProfilePage() {
 
                 return (
                   <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                    {friendsModalTab === "all" ? <UserIcon size={40} className="text-gray-100" /> : <Star size={40} className="text-gray-100" />}
+                    {friendsModalTab === "all" ? <UserIcon size={40} className="text-text-sub/20" /> : <Star size={40} className="text-text-sub/20" />}
                     <p className="text-xs text-text-sub font-medium">
                       {friendsModalTab === "all" ? "아직 팔로우하는 친구가 없습니다." : "친한 친구로 등록된 친구가 없습니다."}
                     </p>
@@ -618,9 +619,9 @@ export default function ProfilePage() {
       {/* Unfollow Confirmation Modal */}
       {isUnfollowConfirmOpen && userToUnfollow && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
-          <div className="w-full max-w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+          <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
             <div className="p-8 text-center space-y-4">
-              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-gray-100 flex items-center justify-center">
+              <div className="mx-auto h-20 w-20 rounded-full overflow-hidden border-2 border-border-base flex items-center justify-center">
                 <img src={userToUnfollow.avatarUrl || DEFAULT_AVATAR} alt="" className="h-full w-full object-cover" />
               </div>
               <div className="space-y-1">
@@ -634,10 +635,10 @@ export default function ProfilePage() {
               </div>
             </div>
             
-            <div className="flex flex-col border-t divide-y">
+            <div className="flex flex-col border-t border-border-base divide-y divide-border-base">
               <button 
                 onClick={handleUnfollow}
-                className="w-full py-4 text-red-500 font-black text-sm hover:bg-red-50 transition-colors"
+                className="w-full py-4 text-error font-black text-sm hover:bg-error/5 transition-colors"
               >
                 팔로우 취소
               </button>
@@ -646,7 +647,7 @@ export default function ProfilePage() {
                   setIsUnfollowConfirmOpen(false);
                   setUserToUnfollow(null);
                 }}
-                className="w-full py-4 text-text-main font-bold text-sm hover:bg-gray-50 transition-colors"
+                className="w-full py-4 text-text-main font-bold text-sm hover:bg-border-base transition-colors"
               >
                 아니요
               </button>
@@ -674,7 +675,7 @@ export default function ProfilePage() {
             {bookmarkedPosts.map((post) => (
               <div 
                 key={post.id} 
-                className="aspect-square relative group cursor-pointer overflow-hidden rounded-[20px] bg-gray-50 border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1"
+                className="aspect-square relative group cursor-pointer overflow-hidden rounded-[20px] bg-bg-alt border border-border-base shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1"
                 onClick={() => {
                   setIsBookmarkPopupOpen(false);
                   router.push(`/post/${post.id}`);
@@ -696,10 +697,10 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <div className="p-6 bg-gray-50 rounded-full text-gray-200">
+            <div className="p-6 bg-bg-alt rounded-full text-text-sub/30">
               <Bookmark size={48} />
             </div>
-            <p className="text-sm font-bold text-gray-400">저장된 게시물이 없습니다.</p>
+            <p className="text-sm font-bold text-text-sub/50">저장된 게시물이 없습니다.</p>
           </div>
         )}
       </PowerPopup>
@@ -740,7 +741,7 @@ export default function ProfilePage() {
             {archivedStories.map((story) => (
               <div 
                 key={story.id} 
-                className="group relative aspect-[9/16] rounded-[20px] overflow-hidden bg-gray-50 border border-gray-100 cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
+                className="group relative aspect-[9/16] rounded-[20px] overflow-hidden bg-bg-alt border border-border-base cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
               >
                 {story.mediaUrl ? (
                   <img 
@@ -749,7 +750,7 @@ export default function ProfilePage() {
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
                   />
                 ) : (
-                  <div className="h-full w-full flex items-center justify-center text-gray-300">
+                  <div className="h-full w-full flex items-center justify-center text-text-sub/50">
                     <Camera size={20} />
                   </div>
                 )}
@@ -761,13 +762,49 @@ export default function ProfilePage() {
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center py-20 space-y-4">
-            <div className="p-6 bg-gray-50 rounded-full text-gray-200">
+            <div className="p-6 bg-bg-alt rounded-full text-text-sub/30">
               <History size={48} />
             </div>
-            <p className="text-sm font-bold text-gray-400">보관된 스토리가 없습니다.</p>
+            <p className="text-sm font-bold text-text-sub/50">보관된 스토리가 없습니다.</p>
           </div>
         )}
       </PowerPopup>
+      {/* Logout Confirmation Modal */}
+      {isLogoutConfirmOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-6">
+          <div className="w-full max-w-[320px] bg-bg-base rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
+            <div className="p-8 text-center space-y-4">
+              <div className="mx-auto h-20 w-20 rounded-full bg-error/10 flex items-center justify-center text-error">
+                <LogOut size={40} />
+              </div>
+              <div className="space-y-1">
+                <p className="text-[15px] font-bold text-text-main">
+                  로그아웃 하시겠습니까?
+                </p>
+                <p className="text-[12px] text-text-sub leading-relaxed">
+                  로그아웃하면 다시 로그인할 때까지 <br />
+                  서비스 이용이 제한됩니다.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col border-t border-border-base divide-y divide-border-base">
+              <button 
+                onClick={handleLogout}
+                className="w-full py-4 text-error font-black text-sm hover:bg-error/5 transition-colors"
+              >
+                로그아웃
+              </button>
+              <button 
+                onClick={() => setIsLogoutConfirmOpen(false)}
+                className="w-full py-4 text-text-main font-bold text-sm hover:bg-bg-alt transition-colors"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,14 +21,14 @@ export const Modal = ({ isOpen, onClose, title, message }: ModalProps) => {
             />
 
             {/* 모달 박스 */}
-            <div className="relative w-[90%] max-w-sm rounded-2xl bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-                <h3 className="text-lg font-bold text-gray-900">{title}</h3>
-                <p className="mt-2 text-sm text-gray-600 leading-relaxed">{message}</p>
+            <div className="relative w-[90%] max-w-sm rounded-2xl bg-bg-base p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+                <h3 className="text-lg font-bold text-text-main">{title}</h3>
+                <p className="mt-2 text-sm text-text-sub leading-relaxed">{message}</p>
 
                 <div className="mt-6">
                     <button
                         onClick={onClose}
-                        className="w-full rounded-xl bg-blue-600 py-3 font-semibold text-white hover:bg-blue-700 transition-colors"
+                        className="w-full rounded-xl bg-primary py-3 font-semibold text-white hover:opacity-90 transition-colors"
                     >
                         확인
                     </button>

@@ -163,12 +163,12 @@ export default function RecoveryPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-bg-base">
       {/* Header */}
-      <header className="flex h-14 items-center border-b px-4">
+      <header className="flex h-14 items-center border-b border-border-base px-4">
         <button 
           onClick={() => router.back()}
-          className="mr-4 rounded-full p-2 hover:bg-gray-100"
+          className="mr-4 rounded-full p-2 hover:bg-bg-alt"
         >
           <ArrowLeft size={20} />
         </button>
@@ -178,7 +178,7 @@ export default function RecoveryPage() {
       <main className="flex-grow px-6 py-8">
         <div className="mx-auto max-w-sm space-y-8">
           {/* Tabs */}
-          <div className="flex border-b">
+          <div className="flex border-b border-border-base">
             <button
               className={cn(
                 "flex-1 py-3 text-sm font-medium transition-colors",
