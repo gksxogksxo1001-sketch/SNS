@@ -702,8 +702,7 @@ export default function ChatRoomPage() {
 
                     {/* Reply To Reference */}
                     {msg.replyTo && (
-                      <div className={`text-[12px] opacity-70 mb-1 px-3 py-1.5 rounded-xl border ${isMe ? "bg-white/10 border-white/20 text-white" : "bg-bg-alt border-border-base text-text-sub"
-                        } flex flex-col`}>
+                      <div className="text-[12px] opacity-70 mb-1 px-3 py-1.5 rounded-xl border bg-bg-alt border-border-base text-text-sub flex flex-col">
                         <span className="font-bold text-[10px] mb-0.5">{msg.replyTo.senderName}</span>
                         <span className="line-clamp-1">{msg.replyTo.text}</span>
                       </div>
@@ -782,18 +781,18 @@ export default function ChatRoomPage() {
                           </button>
                         </div>
                       ) : msg.type === "storyReply" && msg.storyData ? (
-                        <div className="flex flex-col space-y-2">
-                          <div className="relative w-full aspect-[3/4] rounded-lg overflow-hidden border border-border-base bg-bg-alt">
+                        <div className="flex flex-col space-y-3 pt-1">
+                          <div className="relative w-[180px] aspect-[9/16] rounded-xl overflow-hidden border border-border-base bg-bg-alt shadow-sm">
                             <Image 
                               src={msg.storyData.mediaUrl} 
                               alt="Story Preview" 
                               fill
-                              sizes="(max-width: 260px) 100vw, 260px"
+                              sizes="(max-width: 260px) 180px, 180px"
                               className="w-full h-full object-cover" 
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/20 to-transparent h-12"></div>
+                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent h-16"></div>
                           </div>
-                          <p className="text-[14px] leading-relaxed font-medium">
+                          <p className={cn("text-[14px] leading-relaxed font-medium", isMe ? "text-white" : "text-text-main")}>
                             {msg.text}
                           </p>
                         </div>
