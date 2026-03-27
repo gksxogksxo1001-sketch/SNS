@@ -43,28 +43,15 @@ function LoginContent() {
     }
   };
 
-  useEffect(() => {
-    const checkRedirect = async () => {
-      try {
-        const user = await AuthService.handleGoogleRedirectResult();
-        if (user) {
-          router.push("/");
-        }
-      } catch (err: any) {
-        setError(err.message);
-      }
-    };
-    checkRedirect();
-  }, [router]);
-
   const handleGoogleLogin = async () => {
     setError("");
     setIsLoading(true);
     try {
-      await AuthService.signInWithGoogleRedirect();
-      // Page will redirect, no need for router.push here
+      await AuthService.signInWithGoogle();
+      router.push("/");
     } catch (err: any) {
       setError(err.message);
+    } finally {
       setIsLoading(false);
     }
   };
