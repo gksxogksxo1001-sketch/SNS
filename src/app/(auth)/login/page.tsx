@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react"; // 1. Suspense 추가
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/common/Button";
@@ -9,7 +9,8 @@ import { Chrome, MessageCircle, MapPin, Eye, EyeOff } from "lucide-react";
 import { AuthService } from "@/core/services/AuthService";
 import { useModalStore } from "@/store/useModalStore";
 
-export default function LoginPage() {
+// 2. 기존 로직을 별도의 컴포넌트로 분리
+function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showAlert } = useModalStore();
@@ -69,22 +70,22 @@ export default function LoginPage() {
 
         <form className="mt-8 space-y-4" onSubmit={handleLogin}>
           {error && <p className="text-sm text-error text-center">{error}</p>}
-          <Input 
-            label="아이디" 
-            placeholder="아이디를 입력하세요" 
+          <Input
+            label="아이디"
+            placeholder="아이디를 입력하세요"
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             required
           />
-          <Input 
-            label="비밀번호" 
-            placeholder="••••••••" 
-            type={showPassword ? "text" : "password"} 
+          <Input
+            label="비밀번호"
+            placeholder="••••••••"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             rightElement={
-              <button 
+              <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="text-text-sub hover:text-text-main"
@@ -115,21 +116,21 @@ export default function LoginPage() {
           </div>
 
           <div className="flex justify-center space-x-6 pt-2">
-            <button 
+            <button
               type="button"
               onClick={() => showAlert({ title: "준비 중", message: "카카오 로그인은 준비 중입니다." })}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FEE500] text-[#3c1e1e] hover:opacity-90"
             >
               <MessageCircle size={24} fill="currentColor" />
             </button>
-            <button 
+            <button
               type="button"
               onClick={() => showAlert({ title: "준비 중", message: "네이버 로그인은 준비 중입니다." })}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-[#03C75A] text-white hover:opacity-90"
             >
               <span className="text-xl font-bold">N</span>
             </button>
-            <button 
+            <button
               type="button"
               onClick={handleGoogleLogin}
               className="flex h-12 w-12 items-center justify-center rounded-full border border-border-base bg-bg-base hover:bg-bg-alt"
@@ -140,5 +141,14 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// 3. 최종 export: Suspense로 감싸서 반환
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">로딩 중...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
