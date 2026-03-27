@@ -16,15 +16,15 @@ import { DEFAULT_AVATAR } from "@/core/constants";
 import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
 
-function SwipeableMessageItem({ 
-  item, 
-  title, 
-  image, 
-  chatUrl, 
-  lastMsg, 
-  lastTime, 
+function SwipeableMessageItem({
+  item,
+  title,
+  image,
+  chatUrl,
+  lastMsg,
+  lastTime,
   activeTab,
-  onDelete 
+  onDelete
 }: any) {
   const [translateX, setTranslateX] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -58,7 +58,7 @@ function SwipeableMessageItem({
   const handleEnd = () => {
     if (!isSwiping) return;
     setIsSwiping(false);
-    
+
     if (Math.abs(currentX.current - (isOpen ? SWIPE_THRESHOLD : 0)) > 10) {
       isDraggingClick.current = true;
       setTimeout(() => { isDraggingClick.current = false; }, 50);
@@ -77,7 +77,7 @@ function SwipeableMessageItem({
 
   return (
     <div className="relative w-full overflow-hidden bg-error border-b border-border-base">
-      <div 
+      <div
         className="absolute inset-y-0 right-0 w-24 flex items-center justify-end pr-6 text-white cursor-pointer"
         onClick={(e) => {
           e.stopPropagation();
@@ -89,7 +89,7 @@ function SwipeableMessageItem({
         <Trash2 size={24} />
       </div>
 
-      <div 
+      <div
         className={cn(
           "relative bg-bg-base transition-transform",
           !isSwiping && "duration-200"
@@ -103,7 +103,7 @@ function SwipeableMessageItem({
         onMouseUp={handleEnd}
         onMouseLeave={() => isSwiping && handleEnd()}
       >
-        <Link 
+        <Link
           href={chatUrl}
           onClick={(e) => {
             if (isOpen || isDraggingClick.current) {
@@ -120,17 +120,17 @@ function SwipeableMessageItem({
                 "relative w-14 h-14 overflow-hidden border border-border-base shadow-sm",
                 activeTab === "group" ? "rounded-2xl" : "rounded-full"
               )}>
-                <Image 
-                  src={image} 
-                  alt={title} 
+                <Image
+                  src={image}
+                  alt={title}
                   fill
                   sizes="56px"
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover"
                   draggable={false}
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-col">
               <span className="text-[15px] font-bold text-text-main">{title}</span>
               <span className="text-[13px] mt-0.5 truncate max-w-[180px] text-text-sub">
@@ -160,7 +160,7 @@ export default function MessagesPage() {
   const [travelGroups, setTravelGroups] = useState<Group[]>([]);
   const [activeTab, setActiveTab] = useState<"direct" | "group">("direct");
   const { showAlert, showConfirm } = useModalStore();
-  
+
   const currentUserId = user?.uid || "";
 
   useEffect(() => {
@@ -178,11 +178,11 @@ export default function MessagesPage() {
           newRooms.forEach(r => roomMap.set(r.id, r));
           return Array.from(roomMap.values());
         });
-        
-        const otherUids = newRooms.map(room => 
+
+        const otherUids = newRooms.map(room =>
           room.participants.find(p => p !== user.uid)
         ).filter(Boolean) as string[];
-        
+
         if (otherUids.length > 0) {
           fetchProfiles(otherUids);
         }
@@ -217,7 +217,7 @@ export default function MessagesPage() {
     setUserProfiles(profiles);
   };
 
-  const filteredUsers = Object.values(userProfiles).filter(p => 
+  const filteredUsers = Object.values(userProfiles).filter(p =>
     p.nickname.toLowerCase().includes(searchQuery.toLowerCase()) && p.uid !== currentUserId
   );
 
@@ -316,18 +316,18 @@ export default function MessagesPage() {
               <p className="text-sm text-text-sub/50 py-4">검색 결과가 없습니다.</p>
             ) : (
               filteredUsers.map(profile => (
-                <button 
-                  key={profile.uid} 
+                <button
+                  key={profile.uid}
                   onClick={() => startChat(profile.uid, profile.nickname, profile.avatarUrl || "")}
                   className="w-full flex items-center space-x-4 py-3 border-b border-border-base hover:bg-bg-alt transition-colors px-4"
                 >
                   <div className="relative w-12 h-12 rounded-full overflow-hidden border border-border-base">
-                    <Image 
-                      src={profile.avatarUrl || DEFAULT_AVATAR} 
-                      alt={profile.nickname} 
+                    <Image
+                      src={profile.avatarUrl || DEFAULT_AVATAR}
+                      alt={profile.nickname}
                       fill
                       sizes="48px"
-                      className="object-cover" 
+                      className="object-cover"
                     />
                   </div>
                   <span className="text-[15px] font-bold text-text-main">{profile.nickname}</span>
@@ -335,10 +335,10 @@ export default function MessagesPage() {
               ))
             )}
           </div>
-        ) : (activeTab === "direct" 
-             ? rooms.filter(r => r.type === "direct" || (!r.type && !travelGroups.some(g => g.id === r.id))) 
-             : travelGroups
-            ).length === 0 ? (
+        ) : (activeTab === "direct"
+          ? rooms.filter(r => r.type === "direct" || (!r.type && !travelGroups.some(g => g.id === r.id)))
+          : travelGroups
+        ).length === 0 ? (
           <div className="flex flex-col items-center justify-center p-12 text-text-sub space-y-2">
             <div className="w-16 h-16 bg-bg-base rounded-full flex items-center justify-center">
               <Search size={24} className="opacity-20" />
@@ -348,7 +348,7 @@ export default function MessagesPage() {
             </span>
           </div>
         ) : (
-          (activeTab === "direct" 
+          (activeTab === "direct"
             ? rooms.filter(r => r.type === "direct" || (!r.type && !travelGroups.some(g => g.id === r.id)))
             : travelGroups
           ).map((item: any) => {
