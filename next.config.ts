@@ -8,39 +8,28 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '*.googleusercontent.com',
-      },
-      {
-        protocol: 'http',
-        hostname: '*.googleusercontent.com',
+        hostname: 'firebasestorage.googleapis.com',
+        pathname: '/**', // 모든 경로 허용
       },
       {
         protocol: 'https',
-        hostname: 'firebasestorage.googleapis.com',
-      },
-      {
-        protocol: 'http',
-        hostname: 'firebasestorage.googleapis.com',
+        hostname: '*.googleusercontent.com',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: '*.googleapis.com',
-      },
-      {
-        protocol: 'http',
-        hostname: '*.googleapis.com',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
+        pathname: '/**',
       },
       {
         protocol: 'https',
         hostname: 'ui-avatars.com',
-      },
-      {
-        protocol: 'http',
-        hostname: 'ui-avatars.com',
+        pathname: '/**',
       },
     ],
   },
