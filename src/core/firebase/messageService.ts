@@ -34,7 +34,9 @@ export const messageService = {
     
     snapshot.forEach((doc) => {
       const data = doc.data() as ChatRoom;
-      if (data.participants.includes(userId2) && data.participants.length === 2) {
+      // Either explicitly 'direct' or no type (legacy), and has exactly these 2 participants
+      const isDirect = data.type === "direct" || !data.type;
+      if (isDirect && data.participants.includes(userId2) && data.participants.length === 2) {
         existingRoomId = doc.id;
       }
     });

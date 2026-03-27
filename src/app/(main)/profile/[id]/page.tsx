@@ -4,11 +4,12 @@ import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { postService } from "@/core/firebase/postService";
 import { userService } from "@/core/firebase/userService";
+import { messageService } from "@/core/firebase/messageService";
 import { useAuth } from "@/core/hooks/useAuth";
 import { UserProfile } from "@/types/user";
 import { Post } from "@/types/post";
 import { PostCard } from "@/components/features/feed/PostCard";
-import { ChevronLeft, Grid, Heart, User as UserIcon, Globe, X } from "lucide-react";
+import { ChevronLeft, Grid, Heart, User as UserIcon, Globe, X, Send, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import Image from "next/image";
@@ -26,17 +27,32 @@ export default function PublicProfilePage() {
   
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [isFriendsModalOpen, setIsFriendsModalOpen] = useState(false);
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, isLoading: isAuthLoading } = useAuth();
   const [requestStatus, setRequestStatus] = useState<"none" | "pending" | "friends">("none");
   const [incomingRequestId, setIncomingRequestId] = useState<string | null>(null);
   const [isRequesting, setIsRequesting] = useState(false);
   const [isUnfollowConfirmOpen, setIsUnfollowConfirmOpen] = useState(false);
+  const [isEnteringChat, setIsEnteringChat] = useState(false);
 
   useEffect(() => {
-    if (userId) {
+    if (userId && !isAuthLoading) {
       fetchData();
     }
-  }, [userId]);
+  }, [userId, isAuthLoading, currentUser?.uid]);
+
+  const handleMessageClick = async () => {
+    if (!currentUser || !userId || isEnteringChat) return;
+    setIsEnteringChat(true);
+    try {
+      const roomId = await messageService.createOrGetRoom(currentUser.uid, userId);
+      const name = profile?.nickname || "";
+      const image = profile?.avatarUrl || "";
+      router.push(`/messages/${roomId}?userId=${userId}&name=${encodeURIComponent(name)}&image=${encodeURIComponent(image)}`);
+    } catch (error) {
+      console.error("Failed to enter chat:", error);
+      setIsEnteringChat(false);
+    }
+  };
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -211,9 +227,18 @@ export default function PublicProfilePage() {
             </div>
           </div>
 
-          <div className="w-full pt-2">
+          <div className="w-full pt-2 flex space-x-2">
+            <button 
+              onClick={handleMessageClick}
+              disabled={isEnteringChat}
+              className="flex-1 py-2.5 bg-bg-alt text-text-main rounded-xl text-[14px] font-black hover:bg-border-base transition-colors active:scale-95 border border-border-base flex items-center justify-center space-x-1.5 disabled:opacity-50"
+            >
+              <Send size={16} className="-rotate-12" />
+              <span>메시지</span>
+            </button>
+
             {incomingRequestId ? (
-              <div className="flex space-x-2">
+              <div className="flex-[2] flex space-x-2">
                 <button 
                   onClick={handleAcceptFriend}
                   disabled={isRequesting}
@@ -232,19 +257,21 @@ export default function PublicProfilePage() {
             ) : requestStatus === "friends" ? (
               <button 
                 onClick={() => setIsUnfollowConfirmOpen(true)}
-                className="w-full py-2.5 bg-bg-alt text-text-sub rounded-xl text-[14px] font-black hover:bg-border-base transition-colors active:scale-95 border border-border-base"
+                className="flex-[2] py-2.5 bg-primary text-white rounded-xl text-[14px] font-black shadow-md shadow-primary/20 transition-colors active:scale-95 flex items-center justify-center space-x-1.5"
               >
-                팔로잉
+                <UserCheck size={16} />
+                <span className="hidden sm:inline">친구 (팔로잉)</span>
+                <span className="sm:hidden">친구</span>
               </button>
             ) : requestStatus === "pending" ? (
-              <button className="w-full py-2.5 bg-bg-alt text-text-sub/50 rounded-xl text-[14px] font-black cursor-default border border-border-base">
+              <button className="flex-[2] py-2.5 bg-bg-alt text-text-sub/50 rounded-xl text-[14px] font-black cursor-default border border-border-base">
                 요청됨
               </button>
             ) : (
               <button 
                 onClick={handleFriendRequest}
                 disabled={isRequesting}
-                className="w-full py-2.5 bg-primary text-white rounded-xl text-[14px] font-black shadow-md shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
+                className="flex-[2] py-2.5 bg-primary text-white rounded-xl text-[14px] font-black shadow-md shadow-primary/20 active:scale-95 transition-all disabled:opacity-50"
               >
                 {isRequesting ? "보내는 중..." : "친구 신청하기"}
               </button>

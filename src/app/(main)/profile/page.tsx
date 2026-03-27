@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { useModalStore } from "@/store/useModalStore";
 import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
+import { ProfileEditModal } from "@/components/features/profile/ProfileEditModal";
 import { DEFAULT_AVATAR } from "@/core/constants";
 import { PowerPopup } from "@/components/common/PowerPopup";
 import { storyService } from "@/core/firebase/storyService";
@@ -51,6 +52,7 @@ export default function ProfilePage() {
   const [isLoadingStories, setIsLoadingStories] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
   const [friendsModalTab, setFriendsModalTab] = useState<"all" | "close">("all");
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
 
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -267,16 +269,52 @@ export default function ProfilePage() {
 
                 <button
                   onClick={() => {
-                    setIsAccountSwitcherOpen(true);
                     setIsSettingsOpen(false);
+                    setIsAccountSwitcherOpen(true);
                   }}
                   className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-bg-alt transition-colors group"
                 >
                   <UserCog size={18} className="text-point" />
-                  <span className="text-sm font-bold text-text-main">계정 관리</span>
+                  <span className="text-sm font-bold text-text-main">계정 전환</span>
                 </button>
 
                 <div className="h-px bg-border-base my-1 mx-4"></div>
+
+                <button
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    setIsProfileEditOpen(true);
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-bg-alt transition-colors group"
+                >
+                  <UserIcon size={18} className="text-primary" />
+                  <span className="text-sm font-bold text-text-main">프로필 수정</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsSettingsOpen(false);
+                    showConfirm({
+                      title: "회원 탈퇴",
+                      message: "정말 탈퇴하시겠습니까? 모든 정보가 함께 삭제되며 복구할 수 없습니다.",
+                      isDanger: true,
+                      confirmText: "탈퇴하기",
+                      onConfirm: async () => {
+                        if (!user) return;
+                        try {
+                          await AuthService.deleteUserAccount(user.uid);
+                          router.push("/login"); // Redirect after withdrawal
+                        } catch (error: any) {
+                          alert(error.message);
+                        }
+                      }
+                    });
+                  }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 text-error hover:bg-error/5 transition-colors group"
+                >
+                  <Trash2 size={18} />
+                  <span className="text-sm font-bold">계정 탈퇴</span>
+                </button>
 
                 <button
                   onClick={() => {
@@ -767,6 +805,16 @@ export default function ProfilePage() {
           </div>
         )}
       </PowerPopup>
+
+      {/* Profile Edit Modal */}
+      {profile && isProfileEditOpen && (
+        <ProfileEditModal
+          isOpen={isProfileEditOpen}
+          onClose={() => setIsProfileEditOpen(false)}
+          profile={profile}
+          onUpdate={fetchUserProfile}
+        />
+      )}
     </div>
   );
 }

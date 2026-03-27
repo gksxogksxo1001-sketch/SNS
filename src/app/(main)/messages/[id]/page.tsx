@@ -748,27 +748,37 @@ export default function ChatRoomPage() {
 
                       {msg.type === "settlement" && msg.settlementData ? (
                         <div className="flex flex-col space-y-3 pt-1">
-                          <div className="flex items-center space-x-2 text-white pb-3 border-b border-white/20">
+                          <div className={cn("flex items-center space-x-2 pb-3 border-b", isMe ? "text-white border-white/20" : "text-text-main border-border-base")}>
                             <Wallet size={18} />
                             <span className="text-[14px] font-black">정산 요청</span>
                           </div>
                           <div className="space-y-1">
-                            <p className="text-[12px] font-medium text-white/80">{msg.settlementData.title}</p>
+                            <p className={cn("text-[12px] font-medium", isMe ? "text-white/80" : "text-text-sub")}>{msg.settlementData.title}</p>
                             <p className="text-[20px] font-black tracking-tight">{formatMoney(msg.settlementData.amountToPay)}</p>
                           </div>
-                          <div className="bg-white/10 p-2.5 rounded-xl border border-white/20 mt-2">
-                            <p className="text-[10px] font-semibold text-white/70 mb-0.5">입금 계좌</p>
+                          <div className={cn("p-2.5 rounded-xl border mt-2", isMe ? "bg-white/10 border-white/20" : "bg-bg-alt border-border-base")}>
+                            <p className={cn("text-[10px] font-semibold mb-0.5", isMe ? "text-white/70" : "text-text-sub")}>입금 계좌</p>
                             <p className="text-[12px] font-bold tracking-wide">{msg.settlementData.bankAccount}</p>
                           </div>
-                          {/* Only show 'Send Money' if I am receiving the request. Since I am sending it, show 'Sent' */}
                           <button
-                            onClick={() => !msg.settlementData?.isSettled && !isMe && handleSettleMoney(msg.id)}
-                            className={`w-full mt-2 py-2.5 text-[13px] font-black rounded-xl shadow-sm transition-colors active:scale-95 ${msg.settlementData?.isSettled
-                              ? "bg-white/20 text-white cursor-default"
-                              : "bg-white text-primary hover:bg-bg-alt"
-                              }`}
+                            onClick={() => {
+                              if (!msg.settlementData?.isSettled && !isMe) {
+                                showConfirm({
+                                  title: "송금 완료 확인",
+                                  message: "상대방 계좌로 송금을 완료하셨나요?\n확인을 누르면 정산이 완료 처리됩니다.",
+                                  confirmText: "송금 완료",
+                                  onConfirm: () => handleSettleMoney(msg.id)
+                                });
+                              }
+                            }}
+                            className={cn(
+                              "w-full mt-2 py-2.5 text-[13px] font-black rounded-xl shadow-sm transition-colors active:scale-95",
+                              msg.settlementData?.isSettled
+                                ? (isMe ? "bg-white/20 text-white cursor-default" : "bg-bg-alt text-text-sub cursor-default border border-border-base")
+                                : (isMe ? "bg-white/20 text-white cursor-default" : "bg-primary text-white hover:bg-primary/90")
+                            )}
                           >
-                            {msg.settlementData?.isSettled ? "송금 완료" : (isMe ? "요청 완료" : "송금하기")}
+                            {msg.settlementData?.isSettled ? "송금 완료됨" : (isMe ? "요청 보냄" : "송금 완료 처리하기")}
                           </button>
                         </div>
                       ) : msg.type === "storyReply" && msg.storyData ? (

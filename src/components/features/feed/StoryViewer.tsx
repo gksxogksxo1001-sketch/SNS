@@ -195,19 +195,19 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
         />
       </div>
 
-      <div className="relative w-full max-w-lg aspect-[9/16] bg-bg-base shadow-2xl overflow-hidden sm:rounded-[40px] border border-border-base z-10">
+      <div className="relative w-full max-w-[400px] aspect-[9/16] bg-bg-base shadow-2xl overflow-hidden sm:rounded-[40px] border border-border-base z-10 flex flex-col">
         <Image 
           src={currentStory.mediaUrl} 
           alt="Story" 
           fill
           priority
           sizes="(max-width: 768px) 100vw, 512px"
-          className="object-cover"
+          className="object-cover z-0"
         />
 
         {/* Top Overlay */}
-        <div className="absolute top-0 left-0 right-0 p-5 pt-8 z-20 space-y-5 bg-gradient-to-b from-white/90 via-white/40 to-transparent">
-          <div className="flex space-x-1.5 px-0.5">
+        <div className="absolute top-0 left-0 right-0 p-5 pt-8 z-[50] space-y-5 bg-gradient-to-b from-black/60 via-black/20 to-transparent">
+          <div className="flex space-x-1.5 px-0.5 z-[50]">
             {currentGroup.stories.map((s, idx) => (
               <div key={idx} className="flex-1 h-1 bg-border-base/30 rounded-full overflow-hidden">
                 <div 
@@ -230,7 +230,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                 currentStory.visibility === "close_friends" ? "bg-success" : "bg-gradient-to-tr from-primary via-point to-secondary"
               )}>
                 <div className="w-full h-full rounded-[13px] bg-bg-base p-[1.5px]">
-                  <div className="w-full h-full rounded-[11px] overflow-hidden bg-bg-alt">
+                  <div className="relative w-full h-full rounded-[11px] overflow-hidden bg-bg-alt">
                     {currentGroup.user.image ? (
                       <Image src={currentGroup.user.image} alt="" fill sizes="44px" className="object-cover" />
                     ) : (
@@ -243,10 +243,10 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center space-x-2">
-                  <span className="text-sm font-black text-text-main tracking-tight">{currentGroup.user.name}</span>
+                  <span className="text-sm font-black text-white tracking-tight drop-shadow-md">{currentGroup.user.name}</span>
                   <div className={cn(
                     "flex items-center p-1 rounded-md",
-                    currentStory.visibility === "close_friends" ? "text-success bg-success/10" : "text-text-sub bg-bg-alt"
+                    currentStory.visibility === "close_friends" ? "text-success bg-white/20 backdrop-blur-md" : "text-white/80 bg-black/30 backdrop-blur-md"
                   )}>
                     {currentStory.visibility === "friends" ? (
                       <Users size={10} />
@@ -255,7 +255,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                     )}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-text-sub">
+                <span className="text-[10px] font-bold text-white/80 drop-shadow-md">
                   {currentStory.createdAt?.seconds 
                     ? formatDistanceToNow(new Date(currentStory.createdAt.seconds * 1000), { addSuffix: true, locale: ko })
                     : "방금 전"}
@@ -267,12 +267,12 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                 <button 
                   onClick={handleDeleteStory}
                   disabled={isLoading}
-                  className="p-2.5 text-text-sub hover:bg-bg-alt rounded-full transition-colors"
+                  className="p-2.5 text-white hover:bg-white/20 rounded-full transition-colors"
                 >
                   <Trash2 size={24} />
                 </button>
               )}
-              <button onClick={onClose} className="p-2.5 text-text-sub hover:bg-bg-alt rounded-full transition-colors">
+              <button onClick={onClose} className="p-2.5 text-white hover:bg-white/20 rounded-full transition-colors backdrop-blur-md bg-black/20">
                 <X size={24} />
               </button>
             </div>
