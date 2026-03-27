@@ -7,7 +7,7 @@ export interface Message {
   text: string;
   createdAt: Timestamp | Date;
   isRead: boolean;
-  type?: "text" | "settlement" | "storyReply" | "postShare" | "settlementSummary";
+  type?: "text" | "settlement" | "storyReply" | "postShare" | "settlementSummary" | "image" | "video";
   settlementData?: {
     title: string;
     amountToPay: number;      // Amount the OTHER person needs to pay (e.g. Total / 2)
@@ -38,7 +38,9 @@ export interface Message {
   };
   isEdited?: boolean;
   isDeleted?: boolean;
-  likes?: string[]; // Array of User UIDs
+  likes?: string[];
+  readBy?: string[]; // Array of User UIDs who have read the message
+  isEphemeral?: boolean; // Whether the message should disappear after reading
 }
 
 export interface ChatRoom {

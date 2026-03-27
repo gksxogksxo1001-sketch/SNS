@@ -36,6 +36,7 @@ import { DEFAULT_AVATAR } from "@/core/constants";
 import { cn } from "@/lib/utils";
 import { useModalStore } from "@/store/useModalStore";
 import Image from "next/image";
+import { Avatar } from "@/components/common/Avatar";
 
 // Mock Messages Extended
 export default function ChatRoomPage() {
@@ -58,7 +59,7 @@ export default function ChatRoomPage() {
   const [otherProfile, setOtherProfile] = useState<UserProfile | null>(null);
   const [profiles, setProfiles] = useState<Record<string, UserProfile>>({});
   const [roomData, setRoomData] = useState<ChatRoom | null>(null);
-  const [groupData, setGroupData] = useState<any | null>(null);
+  const [groupData, setGroupData] = useState<Group | null>(null);
   const [allUserGroups, setAllUserGroups] = useState<Group[]>([]);
   const [isGroupProfileModalOpen, setIsGroupProfileModalOpen] = useState(false);
   const [newRoomName, setNewRoomName] = useState("");
@@ -77,6 +78,10 @@ export default function ChatRoomPage() {
   const [settleAmount, setSettleAmount] = useState("");
   const [settleBank, setSettleBank] = useState("");
   const [settleAccount, setSettleAccount] = useState("");
+
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { addExpense, groups, addGroup } = useSettlementStore();
   const [selectedGroupId, setSelectedGroupId] = useState("");
@@ -97,6 +102,9 @@ export default function ChatRoomPage() {
     scrollToBottom();
   }, [messages]);
 
+  const [readInitialIds, setReadInitialIds] = useState<Set<string>>(new Set());
+  const isInitialSnapshot = useRef(true);
+
   // Real-time subscription to messages and other user profile
   useEffect(() => {
     if (!roomId || isAuthLoading) return;
@@ -107,14 +115,38 @@ export default function ChatRoomPage() {
 
     // Subscribe to messages in this room
     const unsubscribe = messageService.subscribeToMessages(roomId, (newMessages) => {
-      setMessages(newMessages);
-      // Mark as read when new messages are received while in the room
+      // On the very first snapshot, we identify messages the user has ALREADY read
+      // These will be hidden for the duration of this session.
+      if (isInitialSnapshot.current) {
+        const initialRead = new Set<string>();
+        newMessages.forEach(msg => {
+          if (msg.readBy?.includes(user.uid)) {
+            initialRead.add(msg.id);
+          }
+        });
+        setReadInitialIds(initialRead);
+        isInitialSnapshot.current = false;
+      }
+
+      // Filter out only the messages that were ALREADY read before entering
+      const filtered = newMessages.filter(msg => !readInitialIds.has(msg.id));
+      
+      setMessages(filtered);
+
+      // Mark unread messages as read (they will stay visible now, but hide next time)
+      newMessages.forEach(msg => {
+        if (msg.senderId !== user.uid && !msg.readBy?.includes(user.uid)) {
+          messageService.markMessageAsRead(roomId, msg.id, user.uid);
+        }
+      });
+
+      // Mark room as read for notification badge
       if (user?.uid) {
         messageService.markRoomAsRead(roomId, user.uid);
       }
     });
 
-    // Mark as read immediately on entry
+    // Mark room as read immediately on entry
     if (user?.uid) {
       messageService.markRoomAsRead(roomId, user.uid);
     }
@@ -176,7 +208,7 @@ export default function ChatRoomPage() {
           Array.from(missingIds).map(async (uid) => {
             const p = await userService.getUserProfile(uid);
             // Must assign a fallback to prevent infinite loop on missing profiles (ghost users)
-            newProfiles[uid] = p || { uid, nickname: "알 수 없는 사용자", avatarUrl: "" } as any;
+            newProfiles[uid] = p || ({ uid, nickname: "알 수 없는 사용자", avatarUrl: "" } as UserProfile);
           })
         );
         setProfiles(newProfiles);
@@ -186,6 +218,29 @@ export default function ChatRoomPage() {
       fetchMissingProfiles();
     }
   }, [messages, currentUserId, profiles]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !roomId || !user) return;
+
+    setIsUploadingImage(true);
+    try {
+      const urls = await postService.uploadImages([file], user.uid);
+      await messageService.sendMessage(
+        roomId,
+        user.uid,
+        "사진을 보냈습니다.",
+        "image",
+        urls[0]
+      );
+    } catch (error) {
+      console.error("Failed to upload image:", error);
+      showAlert({ title: "오류", message: "이미지 업로드 중 오류가 발생했습니다.", type: "error" });
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,7 +257,7 @@ export default function ChatRoomPage() {
           id: replyingTo.id,
           text: replyingTo.text,
           senderId: replyingTo.senderId,
-          senderName: replyingTo.senderId === currentUserId ? "나" : (otherProfile?.nickname || "상대방")
+          senderName: replyingTo.senderId === currentUserId ? "나" : (profiles[replyingTo.senderId]?.nickname || "상대방")
         } : undefined;
 
         await messageService.sendMessage(
@@ -210,6 +265,7 @@ export default function ChatRoomPage() {
           user.uid,
           inputText.trim(),
           "text",
+          undefined,
           undefined,
           undefined,
           replyToData
@@ -265,9 +321,6 @@ export default function ChatRoomPage() {
     const amountToPay = Math.round(totalNum / 2);
 
     // Use selected group or fall back to a default/temp ID if none selected
-    const groupId = selectedGroupId || (showNewGroupInput && newGroupName)
-      ? `g${Date.now()}` // Will be handled below if creating new
-      : roomId;
 
     try {
       let finalGroupId = selectedGroupId;
@@ -307,6 +360,7 @@ export default function ChatRoomPage() {
         currentUserId,
         "정산 요청이 도착했습니다.",
         "settlement",
+        undefined,
         {
           title: settleTitle,
           amountToPay,
@@ -512,17 +566,24 @@ export default function ChatRoomPage() {
               onClick={() => router.push(`/profile/${otherId}`)}
               className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity text-left"
             >
-              <div className="relative w-9 h-9 border border-border-base rounded-full overflow-hidden">
-                <Image 
-                  src={otherProfile?.avatarUrl || otherImage || DEFAULT_AVATAR} 
+              <div className="relative">
+                <Avatar 
+                  src={otherProfile?.avatarUrl || otherImage} 
                   alt={otherProfile?.nickname || otherName} 
-                  fill
-                  sizes="36px"
-                  className="object-cover" 
+                  size={36}
+                  className="border border-border-base"
                 />
               </div>
               <div className="flex flex-col">
-                <span className="text-[15px] font-bold text-text-main leading-tight">{otherProfile?.nickname || otherName}</span>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsGalleryOpen(true);
+                  }}
+                  className="text-[15px] font-bold text-text-main leading-tight text-left hover:text-primary transition-colors"
+                >
+                  {otherProfile?.nickname || otherName}
+                </button>
                 <span className="text-[11px] font-semibold text-primary">현재 접속 중</span>
               </div>
             </button>
@@ -531,13 +592,12 @@ export default function ChatRoomPage() {
               onClick={() => setIsGroupProfileModalOpen(true)}
               className="flex items-center space-x-2.5 hover:opacity-80 transition-opacity text-left"
             >
-              <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border-base">
-                <Image 
-                  src={roomData?.groupImage || DEFAULT_AVATAR} 
+              <div className="relative">
+                <Avatar 
+                  src={roomData?.groupImage} 
                   alt={roomData?.name || ""} 
-                  fill
-                  sizes="36px"
-                  className="object-cover" 
+                  size={36}
+                  className="border border-border-base"
                 />
                 <div className="absolute -bottom-1 -right-1 bg-bg-base p-0.5 rounded-full border border-border-base z-10">
                   <Camera size={10} className="text-text-sub" />
@@ -676,23 +736,20 @@ export default function ChatRoomPage() {
                 </div>
               )}
               <div className={`flex ${isMe ? "justify-end" : "justify-start"} mb-4`}>
-                <div className={`flex items-end max-w-[75%] ${isMe ? "flex-row-reverse space-x-reverse" : "space-x-2"}`}>
+                <div className={`flex items-end max-w-[85%] ${isMe ? "flex-row-reverse space-x-reverse" : "space-x-2"}`}>
 
-                  {/* Avatar for other user */}
-                  {!isMe && (
-                    <button
-                      onClick={() => router.push(`/profile/${msg.senderId}`)}
-                      className="relative w-7 h-7 flex-shrink-0 hover:opacity-80 transition-opacity flex items-end rounded-full overflow-hidden border border-border-base mb-1"
-                    >
-                      <Image 
-                        src={profiles[msg.senderId]?.avatarUrl || (otherId ? otherImage : DEFAULT_AVATAR) || DEFAULT_AVATAR} 
-                        alt={profiles[msg.senderId]?.nickname || otherName} 
-                        fill
-                        sizes="28px"
-                        className="object-cover" 
-                      />
-                    </button>
-                  )}
+                  {/* Avatar for both users (Instagram Style) */}
+                  <div 
+                    onClick={() => router.push(`/profile/${msg.senderId}`)}
+                    className="cursor-pointer"
+                  >
+                    <Avatar 
+                      src={isMe ? (user?.photoURL) : (profiles[msg.senderId]?.avatarUrl || (otherId ? otherImage : null))} 
+                      alt={isMe ? "나" : (profiles[msg.senderId]?.nickname || otherName)} 
+                      size={32}
+                      className="border border-border-base mb-1 shadow-sm hover:opacity-80 transition-opacity"
+                    />
+                  </div>
 
                   {/* Bubble & Sender Name Container */}
                   <div className="flex flex-col space-y-1 relative">
@@ -708,7 +765,7 @@ export default function ChatRoomPage() {
                       </div>
                     )}
 
-                    <div className={`px-4 py-2.5 rounded-2xl max-w-[260px] relative group ${isMe
+                    <div className={`px-4 py-2.5 rounded-2xl max-w-[280px] relative group ${isMe
                       ? "bg-primary text-white rounded-br-[4px] shadow-[0_2px_12px_rgba(42,157,143,0.2)]"
                       : "bg-bg-base text-text-main rounded-bl-[4px] shadow-sm border border-border-base/50"
                       } ${msg.isDeleted ? "opacity-60 italic" : ""}`}>
@@ -745,7 +802,17 @@ export default function ChatRoomPage() {
                         </div>
                       )}
 
-                      {msg.type === "settlement" && msg.settlementData ? (
+                      {msg.type === "image" ? (
+                        <div className="relative w-[240px] aspect-square rounded-lg overflow-hidden my-1">
+                          <Image 
+                            src={msg.text} // The text field stores the image URL for type: "image"
+                            alt="Sent image" 
+                            fill
+                            sizes="240px"
+                            className="object-cover" 
+                          />
+                        </div>
+                      ) : msg.type === "settlement" && msg.settlementData ? (
                         <div className="flex flex-col space-y-3 pt-1">
                           <div className={cn("flex items-center space-x-2 pb-3 border-b", isMe ? "text-white border-white/20" : "text-text-main border-border-base")}>
                             <Wallet size={18} />
@@ -797,32 +864,45 @@ export default function ChatRoomPage() {
                           </p>
                         </div>
                       ) : msg.type === "postShare" && msg.postShareData ? (
-                          <div 
-                           onClick={() => router.push(`/post/${msg.postShareData!.postId}`)}
-                           className="flex flex-col space-y-2 cursor-pointer group/post min-w-[200px]"
-                         >
-                           <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-border-base bg-bg-alt">
+                        <div 
+                          onClick={() => router.push(`/post/${msg.postShareData!.postId}`)}
+                          className={cn(
+                            "flex flex-col overflow-hidden rounded-2xl border transition-all hover:shadow-md cursor-pointer group/post min-w-[220px]",
+                            isMe ? "bg-white/10 border-white/20" : "bg-bg-base border-border-base shadow-sm"
+                          )}
+                        >
+                          {/* Post Card Header (Mini) */}
+                          <div className={cn("px-3 py-2 flex items-center space-x-2 border-b", isMe ? "border-white/10" : "border-border-base/50")}>
+                            <div className="relative w-4 h-4 rounded-full overflow-hidden">
+                              <Avatar size={16} src={null} />
+                            </div>
+                            <span className={cn("text-[10px] font-bold truncate", isMe ? "text-white/90" : "text-text-main")}>
+                              {msg.postShareData.authorName}
+                            </span>
+                          </div>
+
+                          {/* Image Preview */}
+                          <div className="relative w-full aspect-video overflow-hidden bg-bg-alt">
                             <Image 
                               src={msg.postShareData.postImage} 
                               alt="Shared Post" 
                               fill
-                              sizes="(max-width: 260px) 100vw, 260px"
-                              className="w-full h-full object-cover group-hover/post:scale-105 transition-transform duration-300" 
+                              sizes="220px"
+                              className="w-full h-full object-cover group-hover/post:scale-105 transition-transform duration-500" 
                             />
-                            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/40 to-transparent h-12"></div>
-                            <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/40 backdrop-blur-sm text-[10px] font-bold text-white border border-white/10">
-                              게시물 공유
+                            <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-black/40 backdrop-blur-sm text-[8px] font-black text-white border border-white/10 uppercase tracking-wider">
+                              Post
                             </div>
                           </div>
-                          <div className="px-1 py-1">
-                            <p className={cn("text-[10px] font-black mb-0.5", isMe ? "text-white/80" : "text-primary")}>
-                              {msg.postShareData.authorName}님의 게시물
-                            </p>
+
+                          {/* Content */}
+                          <div className="p-3">
                             <p className={cn("text-[13px] leading-tight font-bold line-clamp-2", isMe ? "text-white" : "text-text-main")}>
-                              {msg.postShareData.postTitle}...
+                              {msg.postShareData.postTitle || "게시물 확인하기"}
                             </p>
-                            <div className={cn("mt-2 flex items-center text-[10px] font-bold", isMe ? "text-white/60" : "text-text-sub")}>
-                              자세히 보기 <ChevronLeft size={10} className="rotate-180 ml-0.5" />
+                            <div className={cn("mt-2 pt-2 border-t flex items-center justify-between", isMe ? "border-white/10" : "border-border-base/50")}>
+                              <span className={cn("text-[9px] font-black uppercase tracking-tighter", isMe ? "text-white/60" : "text-text-sub")}>View Detail</span>
+                              <ChevronLeft size={10} className={cn("rotate-180", isMe ? "text-white/60" : "text-primary")} />
                             </div>
                           </div>
                         </div>
@@ -907,9 +987,21 @@ export default function ChatRoomPage() {
         )}
 
         <form onSubmit={handleSend} className="flex items-center space-x-1 sm:space-x-2">
-          <button type="button" className="p-2 sm:p-2.5 text-text-sub hover:text-primary bg-bg-alt rounded-full transition-colors">
-            <ImageIcon size={22} />
+          <button 
+            type="button" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploadingImage}
+            className="p-2 sm:p-2.5 text-text-sub hover:text-primary bg-bg-alt rounded-full transition-colors disabled:opacity-50"
+          >
+            <ImageIcon size={22} className={isUploadingImage ? "animate-pulse" : ""} />
           </button>
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            className="hidden" 
+            accept="image/*" 
+            onChange={handleImageUpload} 
+          />
           <button
             type="button"
             onClick={() => setIsSettlementModalOpen(true)}
@@ -1104,12 +1196,11 @@ export default function ChatRoomPage() {
             <div className="flex flex-col items-center mb-8">
               <div className="relative group cursor-pointer" onClick={() => document.getElementById("room-image-input")?.click()}>
                 <div className="relative w-24 h-24 rounded-full overflow-hidden border-4 border-bg-alt shadow-md">
-                  <Image 
-                    src={roomData?.groupImage || DEFAULT_AVATAR} 
+                  <Avatar 
+                    src={roomData?.groupImage} 
                     alt="group" 
-                    fill
-                    sizes="96px"
-                    className="object-cover" 
+                    size={96}
+                    className="border-4 border-bg-alt shadow-md"
                   />
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera size={24} className="text-white" />
@@ -1157,18 +1248,15 @@ export default function ChatRoomPage() {
                         }}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border-base">
-                            <Image 
-                              src={profile?.avatarUrl || DEFAULT_AVATAR} 
-                              alt={profile?.nickname || "User"} 
-                              fill
-                              sizes="36px"
-                              className="object-cover" 
-                            />
-                          </div>
+                          <Avatar 
+                            src={profile?.avatarUrl} 
+                            alt={profile?.nickname || "User"} 
+                            size={36}
+                            className="border border-border-base"
+                          />
                           <div>
                             <p className="text-[13px] font-bold text-text-main group-hover/member:text-primary transition-colors">{profile?.nickname || "알 수 없는 사용자"}</p>
-                            {uid === (groupData as any)?.ownerId && (
+                            {uid === groupData?.ownerId && (
                               <span className="text-[9px] font-black text-primary uppercase">관리자</span>
                             )}
                           </div>
@@ -1227,15 +1315,12 @@ export default function ChatRoomPage() {
                       isSelected ? 'border-primary bg-primary/5' : 'border-border-base hover:bg-bg-alt'
                     }`}
                   >
-                    <div className="relative w-10 h-10 rounded-full border border-border-base overflow-hidden mr-3">
-                      <Image 
-                        src={profile?.avatarUrl || `https://ui-avatars.com/api/?name=${profile?.nickname || uid}&background=F1F3F5&color=6C757D`} 
-                        alt="Profile" 
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                      />
-                    </div>
+                    <Avatar 
+                      src={profile?.avatarUrl} 
+                      alt="Profile" 
+                      size={40}
+                      className="border border-border-base mr-3"
+                    />
                     <span className={`font-bold text-[14px] ${isSelected ? 'text-primary' : 'text-text-main'}`}>
                       {profile?.nickname?.split('(')[0] || "알 수 없는 유저"}
                     </span>
@@ -1257,6 +1342,58 @@ export default function ChatRoomPage() {
               >
                 위임 및 나가기
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Media Gallery Modal */}
+      {isGalleryOpen && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-md animate-in fade-in" onClick={() => setIsGalleryOpen(false)}>
+          <div className="w-full h-full sm:h-[80vh] sm:w-[500px] bg-bg-base sm:rounded-[40px] shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-10" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-6 border-b border-border-base">
+              <h3 className="text-xl font-black text-text-main flex items-center gap-2">
+                <ImageIcon size={22} className="text-primary" />
+                미디어 갤러리
+              </h3>
+              <button 
+                onClick={() => setIsGalleryOpen(false)} 
+                className="p-2 text-text-sub hover:bg-bg-alt rounded-full transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+              {messages.filter(m => m.type === "image").length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-64 text-text-sub opacity-50">
+                  <ImageIcon size={48} strokeWidth={1} className="mb-3" />
+                  <p className="font-bold">공유된 사진이 없습니다.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {messages.filter(m => m.type === "image").map((msg) => (
+                    <div 
+                      key={msg.id} 
+                      className="relative aspect-square rounded-xl overflow-hidden border border-border-base bg-bg-alt hover:scale-[1.02] transition-transform cursor-pointer shadow-sm"
+                      onClick={() => window.open(msg.text, '_blank')}
+                    >
+                      <Image 
+                        src={msg.text} 
+                        alt="Shared" 
+                        fill
+                        sizes="(max-width: 500px) 33vw, 150px"
+                        className="object-cover" 
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 bg-bg-alt/30 border-t border-border-base">
+              <p className="text-center text-[11px] font-bold text-text-sub uppercase tracking-widest">
+                총 {messages.filter(m => m.type === "image").length}개의 미디어
+              </p>
             </div>
           </div>
         </div>

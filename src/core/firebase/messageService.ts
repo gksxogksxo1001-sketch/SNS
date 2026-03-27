@@ -117,7 +117,8 @@ export const messageService = {
     roomId: string, 
     senderId: string, 
     text: string, 
-    type: "text" | "settlement" | "storyReply" | "postShare" | "settlementSummary" = "text",
+    type: "text" | "settlement" | "storyReply" | "postShare" | "settlementSummary" | "image" = "text",
+    imageUrl?: string,
     settlementData?: { title: string; amountToPay: number; bankAccount: string; },
     storyData?: { mediaUrl: string; storyId: string; },
     replyTo?: { id: string; text: string; senderId: string; senderName?: string; },
@@ -179,7 +180,6 @@ export const messageService = {
           unreadUpdate[`unreadCount.${pId}`] = currentCount + 1;
         }
       });
-
       await updateDoc(roomRef, {
         lastMessage: {
           text: type === "text" ? text : 
@@ -193,6 +193,30 @@ export const messageService = {
         updatedAt: serverTimestamp(),
         ...unreadUpdate
       });
+      
+      // Trigger Notification for Toast
+      const { notificationService } = await import("./notificationService");
+      const { userService } = await import("./userService");
+      const senderProfile = await userService.getUserProfile(senderId);
+      
+      // Create notification for each participant except sender
+      await Promise.all(participants.map((pId: string) => {
+        if (pId !== senderId) {
+          return notificationService.createNotification({
+            uid: pId,
+            type: "message",
+            fromUid: senderId,
+            fromNickname: senderProfile?.nickname || "사용자",
+            fromAvatarUrl: senderProfile?.avatarUrl || null,
+            content: type === "text" ? text : 
+                     type === "settlement" ? "정산 요청" : 
+                     type === "storyReply" ? "스토리 답장" : 
+                     type === "postShare" ? "게시물 공유" : 
+                     "정산 요약 공유",
+          });
+        }
+        return Promise.resolve();
+      }));
     }
   },
 
@@ -218,10 +242,20 @@ export const messageService = {
           isEdited: data.isEdited || false,
           isDeleted: data.isDeleted || false,
           createdAt: data.createdAt,
-          isRead: data.isRead
+          isRead: data.isRead,
+          readBy: data.readBy || [],
+          isEphemeral: data.isEphemeral || false
         } as Message;
       });
       callback(messages);
+    });
+  },
+
+  // Mark an individual message as read for a specific user
+  async markMessageAsRead(roomId: string, messageId: string, userId: string) {
+    const messageRef = doc(db, "chatRooms", roomId, "messages", messageId);
+    await updateDoc(messageRef, {
+      readBy: arrayUnion(userId)
     });
   },
 

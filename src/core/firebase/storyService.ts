@@ -122,6 +122,7 @@ export const storyService = {
       text || "스토리에 답장했습니다.",
       "storyReply",
       undefined,
+      undefined,
       {
         mediaUrl: story.mediaUrl,
         storyId: story.id

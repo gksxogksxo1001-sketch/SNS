@@ -1,4 +1,4 @@
-export type NotificationType = "like" | "comment" | "friend_request" | "friend_accept" | "story_like" | "group_invite" | "settlement_request" | "settlement_pay";
+export type NotificationType = "like" | "comment" | "friend_request" | "friend_accept" | "story_like" | "group_invite" | "settlement_request" | "settlement_pay" | "message";
 
 export interface Notification {
   id: string;

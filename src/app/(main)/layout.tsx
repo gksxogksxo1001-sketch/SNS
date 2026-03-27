@@ -6,6 +6,7 @@ import { SideNav } from "@/components/layout/SideNav";
 import { RightPanel } from "@/components/layout/RightPanel";
 import { usePathname, useRouter } from "next/navigation";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { NotificationProvider } from "@/components/providers/NotificationProvider";
 
 // --- 모달 컴포넌트 (디자인 강화) ---
 const AuthModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) => {
@@ -76,16 +77,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-bg-alt">
       <AuthModal isOpen={showModal} onClose={handleModalClose} />
 
-      <SideNav />
-      {!isMapPage && !isChatRoom && <RightPanel />}
+      <NotificationProvider>
+        <SideNav />
+        {!isMapPage && !isChatRoom && <RightPanel />}
 
-      <main className={`w-full md:pl-16 ${!isMapPage && !isChatRoom ? "xl:pr-72" : ""} ${isChatRoom ? "" : "pb-20 md:pb-0"} flex justify-center`}>
-        <div className={`w-full ${isMapPage ? "h-[calc(100vh-0px)]" : "max-w-2xl min-h-screen bg-bg-base border-x border-border-base"}`}>
-          {children}
-        </div>
-      </main>
+        <main className={`w-full md:pl-16 ${!isMapPage && !isChatRoom ? "xl:pr-72" : ""} ${isChatRoom ? "" : "pb-20 md:pb-0"} flex justify-center`}>
+          <div className={`w-full ${isMapPage ? "h-[calc(100vh-0px)]" : "max-w-2xl min-h-screen bg-bg-base border-x border-border-base"}`}>
+            {children}
+          </div>
+        </main>
 
-      {!isChatRoom && <BottomNav />}
+        {!isChatRoom && <BottomNav />}
+      </NotificationProvider>
     </div>
   );
 }

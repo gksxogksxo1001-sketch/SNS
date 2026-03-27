@@ -199,6 +199,7 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
         undefined,
         undefined,
         undefined,
+        undefined,
         {
           postId: post.id,
           postImage: post.images[0],
@@ -281,11 +282,6 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
     }
   };
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowMenu(false);
-    setShowDeleteConfirm(true);
-  };
 
   const executeDelete = async () => {
     setIsDeleting(true);
@@ -294,11 +290,12 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
         await postService.deletePost(post.id);
         setIsDeleted(true);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to delete post:", error);
+      const errorMessage = error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.";
       showAlert({ 
         title: "삭제 실패", 
-        message: "게시물 삭제 중에 오류가 발생했습니다.\n" + (error.message || ""),
+        message: "게시물 삭제 중에 오류가 발생했습니다.\n" + errorMessage,
         type: "error"
       });
     } finally {
@@ -626,15 +623,12 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
               {comments.length > 0 ? (
                 comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
-                    <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-                      <Image 
-                        src={comment.user.image || DEFAULT_AVATAR} 
-                        alt={comment.user.name} 
-                        fill
-                        sizes="32px"
-                        className="object-cover" 
-                      />
-                    </div>
+                    <Avatar 
+                      src={comment.user.image} 
+                      alt={comment.user.name} 
+                      size={32}
+                      className="border border-border-base"
+                    />
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-text-main">{comment.user.name}</span>
@@ -654,15 +648,12 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
             {/* Comment Input */}
             {user ? (
               <form onSubmit={handleCommentSubmit} className="flex items-center space-x-2 pt-2">
-                <div className="relative h-8 w-8 flex-shrink-0 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-                  <Image 
-                    src={user.photoURL || DEFAULT_AVATAR} 
-                    alt={user.displayName || ""} 
-                    fill
-                    sizes="32px"
-                    className="object-cover" 
-                  />
-                </div>
+                <Avatar 
+                  src={user.photoURL} 
+                  alt={user.displayName || ""} 
+                  size={32}
+                  className="border border-border-base"
+                />
                 <div className="relative flex-1">
                   <input
                     type="text"
