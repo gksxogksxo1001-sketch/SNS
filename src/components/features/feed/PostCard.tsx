@@ -66,8 +66,17 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
   }, [user, post.likedBy, post.bookmarkedBy]);
 
   useEffect(() => {
+    setLikeCount(post.likes || 0);
+    setCommentCount(post.comments || 0);
+  }, [post.likes, post.comments]);
+
+  useEffect(() => {
     if (showComments && post.id) {
-      fetchComments();
+      const unsubscribe = postService.subscribeToComments(post.id, (fetchedComments) => {
+        setComments(fetchedComments);
+        setCommentCount(fetchedComments.length);
+      });
+      return () => unsubscribe();
     }
   }, [showComments, post.id]);
 
@@ -88,15 +97,7 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
     }
   }, [isSharePopupOpen, user]);
 
-  const fetchComments = async () => {
-    if (!post.id) return;
-    try {
-      const fetchedComments = await postService.getComments(post.id);
-      setComments(fetchedComments);
-    } catch (error) {
-      console.error("Failed to fetch comments:", error);
-    }
-  };
+
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,8 +117,7 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
       };
       await postService.addComment(post.id, commentData);
       setNewComment("");
-      setCommentCount(prev => prev + 1);
-      fetchComments();
+      // Real-time listener handles state updates automatically
     } catch (error) {
       console.error("Failed to add comment:", error);
       showAlert({ title: "오류", message: "댓글 추가에 실패했습니다.", type: "error" });

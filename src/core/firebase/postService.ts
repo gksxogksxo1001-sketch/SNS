@@ -356,6 +356,20 @@ export const postService = {
     })) as unknown as PostComment[];
   },
 
+  // Subscribe to comments for real-time updates
+  subscribeToComments(postId: string, callback: (comments: PostComment[]) => void): () => void {
+    const commentsRef = collection(db, "posts", postId, "comments");
+    const q = query(commentsRef, orderBy("createdAt", "asc"));
+
+    return onSnapshot(q, (snapshot) => {
+      const comments = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as unknown as PostComment[];
+      callback(comments);
+    });
+  },
+
   // Toggle bookmark status for a post
   async toggleBookmark(postId: string, userId: string, isBookmarked: boolean): Promise<void> {
     const { doc, updateDoc, arrayUnion, arrayRemove } = await import("firebase/firestore");
