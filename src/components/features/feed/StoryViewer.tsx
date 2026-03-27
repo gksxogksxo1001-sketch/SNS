@@ -31,7 +31,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   const [progress, setProgress] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<any>(null);
   const lastTickTimeRef = useRef<number>(0);
   
   const currentGroup = groups[currentGroupIndex];
