@@ -11,7 +11,21 @@ import {
   deleteUser
 } from "firebase/auth";
 import { auth, db } from "@/core/firebase/config";
-import { doc, setDoc, getDoc, deleteDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  deleteDoc, 
+  serverTimestamp, 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  limit, 
+  writeBatch, 
+  arrayRemove, 
+  updateDoc 
+} from "firebase/firestore";
 
 export const AuthService = {
   // Email Signup
@@ -214,24 +228,73 @@ export const AuthService = {
     }
   },
 
-  // Delete Account (Withdrawal)
+  // Delete Account (Withdrawal) - Enhanced with thorough cleanup
   async deleteUserAccount(uid: string) {
-    console.log("[AuthService] Starting account deletion for:", uid);
+    console.log("[AuthService] Starting COMPREHENSIVE account deletion for:", uid);
     try {
       if (!auth.currentUser || auth.currentUser.uid !== uid) {
         throw new Error("삭제하려는 계정의 권한이 없거나 로그인 상태가 아닙니다.");
       }
 
-      // 1. Delete Firestore User Document
-      await deleteDoc(doc(db, "users", uid));
-      console.log("[AuthService] Firestore document deleted.");
+      const currentUser = auth.currentUser;
 
-      // 2. Remove from Local Recent Accounts
+      // 1. Delete User's Posts
+      const postsRef = collection(db, "posts");
+      const postsSnap = await getDocs(query(postsRef, where("user.uid", "==", uid)));
+      await Promise.all(postsSnap.docs.map(d => deleteDoc(d.ref)));
+      console.log(`[AuthService] Deleted ${postsSnap.size} posts.`);
+
+      // 2. Delete User's Stories
+      const storiesRef = collection(db, "stories");
+      const storiesSnap = await getDocs(query(storiesRef, where("userId", "==", uid)));
+      await Promise.all(storiesSnap.docs.map(d => deleteDoc(d.ref)));
+      console.log(`[AuthService] Deleted ${storiesSnap.size} stories.`);
+
+      // 3. Remove from Group Memberships
+      const groupsRef = collection(db, "groups");
+      const groupsSnap = await getDocs(query(groupsRef, where("members", "array-contains", uid)));
+      await Promise.all(groupsSnap.docs.map(d => 
+        updateDoc(d.ref, { 
+          members: arrayRemove(uid),
+          updatedAt: serverTimestamp() 
+        })
+      ));
+      console.log(`[AuthService] Removed from ${groupsSnap.size} groups.`);
+
+      // 4. Remove from Friends Lists of other users
+      const usersRef = collection(db, "users");
+      const usersSnap = await getDocs(query(usersRef, where("friends", "array-contains", uid)));
+      await Promise.all(usersSnap.docs.map(d => 
+        updateDoc(d.ref, { 
+          friends: arrayRemove(uid),
+          updatedAt: serverTimestamp()
+        })
+      ));
+      console.log(`[AuthService] Removed from ${usersSnap.size} friends lists.`);
+
+      // 5. Delete Friend Requests (both sent and received)
+      const frRef = collection(db, "friendRequests");
+      const fr1 = await getDocs(query(frRef, where("fromUid", "==", uid)));
+      const fr2 = await getDocs(query(frRef, where("toUid", "==", uid)));
+      await Promise.all([...fr1.docs, ...fr2.docs].map(d => deleteDoc(d.ref)));
+      console.log(`[AuthService] Deleted ${fr1.size + fr2.size} friend requests.`);
+
+      // 6. Delete Notifications (received)
+      const notiRef = collection(db, "notifications");
+      const notiSnap = await getDocs(query(notiRef, where("uid", "==", uid)));
+      await Promise.all(notiSnap.docs.map(d => deleteDoc(d.ref)));
+      console.log(`[AuthService] Deleted ${notiSnap.size} notifications.`);
+
+      // 7. Delete Firestore User Document
+      await deleteDoc(doc(db, "users", uid));
+      console.log("[AuthService] Firestore user document deleted.");
+
+      // 8. Remove from Local Recent Accounts
       const { accountManager } = await import("@/core/auth/accountManager");
       accountManager.removeAccount(uid);
 
-      // 3. Delete Firebase Auth User
-      await deleteUser(auth.currentUser);
+      // 9. Delete Firebase Auth User
+      await deleteUser(currentUser);
       console.log("[AuthService] Auth user deleted successfully.");
       
       return true;
