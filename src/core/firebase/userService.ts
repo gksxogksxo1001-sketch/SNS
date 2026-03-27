@@ -1,13 +1,13 @@
 import { db, storage, auth } from "./config";
 import { updateProfile } from "firebase/auth";
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  arrayUnion, 
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  arrayUnion,
   arrayRemove,
-  serverTimestamp 
+  serverTimestamp
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { UserProfile } from "@/types/user";
@@ -30,18 +30,18 @@ export const userService = {
     const storageRef = ref(storage, `avatars/${uid}`);
     await uploadBytes(storageRef, file);
     const downloadURL = await getDownloadURL(storageRef);
-    
+
     // Update Firestore
-    await updateDoc(doc(db, "users", uid), {
+    await setDoc(doc(db, "users", uid), {
       avatarUrl: downloadURL,
       updatedAt: serverTimestamp()
-    });
+    }, { merge: true });
 
     // Update Firebase Auth Profile (for immediate session sync)
     if (auth.currentUser && auth.currentUser.uid === uid) {
       await updateProfile(auth.currentUser, { photoURL: downloadURL });
     }
-    
+
     return downloadURL;
   },
 
@@ -66,7 +66,7 @@ export const userService = {
       visitedCountries: arrayUnion(country),
       updatedAt: serverTimestamp()
     });
-    
+
     // Increment totalCountries count
     const userSnap = await getDoc(userRef);
     if (userSnap.exists()) {
@@ -119,19 +119,19 @@ export const userService = {
   async getFriendsProfiles(uid: string): Promise<UserProfile[]> {
     const friendUids = await this.getFriends(uid);
     if (friendUids.length === 0) return [];
-    
+
     // Fetch all profiles
     const profiles = await Promise.all(
       friendUids.map((fUid: string) => this.getUserProfile(fUid))
     );
-    
+
     return profiles.filter(Boolean) as UserProfile[];
   },
 
   // Send friend request
   async sendFriendRequest(fromUid: string, toUid: string): Promise<void> {
     const requestsRef = collection(db, "friendRequests");
-    
+
     // Check if already exists
     const q = query(requestsRef, where("fromUid", "==", fromUid), where("toUid", "==", toUid));
     const snap = await getDocs(q);
@@ -174,14 +174,14 @@ export const userService = {
     const { fromUid, toUid } = requestSnap.data() as FriendRequest;
 
     const batch = writeBatch(db);
-    
+
     // Add to each other's friends list
     const fromUserRef = doc(db, "users", fromUid);
     const toUserRef = doc(db, "users", toUid);
 
     batch.update(fromUserRef, { friends: arrayUnion(toUid) });
     batch.update(toUserRef, { friends: arrayUnion(fromUid) });
-    
+
     // Delete the request
     batch.delete(requestRef);
 
@@ -213,8 +213,8 @@ export const userService = {
     const usersRef = collection(db, "users");
     // Simple prefix search: nickname >= query AND nickname < query + \uf8ff
     const q = query(
-      usersRef, 
-      where("nickname", ">=", queryText), 
+      usersRef,
+      where("nickname", ">=", queryText),
       where("nickname", "<=", queryText + "\uf8ff"),
       limit(20)
     );
@@ -227,19 +227,19 @@ export const userService = {
   async unfollowUser(uid: string, targetUid: string): Promise<void> {
     const userRef = doc(db, "users", uid);
     const targetRef = doc(db, "users", targetUid);
-    
+
     const batch = writeBatch(db);
-    
+
     // Remove from both friends lists
-    batch.update(userRef, { 
+    batch.update(userRef, {
       friends: arrayRemove(targetUid),
       updatedAt: serverTimestamp()
     });
-    batch.update(targetRef, { 
+    batch.update(targetRef, {
       friends: arrayRemove(uid),
       updatedAt: serverTimestamp()
     });
-    
+
     await batch.commit();
   },
 
