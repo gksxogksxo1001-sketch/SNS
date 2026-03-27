@@ -182,7 +182,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-alt pb-20">
+    <div className="min-h-screen bg-bg-alt pb-20 md:pb-0">
       {/* Header */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-bg-base px-4 border-b border-border-base">
         <h1 className="text-lg font-bold">프로필</h1>

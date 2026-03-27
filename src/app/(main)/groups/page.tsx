@@ -145,7 +145,7 @@ export default function GroupsPage() {
   };
 
   return (
-    <div className="px-6 py-8 pb-32">
+    <div className="px-6 py-8 pb-32 md:pb-8">
       <header className="mb-10">
         <h1 className="text-3xl font-black text-text-main tracking-tight">여행 팀 관리</h1>
         <p className="text-text-sub mt-2 font-medium">함께 떠나는 친구들과 여행을 공유하세요.</p>

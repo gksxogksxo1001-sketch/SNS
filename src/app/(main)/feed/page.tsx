@@ -51,7 +51,7 @@ export default function FeedPage() {
   return (
     <div className="flex flex-col min-h-screen bg-bg-alt">
       {/* Header */}
-      <header className="sticky top-0 z-40 flex items-center justify-between bg-bg-base/80 p-4 backdrop-blur-md border-b border-border-base">
+      <header className="md:hidden sticky top-0 z-40 flex items-center justify-between bg-bg-base/80 p-4 backdrop-blur-md border-b border-border-base">
         <h1 className="text-xl font-bold text-primary">HANS</h1>
         {/* 모바일에서만 표시 (PC는 사이드바/우측패널에 있음) */}
         <div className="flex items-center space-x-5 md:hidden">
