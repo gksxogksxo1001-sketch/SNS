@@ -168,11 +168,11 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-1 opacity-100 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center space-x-1">
                   {acc.uid === currentUid && (
                     <div className="relative">
                       {manageUid === acc.uid ? (
-                        <div className="absolute right-0 bottom-0 mb-10 w-24 bg-bg-base/95 backdrop-blur-md rounded-2xl border border-border-base shadow-xl py-1 animate-in zoom-in-95 fill-mode-both duration-200 z-10 overflow-hidden">
+                        <div className="absolute right-0 bottom-full mb-2 w-28 bg-bg-base/98 backdrop-blur-xl rounded-2xl border border-border-base shadow-2xl py-1 animate-in zoom-in-95 slide-in-from-bottom-2 duration-200 z-[110] overflow-hidden">
                           <button 
                             onClick={(e) => { e.stopPropagation(); handleEdit(acc.uid); }}
                             className="w-full px-4 py-2.5 text-xs font-black text-primary hover:bg-primary/5 transition-colors text-left flex items-center justify-between"

@@ -29,8 +29,10 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   const [isLoading, setIsLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState<string | null>(auth.currentUser?.uid || null);
   const [progress, setProgress] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTickTimeRef = useRef<number>(0);
   
   const currentGroup = groups[currentGroupIndex];
   const currentStory = currentGroup?.stories[currentStoryIndex];
@@ -56,6 +58,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
 
     // Reset and start
     setProgress(0);
+    setIsPaused(false);
     startTimer();
     
     return () => {
@@ -65,26 +68,32 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
 
   const startTimer = () => {
     stopTimer();
-    
-    // Reset progress to 0 and turn off transition for the reset
-    setIsTransitioning(false);
     setProgress(0);
+    setIsTransitioning(false);
+    lastTickTimeRef.current = Date.now();
     
-    // Use a small delay for the browser to register the 0% width before starting the transition
-    setTimeout(() => {
-      setIsTransitioning(true);
-      setProgress(100);
-      
-      timeoutRef.current = setTimeout(() => {
-        handleNext();
-      }, 5000);
-    }, 10);
+    const STORY_DURATION = 5000; // 5 seconds
+    const TICK_INTERVAL = 30; // 30ms for smooth progress
+    
+    progressIntervalRef.current = setInterval(() => {
+      if (!isPaused) {
+        setProgress(prev => {
+          const next = prev + (TICK_INTERVAL / STORY_DURATION) * 100;
+          if (next >= 100) {
+            stopTimer();
+            handleNext();
+            return 100;
+          }
+          return next;
+        });
+      }
+    }, TICK_INTERVAL);
   };
 
   const stopTimer = () => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current);
+      progressIntervalRef.current = null;
     }
   };
 
@@ -142,7 +151,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
   const handleDeleteStory = async () => {
     if (!currentStory || !isMe) return;
     
-    stopTimer();
+    setIsPaused(true);
     showConfirm({
       title: "스토리 삭제",
       message: "이 스토리를 삭제하시겠습니까?",
@@ -166,7 +175,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
         }
       },
       onCancel: () => {
-        startTimer();
+        setIsPaused(false);
       }
     });
   };
@@ -203,8 +212,7 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
               <div key={idx} className="flex-1 h-1 bg-border-base/30 rounded-full overflow-hidden">
                 <div 
                   className={cn(
-                    "h-full",
-                    isTransitioning && idx === currentStoryIndex ? "transition-all duration-[5000ms] ease-linear" : "transition-none",
+                    "h-full transition-none", // Manual progress handles the transition
                     currentGroup.stories[idx].visibility === "close_friends" ? "bg-success" : "bg-text-main"
                   )}
                   style={{ 
@@ -272,9 +280,15 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
         </div>
 
         {/* Interaction Areas */}
-        <div className="absolute inset-0 flex z-10">
-          <div className="flex-1 cursor-pointer" onClick={handlePrev}></div>
-          <div className="flex-[2] cursor-pointer" onClick={handleNext}></div>
+        <div 
+          className="absolute inset-0 flex z-10 touch-none"
+          onPointerDown={() => setIsPaused(true)}
+          onPointerUp={() => setIsPaused(false)}
+          onPointerLeave={() => setIsPaused(false)}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <div className="flex-1 cursor-pointer" onClick={(e) => { if (progress < 10) handlePrev(); }}></div>
+          <div className="flex-[2] cursor-pointer" onClick={(e) => { if (progress < 10) handleNext(); }}></div>
         </div>
 
         {!isMe && (
