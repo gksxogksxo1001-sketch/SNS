@@ -10,6 +10,7 @@ import {
   updateDoc, 
   arrayUnion, 
   serverTimestamp,
+  onSnapshot,
   writeBatch,
   deleteDoc,
   deleteField
@@ -57,6 +58,18 @@ export const groupService = {
     );
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+  },
+
+  // Subscribe to all groups for a user
+  subscribeToUserGroups(uid: string, callback: (groups: Group[]) => void) {
+    const q = query(
+      collection(db, "groups"),
+      where("members", "array-contains", uid)
+    );
+    return onSnapshot(q, (snapshot) => {
+      const groups = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Group));
+      callback(groups);
+    });
   },
 
   // Invite a member by email (Simulated for now by creating a notification if user exists)

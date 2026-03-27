@@ -1140,6 +1140,44 @@ export default function ChatRoomPage() {
                   placeholder="그룹 이름을 입력하세요"
                 />
               </div>
+
+              {/* Member List Section */}
+              <div className="pt-4">
+                <label className="text-xs font-bold text-text-sub mb-3 block ml-1">그룹 멤버 ({groupData?.members?.length || roomData?.participants?.length || 0}명)</label>
+                <div className="space-y-3 max-h-[240px] overflow-y-auto pr-1">
+                  {(groupData?.members || roomData?.participants || []).map((uid: string) => {
+                    const profile = profiles[uid];
+                    return (
+                      <div 
+                        key={uid} 
+                        className="flex items-center justify-between p-3 bg-bg-alt rounded-2xl border border-border-base hover:border-primary/30 transition-all cursor-pointer group/member"
+                        onClick={() => {
+                          setIsGroupProfileModalOpen(false);
+                          router.push(`/profile/${uid}`);
+                        }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-border-base">
+                            <Image 
+                              src={profile?.avatarUrl || DEFAULT_AVATAR} 
+                              alt={profile?.nickname || "User"} 
+                              fill
+                              sizes="36px"
+                              className="object-cover" 
+                            />
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-text-main group-hover/member:text-primary transition-colors">{profile?.nickname || "알 수 없는 사용자"}</p>
+                            {uid === (groupData as any)?.ownerId && (
+                              <span className="text-[9px] font-black text-primary uppercase">관리자</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             <button 

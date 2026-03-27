@@ -9,6 +9,7 @@ import { Users, Plus, LayoutGrid, List, Settings, Trash2, CheckCircle, X } from 
 import { useAuth } from "@/core/hooks/useAuth";
 import { Post } from "@/types/post";
 import { postService } from "@/core/firebase/postService";
+import { userService } from "@/core/firebase/userService";
 import { groupService } from "@/core/firebase/groupService";
 import { PostCard } from "@/components/features/feed/PostCard";
 import { useRouter } from "next/navigation";
@@ -29,26 +30,39 @@ export default function GroupsPage() {
   const [groupPosts, setGroupPosts] = useState<Post[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  
+  // Member List States
+  const [isMemberListOpen, setIsMemberListOpen] = useState(false);
+  const [memberProfiles, setMemberProfiles] = useState<any[]>([]);
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   const { user } = useAuth();
   const router = useRouter();
   const { showAlert, showConfirm } = useModalStore();
 
   React.useEffect(() => {
-    if (selectedGroup) {
-      loadGroupPosts(selectedGroup.id);
-    }
+    if (!selectedGroup) return;
+    
+    setIsLoadingPosts(true);
+    const unsubscribe = postService.subscribeToGroupPosts(selectedGroup.id, (posts) => {
+      setGroupPosts(posts);
+      setIsLoadingPosts(false);
+    });
+
+    return () => unsubscribe();
   }, [selectedGroup]);
 
-  const loadGroupPosts = async (groupId: string) => {
-    setIsLoadingPosts(true);
+  const loadMemberProfiles = async (uids: string[]) => {
+    setIsLoadingMembers(true);
     try {
-      const posts = await postService.getPostsByGroup(groupId);
-      setGroupPosts(posts);
+      const profiles = await Promise.all(
+        uids.map(uid => userService.getUserProfile(uid))
+      );
+      setMemberProfiles(profiles.filter(Boolean));
     } catch (error) {
       console.error(error);
     } finally {
-      setIsLoadingPosts(false);
+      setIsLoadingMembers(false);
     }
   };
 
@@ -213,8 +227,16 @@ export default function GroupsPage() {
             )}
 
             <div className="grid grid-cols-2 gap-4 mt-8">
-              <div className="p-6 bg-bg-alt rounded-2xl border border-border-base">
-                <p className="text-xs font-bold text-text-sub mb-1">멤버 수</p>
+              <div 
+                className="p-6 bg-bg-alt rounded-2xl border border-border-base cursor-pointer hover:bg-border-base/10 transition-colors group"
+                onClick={() => {
+                  if (selectedGroup.members.length > 0) {
+                    loadMemberProfiles(selectedGroup.members);
+                    setIsMemberListOpen(true);
+                  }
+                }}
+              >
+                <p className="text-xs font-bold text-text-sub mb-1 group-hover:text-primary transition-colors">멤버 수</p>
                 <p className="text-xl font-black text-text-main">{selectedGroup.members.length}명</p>
               </div>
               <div className="p-6 bg-bg-alt rounded-2xl border border-border-base">
@@ -313,6 +335,63 @@ export default function GroupsPage() {
               <button onClick={() => setIsEditModalOpen(false)} className="flex-1 py-3 bg-bg-alt text-text-sub font-bold rounded-xl hover:bg-border-base transition">취소</button>
               <button onClick={handleConfirmEdit} className="flex-1 py-3 bg-primary text-white font-bold rounded-xl hover:opacity-90 shadow-lg shadow-primary/20 transition">수정하기</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Member List Modal */}
+      {isMemberListOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in" onClick={() => setIsMemberListOpen(false)}>
+          <div className="w-[90%] max-w-[400px] bg-bg-base rounded-[32px] p-8 shadow-2xl animate-in zoom-in-95" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-black text-text-main">그룹 멤버</h3>
+              <button onClick={() => setIsMemberListOpen(false)} className="p-1 text-text-sub hover:bg-bg-alt rounded-full transition-colors">
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+              {isLoadingMembers ? (
+                <div className="text-center py-10 text-text-sub font-bold">멤버 정보를 불러오는 중...</div>
+              ) : memberProfiles.length > 0 ? (
+                memberProfiles.map((member) => (
+                  <div 
+                    key={member.uid} 
+                    className="flex items-center justify-between p-3 bg-bg-alt rounded-2xl border border-border-base hover:border-primary/30 transition-all cursor-pointer group"
+                    onClick={() => {
+                       setIsMemberListOpen(false);
+                       router.push(`/profile/${member.uid}`);
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border-base">
+                        <img 
+                          src={member.avatarUrl || `https://ui-avatars.com/api/?name=${member.nickname}&background=F1F3F5&color=6C757D`} 
+                          alt={member.nickname}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-text-main group-hover:text-primary transition-colors">{member.nickname}</p>
+                        <p className="text-[10px] text-text-sub">{member.travelStyle || "여행을 좋아하는 중"}</p>
+                      </div>
+                    </div>
+                    {member.uid === selectedGroup?.ownerId && (
+                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-[10px] font-black rounded-full">관리자</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-10 text-text-sub">멤버가 없습니다.</div>
+              )}
+            </div>
+            
+            <button 
+              onClick={() => setIsMemberListOpen(false)}
+              className="w-full mt-6 py-4 bg-bg-alt text-text-main font-bold rounded-2xl hover:bg-border-base transition-all"
+            >
+              닫기
+            </button>
           </div>
         </div>
       )}

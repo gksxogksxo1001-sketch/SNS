@@ -10,6 +10,7 @@ import { UserStoryGroup } from "@/types/story";
 import { StoryViewer } from "./StoryViewer";
 import { useRouter } from "next/navigation";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import { Avatar } from "@/components/common/Avatar";
 import Image from "next/image";
 
 interface Story {
@@ -56,8 +57,31 @@ export const Stories = () => {
   }, []);
 
   React.useEffect(() => {
-    fetchStories();
-  }, [fetchStories]);
+    const currentUserId = auth.currentUser?.uid;
+    const unsubscribe = storyService.subscribeToStories(
+      currentUserId || undefined,
+      (groups) => {
+        // 정렬 로직: 
+        // 1. 읽지 않은 스토리(hasUnread) 우선
+        // 2. 같은 읽음 상태 내에서는 내 스토리가 우선
+        const sortedGroups = [...groups].sort((a, b) => {
+          if (a.hasUnread && !b.hasUnread) return -1;
+          if (!a.hasUnread && b.hasUnread) return 1;
+          
+          const isAMe = a.userId === currentUserId;
+          const isBMe = b.userId === currentUserId;
+          if (isAMe) return -1;
+          if (isBMe) return 1;
+          
+          return 0;
+        });
+        setStoryGroups(sortedGroups);
+        setIsLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
 
   const myGroup = storyGroups.find(g => g.userId === auth.currentUser?.uid);
   const otherGroups = storyGroups.filter(g => g.userId !== auth.currentUser?.uid);
@@ -90,16 +114,13 @@ export const Stories = () => {
               )}
             >
               <div className="w-full h-full rounded-[23px] bg-bg-base p-[2px]">
-                <div className="relative w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
-                  <Image 
-                    src={auth.currentUser?.photoURL || DEFAULT_AVATAR} 
+                  <Avatar 
+                    src={auth.currentUser?.photoURL} 
                     alt="Me" 
-                    fill
+                    size="100%"
+                    className="rounded-[21px]"
                     priority
-                    sizes="68px"
-                    className="object-cover" 
                   />
-                </div>
               </div>
             </div>
             {/* Add Icon */}
@@ -136,16 +157,13 @@ export const Stories = () => {
               )}>
                 {/* Avatar Container */}
                 <div className="w-full h-full rounded-[23px] bg-bg-base p-[2px]">
-                  <div className="relative w-full h-full rounded-[21px] overflow-hidden bg-bg-alt flex items-center justify-center">
-                    <Image 
-                      src={group.user.image || DEFAULT_AVATAR} 
-                      alt={group.user.name} 
-                      fill
-                      priority
-                      sizes="68px"
-                      className="object-cover" 
-                    />
-                  </div>
+                  <Avatar 
+                    src={group.user.image} 
+                    alt={group.user.name} 
+                    size="100%"
+                    className="rounded-[21px]"
+                    priority
+                  />
                 </div>
               </div>
             </div>

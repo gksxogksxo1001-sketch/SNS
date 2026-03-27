@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/common/Button";
 import { useRouter } from "next/navigation";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import { Avatar } from "@/components/common/Avatar";
 import { PowerPopup } from "@/components/common/PowerPopup";
 import Image from "next/image";
 import { userService } from "@/core/firebase/userService";
@@ -55,15 +56,26 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   useEffect(() => {
-    if (user) {
-      if (post.likedBy) {
-        setIsLiked(post.likedBy.includes(user.uid));
+    if (!post.id) return;
+    
+    const unsubscribe = postService.subscribeToPost(post.id, (updatedPost) => {
+      if (updatedPost) {
+        setLikeCount(updatedPost.likes || 0);
+        setCommentCount(updatedPost.comments || 0);
+        
+        if (user) {
+          if (updatedPost.likedBy) {
+            setIsLiked(updatedPost.likedBy.includes(user.uid));
+          }
+          if (updatedPost.bookmarkedBy) {
+            setIsBookmarked(updatedPost.bookmarkedBy.includes(user.uid));
+          }
+        }
       }
-      if (post.bookmarkedBy) {
-        setIsBookmarked(post.bookmarkedBy.includes(user.uid));
-      }
-    }
-  }, [user, post.likedBy, post.bookmarkedBy]);
+    });
+
+    return () => unsubscribe();
+  }, [post.id, user]);
 
   useEffect(() => {
     setLikeCount(post.likes || 0);
@@ -310,16 +322,13 @@ export const PostCard = React.memo<PostCardProps>(({ post, priority = false }) =
           }}
           className="flex items-center space-x-3 hover:opacity-80 transition-opacity"
         >
-          <div className="relative h-10 w-10 overflow-hidden rounded-full bg-bg-alt border border-border-base">
-            <Image 
-              src={post.user.image || DEFAULT_AVATAR} 
-              alt={post.user.name || "User"} 
-              fill
-              priority={priority}
-              sizes="40px"
-              className="object-cover" 
-            />
-          </div>
+          <Avatar 
+            src={post.user.image} 
+            alt={post.user.name || "User"} 
+            size={40}
+            className="border border-border-base"
+            priority={priority}
+          />
           <div className="text-left">
             <div className="flex items-center space-x-2">
               <span className="text-sm font-bold text-text-main">{post.user.name || "익명 여행자"}</span>

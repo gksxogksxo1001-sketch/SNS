@@ -9,6 +9,8 @@ import { auth } from "@/core/firebase/config";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
 import { ko } from "date-fns/locale";
+import { DEFAULT_AVATAR } from "@/core/constants";
+import { Avatar } from "@/components/common/Avatar";
 import Image from "next/image";
 
 import { useModalStore } from "@/store/useModalStore";
@@ -230,15 +232,12 @@ export const StoryViewer = ({ groups, initialGroupIndex, onClose, onRefresh }: S
                 currentStory.visibility === "close_friends" ? "bg-success" : "bg-gradient-to-tr from-primary via-point to-secondary"
               )}>
                 <div className="w-full h-full rounded-[13px] bg-bg-base p-[1.5px]">
-                  <div className="relative w-full h-full rounded-[11px] overflow-hidden bg-bg-alt">
-                    {currentGroup.user.image ? (
-                      <Image src={currentGroup.user.image} alt="" fill sizes="44px" className="object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <UserIcon size={20} className="text-[#ADB5BD]" />
-                      </div>
-                    )}
-                  </div>
+                  <Avatar 
+                    src={currentGroup.user.image} 
+                    alt={currentGroup.user.name} 
+                    size="100%"
+                    className="rounded-[11px]"
+                  />
                 </div>
               </div>
               <div className="flex flex-col">

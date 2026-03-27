@@ -4,6 +4,8 @@ import {
   signOut, 
   GoogleAuthProvider, 
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   updateProfile,
   sendPasswordResetEmail,
   deleteUser
@@ -120,39 +122,70 @@ export const AuthService = {
     }
   },
 
-  // Google Login
+  // Google Login (Redirect) - Use this to avoid COOP issues
+  async signInWithGoogleRedirect() {
+    console.log("[AuthService] Starting Google signInRedirect...");
+    try {
+      const provider = new GoogleAuthProvider();
+      // Using redirect instead of popup to avoid COOP policy issues
+      await signInWithRedirect(auth, provider);
+    } catch (error: any) {
+      throw this.handleError(error);
+    }
+  },
+
+  // Handle Redirect Result
+  async handleGoogleRedirectResult() {
+    console.log("[AuthService] Checking Google redirect result...");
+    try {
+      const userCredential = await getRedirectResult(auth);
+      if (!userCredential) return null;
+
+      const user = userCredential.user;
+      console.log("[AuthService] Google redirect user authorized:", user.uid);
+
+      await this.ensureUserDocument(user);
+      return user;
+    } catch (error: any) {
+      console.error("[AuthService] Google Redirect Result Error:", error);
+      throw this.handleError(error);
+    }
+  },
+
+  // Helper to ensure firestore document exists
+  async ensureUserDocument(user: any) {
+    const userDoc = await getDoc(doc(db, "users", user.uid));
+    if (!userDoc.exists()) {
+      console.log("[AuthService] Registering new user in Firestore...");
+      await setDoc(doc(db, "users", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        nickname: user.displayName || `user_${user.uid.slice(0, 5)}`,
+        avatarUrl: user.photoURL,
+        identityVerified: false,
+        stats: {
+          totalPosts: 0,
+          totalCountries: 0,
+          totalDistance: 0,
+        },
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      console.log("[AuthService] User document created.");
+    }
+  },
+
+  // Google Login (Popup) - Deprecated for browsers with strict COOP
   async signInWithGoogle() {
-    console.log("[AuthService] Starting Google signIn...");
+    console.log("[AuthService] Starting Google signIn (Popup)...");
     try {
       const provider = new GoogleAuthProvider();
       const userCredential = await signInWithPopup(auth, provider);
       const user = userCredential.user;
-      console.log("[AuthService] Google user authorized:", user.uid);
-
-      // Check if user exists in Firestore, if not create
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (!userDoc.exists()) {
-        console.log("[AuthService] Registering new Google user in Firestore...");
-        await setDoc(doc(db, "users", user.uid), {
-          uid: user.uid,
-          email: user.email,
-          nickname: user.displayName || `user_${user.uid.slice(0, 5)}`,
-          avatarUrl: user.photoURL,
-          identityVerified: false,
-          stats: {
-            totalPosts: 0,
-            totalCountries: 0,
-            totalDistance: 0,
-          },
-          createdAt: serverTimestamp(),
-          updatedAt: serverTimestamp(),
-        });
-        console.log("[AuthService] New Google user document created.");
-      }
-
+      
+      await this.ensureUserDocument(user);
       return user;
     } catch (error: any) {
-      console.error("[AuthService] Google Login Error Trace:", error);
       throw this.handleError(error);
     }
   },

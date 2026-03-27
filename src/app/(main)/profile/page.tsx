@@ -22,6 +22,7 @@ import { useModalStore } from "@/store/useModalStore";
 import { AccountSwitcher } from "@/components/features/auth/AccountSwitcher";
 import { ProfileEditModal } from "@/components/features/profile/ProfileEditModal";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import { Avatar } from "@/components/common/Avatar";
 import { PowerPopup } from "@/components/common/PowerPopup";
 import { storyService } from "@/core/firebase/storyService";
 import { Story } from "@/types/story";
@@ -63,10 +64,26 @@ export default function ProfilePage() {
   }, [user, isAuthLoading, router]);
 
   useEffect(() => {
-    if (user) {
-      fetchUserPosts();
-      fetchUserProfile();
-    }
+    if (!user) return;
+
+    const unsubscribe = userService.subscribeToUserProfile(user.uid, async (data) => {
+      if (!data) return;
+      setProfile(data);
+
+      // Fetch friend profiles if any
+      if (data.friends && data.friends.length > 0) {
+        const friendData = await Promise.all(
+          data.friends.map(friendId => userService.getUserProfile(friendId))
+        );
+        setFriendProfiles(friendData.filter((p): p is UserProfile => p !== null));
+      } else {
+        setFriendProfiles([]);
+      }
+    });
+
+    fetchUserPosts();
+
+    return () => unsubscribe();
   }, [user]);
 
   const handleLogout = async () => {
@@ -78,19 +95,22 @@ export default function ProfilePage() {
     }
   };
 
-  const fetchUserProfile = async () => {
+  const fetchUserPosts = async () => {
     if (!user) return;
-    const data = await userService.getUserProfile(user.uid);
-    if (!data) return;
-    setProfile(data);
+    setIsLoadingPosts(true);
+    try {
+      const posts = await postService.getPostsByUser(user.uid);
+      setUserPosts(posts);
+      
+      const liked = await postService.getLikedPosts(user.uid);
+      setLikedPosts(liked);
 
-    // Fetch friend profiles if any
-    if (data.friends && data.friends.length > 0) {
-      const friendData = await Promise.all(
-        data.friends.map(friendId => userService.getUserProfile(friendId))
-      );
-      // Filter out any potential nulls if a user was deleted but still in friends list
-      setFriendProfiles(friendData.filter((p): p is UserProfile => p !== null));
+      const bookmarked = await postService.getBookmarkedPosts(user.uid);
+      setBookmarkedPosts(bookmarked);
+    } catch (error) {
+      console.error("Failed to fetch posts:", error);
+    } finally {
+      setIsLoadingPosts(false);
     }
   };
 
@@ -99,37 +119,9 @@ export default function ProfilePage() {
     const isClose = profile.closeFriends?.includes(targetUid) || false;
     try {
       await userService.toggleCloseFriend(user.uid, targetUid, isClose);
-      // Update local state for immediate feedback
-      setProfile(prev => {
-        if (!prev) return null;
-        const currentClose = prev.closeFriends || [];
-        return {
-          ...prev,
-          closeFriends: isClose
-            ? currentClose.filter(id => id !== targetUid)
-            : [...currentClose, targetUid]
-        };
-      });
+      // Real-time handles state update
     } catch (error) {
       console.error("Failed to toggle close friend:", error);
-    }
-  };
-
-  const fetchUserPosts = async () => {
-    if (!user) return;
-    setIsLoadingPosts(true);
-    try {
-      const allPosts = await postService.getPosts(user.uid);
-
-      // Filter for each tab
-      setUserPosts(allPosts.filter(post => post.user.uid === user.uid));
-      setLikedPosts(allPosts.filter(post => post.likedBy?.includes(user.uid)));
-      setBookmarkedPosts(allPosts.filter(post => post.bookmarkedBy?.includes(user.uid)));
-
-    } catch (error) {
-      console.error("Failed to fetch user posts:", error);
-    } finally {
-      setIsLoadingPosts(false);
     }
   };
 
@@ -154,7 +146,7 @@ export default function ProfilePage() {
     try {
       await userService.addVisitedCountry(user.uid, newCountry.trim());
       setNewCountry("");
-      fetchUserProfile();
+      // Real-time handles update
     } catch (error) {
       console.error("Failed to add country:", error);
     }
@@ -164,7 +156,7 @@ export default function ProfilePage() {
     if (!user) return;
     try {
       await userService.removeVisitedCountry(user.uid, country);
-      fetchUserProfile();
+      // Real-time handles update
     } catch (error) {
       console.error("Failed to delete country:", error);
     }
@@ -175,8 +167,7 @@ export default function ProfilePage() {
     try {
       await userService.unfollowUser(user.uid, userToUnfollow.uid);
       setUserToUnfollow(null);
-      // Refresh profiles
-      fetchUserProfile();
+      // Real-time handles update
     } catch (error) {
       console.error("Failed to unfollow:", error);
     }
@@ -342,24 +333,19 @@ export default function ProfilePage() {
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative group">
-            <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
-              {/* Next/Image 대신 일반 img 태그를 사용합니다 */}
-              <img
-                src={profile?.avatarUrl || DEFAULT_AVATAR}
-                alt={profile?.nickname || "프로필"}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            <Avatar 
+              src={profile?.avatarUrl} 
+              alt={profile?.nickname || "프로필"} 
+              size={96}
+              className="border-4 border-bg-base shadow-md"
+            />
 
-                onError={(e) => {
-                  e.currentTarget.src = DEFAULT_AVATAR;
-                }}
-              />
-
-              {isUpdatingPhoto && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <div className="h-5 w-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
-                </div>
-              )}
-            </div>
+            {isUpdatingPhoto && (
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full">
+                <div className="h-5 w-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
+              </div>
+            )}
+            
             <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full border-2 border-bg-base shadow-sm hover:scale-110 active:scale-95 transition-all"
@@ -658,7 +644,7 @@ export default function ProfilePage() {
                                   onConfirm: async () => {
                                     if (!user) return;
                                     await userService.unfollowUser(user.uid, friend.uid);
-                                    fetchUserProfile();
+                                    // Real-time handles update
                                   }
                                 });
                               }}
@@ -812,7 +798,7 @@ export default function ProfilePage() {
           isOpen={isProfileEditOpen}
           onClose={() => setIsProfileEditOpen(false)}
           profile={profile}
-          onUpdate={fetchUserProfile}
+          onUpdate={() => {}} // Real-time handles update
         />
       )}
     </div>

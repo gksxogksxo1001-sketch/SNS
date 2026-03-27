@@ -442,5 +442,65 @@ export const postService = {
 
     const snapshot = await getDocs(q);
     return snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() } as Post));
+  },
+
+  // Real-time: Subscribe to a single post
+  subscribeToPost(postId: string, callback: (post: Post | null) => void) {
+    return onSnapshot(doc(db, "posts", postId), (snapshot) => {
+      if (snapshot.exists()) {
+        callback({ id: snapshot.id, ...snapshot.data() } as Post);
+      } else {
+        callback(null);
+      }
+    });
+  },
+
+  // Real-time: Subscribe to posts of a specific group
+  subscribeToGroupPosts(groupId: string, callback: (posts: Post[]) => void) {
+    const postsRef = collection(db, "posts");
+    const q = query(
+      postsRef,
+      where("groupId", "==", groupId),
+      orderBy("createdAt", "desc")
+    );
+
+    return onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      callback(posts);
+    });
+  },
+
+  // Fetch posts by a specific user
+  async getPostsByUser(userId: string): Promise<Post[]> {
+    const postsRef = collection(db, "posts");
+    const q = query(postsRef, where("user.uid", "==", userId), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+  },
+
+  // Fetch posts liked by a user
+  async getLikedPosts(userId: string): Promise<Post[]> {
+    const postsRef = collection(db, "posts");
+    const q = query(postsRef, where("likedBy", "array-contains", userId), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+  },
+
+  // Fetch posts bookmarked by a user
+  async getBookmarkedPosts(userId: string): Promise<Post[]> {
+    const postsRef = collection(db, "posts");
+    const q = query(postsRef, where("bookmarkedBy", "array-contains", userId), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+  },
+
+  // Subscribe to user posts real-time
+  subscribeToUserPosts(userId: string, callback: (posts: Post[]) => void) {
+    const postsRef = collection(db, "posts");
+    const q = query(postsRef, where("user.uid", "==", userId), orderBy("createdAt", "desc"));
+    return onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post));
+      callback(posts);
+    });
   }
 };

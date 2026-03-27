@@ -12,6 +12,7 @@ import { PostCard } from "@/components/features/feed/PostCard";
 import { ChevronLeft, Grid, Heart, User as UserIcon, Globe, X, Send, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR } from "@/core/constants";
+import { Avatar } from "@/components/common/Avatar";
 import Image from "next/image";
 
 export default function PublicProfilePage() {
@@ -35,9 +36,66 @@ export default function PublicProfilePage() {
   const [isEnteringChat, setIsEnteringChat] = useState(false);
 
   useEffect(() => {
-    if (userId && !isAuthLoading) {
-      fetchData();
+    if (!userId || isAuthLoading) return;
+
+    setIsLoading(true);
+
+    // 1. Subscribe to the profile being viewed
+    const unsubProfile = userService.subscribeToUserProfile(userId, (data) => {
+      if (data) {
+        setProfile(data);
+      }
+    });
+
+    // 2. Subscribe to posts
+    const unsubPosts = postService.subscribeToUserPosts(userId, (posts) => {
+      setUserPosts(posts);
+      setIsLoading(false);
+    });
+
+    // 3. Static fetch for liked posts (keep it simple)
+    postService.getLikedPosts(userId).then(setLikedPosts);
+
+    // 4. Friend Status Logic (Needs Current User)
+    let unsubMyProfile: (() => void) | undefined;
+    let unsubMyRequests: (() => void) | undefined;
+    let unsubTheirRequests: (() => void) | undefined;
+
+    if (currentUser) {
+      unsubMyProfile = userService.subscribeToUserProfile(currentUser.uid, (myData) => {
+        if (myData?.friends?.includes(userId)) {
+          setRequestStatus("friends");
+        } else {
+          if (requestStatus === "friends") setRequestStatus("none");
+        }
+      });
+
+      unsubMyRequests = userService.subscribeToPendingRequests(currentUser.uid, (requests) => {
+        const incoming = requests.find(r => r.fromUid === userId);
+        if (incoming) {
+          setIncomingRequestId(incoming.id);
+        } else {
+          setIncomingRequestId(null);
+        }
+      });
+
+      unsubTheirRequests = userService.subscribeToPendingRequests(userId, (requests) => {
+        const sent = requests.find(r => r.fromUid === currentUser.uid);
+        if (sent) {
+          setRequestStatus("pending");
+        } else if (requestStatus === "pending") {
+          setRequestStatus("none");
+        }
+      });
     }
+
+    return () => {
+      unsubProfile();
+      unsubPosts();
+      unsubMyProfile?.();
+      unsubMyRequests?.();
+      unsubTheirRequests?.();
+    };
   }, [userId, isAuthLoading, currentUser?.uid]);
 
   const handleMessageClick = async () => {
@@ -51,58 +109,6 @@ export default function PublicProfilePage() {
     } catch (error) {
       console.error("Failed to enter chat:", error);
       setIsEnteringChat(false);
-    }
-  };
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const [profileData, allPosts, myProfile] = await Promise.all([
-        userService.getUserProfile(userId),
-        postService.getPosts(),
-        currentUser ? userService.getUserProfile(currentUser.uid) : Promise.resolve(null)
-      ]);
-      const filteredPosts = allPosts.filter(post => post.user.uid === userId);
-      setUserPosts(filteredPosts);
-      setLikedPosts(allPosts.filter(post => post.likedBy?.includes(userId)));
-
-      let finalProfile = profileData;
-      if (!finalProfile && filteredPosts.length > 0) {
-        const postUser = filteredPosts[0].user;
-        finalProfile = {
-          uid: userId,
-          email: "이메일 정보 없음",
-          nickname: postUser.name || "알 수 없는 사용자",
-          avatarUrl: postUser.image || "",
-          friends: [],
-          visitedCountries: [],
-        } as unknown as UserProfile;
-      }
-      setProfile(finalProfile);
-
-      // Check friend status
-      if (currentUser && finalProfile) {
-        if (myProfile?.friends?.includes(userId)) {
-          setRequestStatus("friends");
-        } else {
-          // Check if I sent a request (Pending)
-          const requestsToThem = await userService.getPendingRequests(userId);
-          if (requestsToThem.some(p => p.fromUid === currentUser.uid)) {
-            setRequestStatus("pending");
-          }
-
-          // Check if they sent ME a request (Incoming)
-          const requestsToMe = await userService.getPendingRequests(currentUser.uid);
-          const incoming = requestsToMe.find(p => p.fromUid === userId);
-          if (incoming) {
-            setIncomingRequestId(incoming.id);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch public profile:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -191,15 +197,13 @@ export default function PublicProfilePage() {
       <main className="px-5 pt-6 space-y-8">
         {/* Profile Info */}
         <div className="flex flex-col items-center text-center space-y-4">
-          <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
-            <Image 
-              src={profile.avatarUrl || DEFAULT_AVATAR} 
-              alt={profile.nickname} 
-              fill
-              sizes="96px"
-              className="h-full w-full object-cover" 
-            />
-          </div>
+          <Avatar 
+            src={profile.avatarUrl} 
+            alt={profile.nickname} 
+            size={96}
+            className="border-4 border-bg-base shadow-md"
+            priority
+          />
           
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-text-main">{profile.nickname}</h2>

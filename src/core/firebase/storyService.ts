@@ -6,6 +6,7 @@ import {
   where, 
   getDocs, 
   orderBy, 
+  onSnapshot,
   serverTimestamp,
   Timestamp,
   doc,
@@ -230,5 +231,75 @@ export const storyService = {
       id: doc.id,
       ...doc.data()
     })) as Story[];
+  },
+
+  // Subscribe to active stories with real-time updates and visibility filtering
+  subscribeToStories(currentUserId: string | undefined, callback: (groups: UserStoryGroup[]) => void) {
+    const now = new Date();
+    const storiesRef = collection(db, "stories");
+    const q = query(
+      storiesRef, 
+      where("expiresAt", ">", Timestamp.fromDate(now)),
+      orderBy("expiresAt", "asc")
+    );
+
+    return onSnapshot(q, async (snapshot) => {
+      const stories = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Story[];
+
+      // Group stories by user
+      const userGroups: Record<string, UserStoryGroup> = {};
+      stories.forEach(story => {
+        if (!userGroups[story.userId]) {
+          userGroups[story.userId] = {
+            userId: story.userId,
+            user: story.user,
+            stories: [],
+            hasUnread: false
+          };
+        }
+        userGroups[story.userId].stories.push(story);
+      });
+
+      const groups = Object.values(userGroups);
+      
+      if (!currentUserId) {
+        callback(groups.map(group => ({
+          ...group,
+          stories: group.stories.filter(s => s.visibility === "public" || !s.visibility)
+        })).filter(group => group.stories.length > 0));
+        return;
+      }
+
+      // Filter for logged-in users
+      const myProfile = await userService.getUserProfile(currentUserId);
+      const myFriends = myProfile?.friends || [];
+      
+      const filteredGroups = await Promise.all(groups.map(async (group) => {
+        const authorProfile = await userService.getUserProfile(group.userId);
+        
+        const allowedStories = group.stories.filter(story => {
+          if (story.userId === currentUserId) return true;
+          if (story.visibility === "public" || !story.visibility) return true;
+          if (story.visibility === "friends" && myFriends.includes(story.userId)) return true;
+          if (story.visibility === "close_friends") {
+            return authorProfile?.closeFriends?.includes(currentUserId) || false;
+          }
+          return false;
+        });
+
+        if (allowedStories.length === 0) return null;
+
+        return {
+          ...group,
+          stories: allowedStories,
+          hasUnread: allowedStories.some(story => !story.viewedBy.includes(currentUserId))
+        };
+      }));
+
+      callback(filteredGroups.filter((g): g is UserStoryGroup => g !== null));
+    });
   }
 };

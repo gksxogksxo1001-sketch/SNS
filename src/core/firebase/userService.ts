@@ -5,6 +5,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  onSnapshot,
   arrayUnion,
   arrayRemove,
   serverTimestamp
@@ -266,5 +267,26 @@ export const userService = {
       return userDoc.data().closeFriends || [];
     }
     return [];
+  },
+
+  // Real-time: Subscribe to user profile
+  subscribeToUserProfile(uid: string, callback: (profile: UserProfile | null) => void) {
+    return onSnapshot(doc(db, "users", uid), (snapshot) => {
+      if (snapshot.exists()) {
+        callback(snapshot.data() as UserProfile);
+      } else {
+        callback(null);
+      }
+    });
+  },
+
+  // Real-time: Subscribe to pending friend requests
+  subscribeToPendingRequests(uid: string, callback: (requests: FriendRequest[]) => void) {
+    const requestsRef = collection(db, "friendRequests");
+    const q = query(requestsRef, where("toUid", "==", uid), where("status", "==", "pending"));
+    return onSnapshot(q, (snapshot) => {
+      const requests = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as FriendRequest));
+      callback(requests);
+    });
   }
 };

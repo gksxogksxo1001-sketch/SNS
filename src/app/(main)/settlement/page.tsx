@@ -27,23 +27,35 @@ export default function SettlementListPage() {
   }, []);
 
   React.useEffect(() => {
-    const loadOverview = async () => {
-      if (user) {
-        setIsLoading(true);
-        try {
-          const overview = await settlementService.getUserSettlementOverview(user.uid);
-          setGroups(overview);
-          
-          const allParticipants = Array.from(new Set(overview.flatMap((g: any) => g.participants)));
-          await fetchUserProfiles(allParticipants);
-        } catch (error) {
-          console.error("Failed to load settlement overview:", error);
-        } finally {
-          setIsLoading(false);
-        }
+    if (!user) return;
+
+    setIsLoading(true);
+    const unsubscribe = groupService.subscribeToUserGroups(user.uid, async (userGroups) => {
+      try {
+        const summaries = await Promise.all(userGroups.map(async (group) => {
+          const settlement = await settlementService.calculateGroupSettlement(group.id);
+          return {
+            id: group.id,
+            name: group.name,
+            date: "최근 여행", 
+            participants: group.members,
+            settlementStatus: group.settlementStatus || "ongoing",
+            totalAmount: settlement.totalAmount,
+            myBalance: settlement.balances[user.uid] || 0
+          };
+        }));
+        setGroups(summaries.filter(s => s !== null));
+        
+        const allParticipants = Array.from(new Set(userGroups.flatMap(g => g.members)));
+        await fetchUserProfiles(allParticipants);
+      } catch (error) {
+        console.error("Failed to load settlement overview:", error);
+      } finally {
+        setIsLoading(false);
       }
-    };
-    loadOverview();
+    });
+
+    return () => unsubscribe();
   }, [user]);
 
   const fetchUserProfiles = async (uids: string[]) => {
