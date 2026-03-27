@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    unoptimized: true,
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
@@ -11,7 +12,7 @@ const nextConfig: NextConfig = {
         hostname: 'firebasestorage.googleapis.com',
         pathname: '/**',
       },
-      // 👇 이 부분이 핵심입니다! (신규 파이어베이스 도메인)
+      // 👇 이 2개가 없어서 400 에러가 나는 겁니다!
       {
         protocol: 'https',
         hostname: 'firebasestorage.app',
