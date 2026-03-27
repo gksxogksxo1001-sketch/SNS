@@ -308,8 +308,12 @@ export default function ProfilePage() {
               {/* Next/Image 대신 일반 img 태그를 사용합니다 */}
               <img
                 src={profile?.avatarUrl || DEFAULT_AVATAR}
-                alt={user.displayName || "프로필"}
+                alt={profile?.nickname || "프로필"}
                 style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+
+                onError={(e) => {
+                  e.currentTarget.src = DEFAULT_AVATAR;
+                }}
               />
 
               {isUpdatingPhoto && (
