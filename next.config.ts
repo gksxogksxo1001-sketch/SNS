@@ -9,7 +9,18 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'firebasestorage.googleapis.com',
-        pathname: '/**', // 모든 경로 허용
+        pathname: '/**',
+      },
+      // 👇 이 부분이 핵심입니다! (신규 파이어베이스 도메인)
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.app',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.firebasestorage.app',
+        pathname: '/**',
       },
       {
         protocol: 'https',
