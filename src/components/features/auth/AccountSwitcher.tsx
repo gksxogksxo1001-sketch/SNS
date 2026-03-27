@@ -4,9 +4,13 @@ import React, { useState, useEffect } from "react";
 import { X, User, Trash2, Settings, ChevronRight, UserPlus as LogPlus } from "lucide-react";
 import { accountManager, StoredAccount } from "@/core/auth/accountManager";
 import { AuthService } from "@/core/services/AuthService";
+import { userService } from "@/core/firebase/userService";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
+import { ProfileEditModal } from "../profile/ProfileEditModal";
+import { UserProfile } from "@/types/user";
+import { useModalStore } from "@/store/useModalStore";
 
 interface AccountSwitcherProps {
   isOpen: boolean;
@@ -16,24 +20,76 @@ interface AccountSwitcherProps {
 
 export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcherProps) {
   const [accounts, setAccounts] = useState<StoredAccount[]>([]);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  const [manageUid, setManageUid] = useState<string | null>(null);
+  const { showAlert, showConfirm } = useModalStore();
   const router = useRouter();
+
+  const loadAccounts = () => {
+    setAccounts(accountManager.getAccounts());
+  };
 
   useEffect(() => {
     if (isOpen) {
-      setAccounts(accountManager.getAccounts());
+      loadAccounts();
+    } else {
+      setManageUid(null);
     }
   }, [isOpen]);
 
-  const handleSwitch = async (uid: string) => {
-    if (uid === currentUid) return;
+  const handleEdit = async (uid: string) => {
+    try {
+      const profile = await userService.getUserProfile(uid);
+      if (profile) {
+        setEditingProfile(profile);
+        setIsEditModalOpen(true);
+        setManageUid(null);
+      }
+    } catch (error) {
+      console.error("Failed to load profile for editing:", error);
+    }
+  };
+
+  const handleUpdateComplete = () => {
+    loadAccounts(); // Refresh list to show new nickname/info
+    // In a real app, we might need to refresh the whole page state if nickname changed
+    window.location.reload(); 
+  };
+
+  const handleWithdrawal = async (uid: string) => {
+    showConfirm({
+      title: "회원 탈퇴",
+      message: "정말 탈퇴하시겠습니까? 모든 정보가 삭제되며 복구할 수 없습니다.",
+      confirmText: "탈퇴하기",
+      isDanger: true,
+      onConfirm: async () => {
+        try {
+          await AuthService.deleteUserAccount(uid);
+          onClose();
+          router.push("/login"); // Redirect after withdrawal
+          showAlert({ title: "탈퇴 완료", message: "계정이 정상적으로 삭제되었습니다." });
+        } catch (error: any) {
+          showAlert({ title: "오류", message: error.message });
+        }
+      }
+    });
+  };
+
+  const handleSwitch = async (acc: StoredAccount) => {
+    if (acc.uid === currentUid) return;
     
-    // In a real app, switching might require re-auth if token is expired.
-    // For this prototype, we'll log out and redirect to login, 
-    // but the email can be pre-filled or we can assume a simplified "Switch" for demo.
     try {
       await AuthService.logOut();
       onClose();
-      router.push("/login"); // Pre-filling can be added with query params
+      
+      // Navigate to login with pre-fill info
+      const targetId = acc.loginId || acc.email;
+      if (targetId) {
+        router.push(`/login?loginId=${encodeURIComponent(targetId)}`);
+      } else {
+        router.push("/login");
+      }
     } catch (error) {
       console.error("Failed to logout for switch:", error);
     }
@@ -41,8 +97,25 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
 
   const handleRemove = (e: React.MouseEvent, uid: string) => {
     e.stopPropagation();
-    accountManager.removeAccount(uid);
-    setAccounts(accountManager.getAccounts());
+    
+    showConfirm({
+      title: "기록 삭제",
+      message: "이 기기에서 해당 계정의 로그인 기록을 삭제하시겠습니까?",
+      confirmText: "삭제",
+      isDanger: true,
+      onConfirm: async () => {
+        accountManager.removeAccount(uid);
+        setAccounts(accountManager.getAccounts());
+        
+        // If current user is removed, logout and redirect
+        if (uid === currentUid) {
+          await AuthService.logOut();
+          onClose();
+          router.push("/login");
+          showAlert({ title: "로그아웃", message: "현재 사용 중인 계정의 기록이 삭제되어 로그아웃되었습니다." });
+        }
+      }
+    });
   };
 
   if (!isOpen) return null;
@@ -62,7 +135,7 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
             accounts.map((acc) => (
               <div 
                 key={acc.uid}
-                onClick={() => handleSwitch(acc.uid)}
+                onClick={() => handleSwitch(acc)}
                 className={cn(
                   "group flex items-center justify-between p-3 rounded-2xl border-2 transition-all cursor-pointer",
                   acc.uid === currentUid 
@@ -95,7 +168,44 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center space-x-1 opacity-100 group-hover:opacity-100 transition-opacity">
+                  {acc.uid === currentUid && (
+                    <div className="relative">
+                      {manageUid === acc.uid ? (
+                        <div className="absolute right-0 bottom-0 mb-10 w-24 bg-bg-base/95 backdrop-blur-md rounded-2xl border border-border-base shadow-xl py-1 animate-in zoom-in-95 fill-mode-both duration-200 z-10 overflow-hidden">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleEdit(acc.uid); }}
+                            className="w-full px-4 py-2.5 text-xs font-black text-primary hover:bg-primary/5 transition-colors text-left flex items-center justify-between"
+                          >
+                            <span>수정</span>
+                            <Settings size={12} />
+                          </button>
+                          <div className="h-px bg-border-base/50 mx-2"></div>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleWithdrawal(acc.uid); }}
+                            className="w-full px-4 py-2.5 text-xs font-black text-error hover:bg-error/5 transition-colors text-left flex items-center justify-between"
+                          >
+                            <span>탈퇴</span>
+                            <Trash2 size={12} />
+                          </button>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); setManageUid(null); }}
+                            className="w-full px-4 py-1.5 text-[10px] font-bold text-text-sub hover:bg-bg-alt flex items-center justify-center border-t border-border-base/50"
+                          >
+                            닫기
+                          </button>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setManageUid(acc.uid); }}
+                          className="p-2 text-text-sub/40 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
+                          title="계정 관리"
+                        >
+                          <Settings size={16} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                   <button 
                     onClick={(e) => handleRemove(e, acc.uid)}
                     className="p-2 text-text-sub/40 hover:text-error hover:bg-error/10 rounded-xl transition-all"
@@ -127,6 +237,16 @@ export function AccountSwitcher({ isOpen, onClose, currentUid }: AccountSwitcher
           </button>
         </div>
       </div>
+
+      {/* Profile Edit Modal */}
+      {editingProfile && (
+        <ProfileEditModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          profile={editingProfile}
+          onUpdate={handleUpdateComplete}
+        />
+      )}
     </div>
   );
 }

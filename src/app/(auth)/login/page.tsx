@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/common/Button";
 import { Input } from "@/components/common/Input";
 import { Chrome, MessageCircle, MapPin, Eye, EyeOff } from "lucide-react";
@@ -11,9 +11,18 @@ import { useModalStore } from "@/store/useModalStore";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { showAlert } = useModalStore();
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    const idParam = searchParams.get("loginId");
+    if (idParam) {
+      setLoginId(idParam);
+    }
+  }, [searchParams]);
+
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");

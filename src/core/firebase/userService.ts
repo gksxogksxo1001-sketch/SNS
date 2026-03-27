@@ -45,6 +45,20 @@ export const userService = {
     return downloadURL;
   },
 
+  // Update nickname
+  async updateNickname(uid: string, nickname: string): Promise<void> {
+    // Update Firestore
+    await updateDoc(doc(db, "users", uid), {
+      nickname: nickname,
+      updatedAt: serverTimestamp()
+    });
+
+    // Update Firebase Auth Profile
+    if (auth.currentUser && auth.currentUser.uid === uid) {
+      await updateProfile(auth.currentUser, { displayName: nickname });
+    }
+  },
+
   // Add visited country
   async addVisitedCountry(uid: string, country: string): Promise<void> {
     const userRef = doc(db, "users", uid);

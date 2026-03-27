@@ -5,10 +5,11 @@ import {
   GoogleAuthProvider, 
   signInWithPopup,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  deleteUser
 } from "firebase/auth";
 import { auth, db } from "@/core/firebase/config";
-import { doc, setDoc, getDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
+import { doc, setDoc, getDoc, deleteDoc, serverTimestamp, collection, query, where, getDocs, limit } from "firebase/firestore";
 
 export const AuthService = {
   // Email Signup
@@ -42,6 +43,10 @@ export const AuthService = {
       });
       console.log("[AuthService] Firestore user document created successfully.");
 
+      // Save to recent accounts
+      const { accountManager } = await import("@/core/auth/accountManager");
+      await accountManager.saveAccount(user, loginId);
+
       return user;
     } catch (error: any) {
       console.error("[AuthService] Signup Error Trace:", error);
@@ -55,6 +60,13 @@ export const AuthService = {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       console.log("[AuthService] Sign-in successful for:", userCredential.user.uid);
+      
+      // Save to recent accounts (fetch loginId from Firestore)
+      const { accountManager } = await import("@/core/auth/accountManager");
+      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      const loginId = userDoc.exists() ? userDoc.data().loginId : null;
+      await accountManager.saveAccount(userCredential.user, loginId);
+
       return userCredential.user;
     } catch (error: any) {
       console.error("[AuthService] Sign-in Error Trace:", error);
@@ -191,6 +203,37 @@ export const AuthService = {
     } catch (error: any) {
       console.error("[AuthService] Password Reset Error:", error);
       throw error instanceof Error ? error : this.handleError(error);
+    }
+  },
+
+  // Delete Account (Withdrawal)
+  async deleteUserAccount(uid: string) {
+    console.log("[AuthService] Starting account deletion for:", uid);
+    try {
+      if (!auth.currentUser || auth.currentUser.uid !== uid) {
+        throw new Error("삭제하려는 계정의 권한이 없거나 로그인 상태가 아닙니다.");
+      }
+
+      // 1. Delete Firestore User Document
+      await deleteDoc(doc(db, "users", uid));
+      console.log("[AuthService] Firestore document deleted.");
+
+      // 2. Remove from Local Recent Accounts
+      const { accountManager } = await import("@/core/auth/accountManager");
+      accountManager.removeAccount(uid);
+
+      // 3. Delete Firebase Auth User
+      await deleteUser(auth.currentUser);
+      console.log("[AuthService] Auth user deleted successfully.");
+      
+      return true;
+    } catch (error: any) {
+      console.error("[AuthService] Account Deletion Error:", error);
+      // Re-authentication check
+      if (error.code === "auth/requires-recent-login") {
+        throw new Error("보안을 위해 다시 로그인한 후 탈퇴를 진행해 주세요.");
+      }
+      throw this.handleError(error);
     }
   },
 

@@ -2,6 +2,7 @@ import { User } from "firebase/auth";
 
 export interface StoredAccount {
   uid: string;
+  loginId: string | null;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
@@ -14,7 +15,7 @@ export const accountManager = {
   /**
    * Save current user to the recent accounts list
    */
-  async saveAccount(user: User): Promise<void> {
+  async saveAccount(user: any, loginId: string | null = null): Promise<void> {
     if (!user) return;
 
     try {
@@ -23,6 +24,7 @@ export const accountManager = {
 
       const accountData: StoredAccount = {
         uid: user.uid,
+        loginId: loginId || (accounts[existingIdx]?.loginId ?? null),
         email: user.email,
         displayName: user.displayName,
         photoURL: user.photoURL,
