@@ -9,10 +9,10 @@ import { userService } from "@/core/firebase/userService";
 import { UserProfile } from "@/types/user";
 import { Post } from "@/types/post";
 import { PostCard } from "@/components/features/feed/PostCard";
-import { 
-  Settings, LogOut, Grid, Heart, MapPin, Calendar, 
+import {
+  Settings, LogOut, Grid, Heart, MapPin, Calendar,
   Loader2,
-  User as UserIcon, Camera, Plus, Trash2, X, Globe, 
+  User as UserIcon, Camera, Plus, Trash2, X, Globe,
   Bookmark, Users, UserCog, ChevronRight, History, Star,
 } from "lucide-react";
 import Image from "next/image";
@@ -37,7 +37,7 @@ export default function ProfilePage() {
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
   const [activeTab, setActiveTab] = useState<"posts" | "liked">("posts");
-  
+
   // Modals state
   const [isCountryModalOpen, setIsCountryModalOpen] = useState(false);
   const [newCountry, setNewCountry] = useState("");
@@ -81,7 +81,7 @@ export default function ProfilePage() {
     const data = await userService.getUserProfile(user.uid);
     if (!data) return;
     setProfile(data);
-    
+
     // Fetch friend profiles if any
     if (data.friends && data.friends.length > 0) {
       const friendData = await Promise.all(
@@ -103,7 +103,7 @@ export default function ProfilePage() {
         const currentClose = prev.closeFriends || [];
         return {
           ...prev,
-          closeFriends: isClose 
+          closeFriends: isClose
             ? currentClose.filter(id => id !== targetUid)
             : [...currentClose, targetUid]
         };
@@ -118,12 +118,12 @@ export default function ProfilePage() {
     setIsLoadingPosts(true);
     try {
       const allPosts = await postService.getPosts(user.uid);
-      
+
       // Filter for each tab
       setUserPosts(allPosts.filter(post => post.user.uid === user.uid));
       setLikedPosts(allPosts.filter(post => post.likedBy?.includes(user.uid)));
       setBookmarkedPosts(allPosts.filter(post => post.bookmarkedBy?.includes(user.uid)));
-      
+
     } catch (error) {
       console.error("Failed to fetch user posts:", error);
     } finally {
@@ -194,7 +194,7 @@ export default function ProfilePage() {
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-bg-base px-4 border-b border-border-base">
         <h1 className="text-lg font-bold">프로필</h1>
         <div className="relative flex items-center">
-          <button 
+          <button
             onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             className={cn(
               "p-2 rounded-full transition-all",
@@ -208,17 +208,17 @@ export default function ProfilePage() {
           {isSettingsOpen && (
             <>
               {/* Overlay for closing */}
-              <div 
-                className="fixed inset-0 z-40" 
+              <div
+                className="fixed inset-0 z-40"
                 onClick={() => setIsSettingsOpen(false)}
               ></div>
-              
+
               <div className="absolute top-12 right-0 w-56 bg-bg-base rounded-2xl shadow-xl border border-border-base py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="px-4 py-2 mb-1">
                   <p className="text-[10px] font-black text-text-sub uppercase tracking-widest">설정 및 관리</p>
                 </div>
-                
-                <button 
+
+                <button
                   onClick={async () => {
                     setIsSettingsOpen(false);
                     setIsStoryPopupOpen(true);
@@ -242,7 +242,7 @@ export default function ProfilePage() {
                   <span className="text-sm font-bold text-text-main">스토리 보관함</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => {
                     setIsSettingsOpen(false);
                     setIsBookmarkPopupOpen(true);
@@ -253,7 +253,7 @@ export default function ProfilePage() {
                   <span className="text-sm font-bold text-text-main">북마크</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => {
                     setFriendsModalTab("close"); // Default to Close Friends tab
                     setIsFriendsModalOpen(true);
@@ -265,7 +265,7 @@ export default function ProfilePage() {
                   <span className="text-sm font-bold text-text-main">친한친구</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => {
                     setIsAccountSwitcherOpen(true);
                     setIsSettingsOpen(false);
@@ -278,7 +278,7 @@ export default function ProfilePage() {
 
                 <div className="h-px bg-border-base my-1 mx-4"></div>
 
-                <button 
+                <button
                   onClick={() => {
                     setIsSettingsOpen(false);
                     showConfirm({
@@ -305,35 +305,34 @@ export default function ProfilePage() {
         <div className="flex flex-col items-center text-center space-y-4">
           <div className="relative group">
             <div className="relative h-24 w-24 overflow-hidden rounded-full border-4 border-bg-base shadow-md bg-bg-alt flex items-center justify-center">
-              <Image 
-                src={profile?.avatarUrl || DEFAULT_AVATAR} 
-                alt={user.displayName || ""} 
-                fill 
-                priority 
-                sizes="96px"
-                className="object-cover" 
+              {/* Next/Image 대신 일반 img 태그를 사용합니다 */}
+              <img
+                src={profile?.avatarUrl || DEFAULT_AVATAR}
+                alt={user.displayName || "프로필"}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
               />
+
               {isUpdatingPhoto && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <div className="h-5 w-5 border-2 border-white border-t-transparent animate-spin rounded-full"></div>
                 </div>
               )}
             </div>
-            <button 
+            <button
               onClick={() => fileInputRef.current?.click()}
               className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full border-2 border-bg-base shadow-sm hover:scale-110 active:scale-95 transition-all"
             >
               <Camera size={14} />
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handlePhotoUpload} 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoUpload}
+              className="hidden"
               accept="image/*"
             />
           </div>
-          
+
           <div className="space-y-1">
             <h2 className="text-xl font-bold text-text-main">{user.displayName || "여행자"}</h2>
             <p className="text-sm text-text-sub">{user.email}</p>
@@ -344,7 +343,7 @@ export default function ProfilePage() {
               <p className="text-lg font-bold text-text-main">{userPosts.length}</p>
               <p className="text-[10px] text-text-sub uppercase tracking-wider font-bold">게시물</p>
             </div>
-            <div 
+            <div
               onClick={() => {
                 setFriendsModalTab("all"); // Default to All Following tab
                 setIsFriendsModalOpen(true);
@@ -354,7 +353,7 @@ export default function ProfilePage() {
               <p className="text-lg font-bold text-text-main">{profile?.friends?.length || 0}</p>
               <p className="text-[10px] text-text-sub uppercase tracking-wider font-bold">친구</p>
             </div>
-            <div 
+            <div
               onClick={() => setIsCountryModalOpen(true)}
               className="text-center group cursor-pointer hover:opacity-70 transition-opacity"
             >
@@ -399,25 +398,25 @@ export default function ProfilePage() {
               </div>
             ) : (
               (() => {
-                const currentPosts = activeTab === "posts" ? userPosts : 
-                                   activeTab === "liked" ? likedPosts : 
-                                   activeTab === "bookmarks" ? bookmarkedPosts : [];
-                
+                const currentPosts = activeTab === "posts" ? userPosts :
+                  activeTab === "liked" ? likedPosts :
+                    activeTab === "bookmarks" ? bookmarkedPosts : [];
+
                 if (currentPosts.length > 0) {
                   return (
                     <div className="grid grid-cols-3 gap-[2px]">
                       {currentPosts.map((post) => (
-                        <div 
-                          key={post.id} 
+                        <div
+                          key={post.id}
                           className="aspect-square relative group cursor-pointer overflow-hidden"
                           onClick={() => router.push(`/post/${post.id}`)}
                         >
-                          <Image 
-                            src={post.images[0]} 
-                            alt="Post" 
+                          <Image
+                            src={post.images[0]}
+                            alt="Post"
                             fill
                             sizes="33vw"
-                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110" 
+                            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                         </div>
                       ))}
@@ -459,19 +458,19 @@ export default function ProfilePage() {
                 <X size={24} />
               </button>
             </div>
-            
+
             <div className="p-5 flex-1 overflow-y-auto space-y-6">
               {/* Add Country */}
               <div className="flex items-center space-x-2">
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={newCountry}
                   onChange={(e) => setNewCountry(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddCountry()}
-                  placeholder="새로운 나라 추가 (예: 일본)" 
+                  placeholder="새로운 나라 추가 (예: 일본)"
                   className="flex-1 bg-bg-alt border border-border-base p-3 rounded-2xl text-[14px] focus:ring-2 focus:ring-primary/20 focus:outline-none text-text-main"
                 />
-                <button 
+                <button
                   onClick={handleAddCountry}
                   className="p-3 bg-primary text-white rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-md shadow-primary/20"
                 >
@@ -485,7 +484,7 @@ export default function ProfilePage() {
                   profile.visitedCountries.map((country, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 bg-bg-alt rounded-2xl border border-border-base group">
                       <span className="text-sm font-bold text-text-main">{country}</span>
-                      <button 
+                      <button
                         onClick={() => handleDeleteCountry(country)}
                         className="p-1.5 text-red-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                       >
@@ -501,7 +500,7 @@ export default function ProfilePage() {
                 )}
               </div>
             </div>
-            
+
             <div className="p-5 border-t">
               <Button onClick={() => setIsCountryModalOpen(false)} className="w-full rounded-2xl py-6 font-black">
                 확인
@@ -531,7 +530,7 @@ export default function ProfilePage() {
 
             {/* Modal Tabs */}
             <div className="flex border-b border-border-base">
-              <button 
+              <button
                 onClick={() => setFriendsModalTab("all")}
                 className={cn(
                   "flex-1 py-3 text-[13px] font-bold transition-all relative",
@@ -541,7 +540,7 @@ export default function ProfilePage() {
                 전체 팔로잉
                 {friendsModalTab === "all" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />}
               </button>
-              <button 
+              <button
                 onClick={() => setFriendsModalTab("close")}
                 className={cn(
                   "flex-1 py-3 text-[13px] font-bold transition-all relative",
@@ -552,19 +551,19 @@ export default function ProfilePage() {
                 {friendsModalTab === "close" && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-success" />}
               </button>
             </div>
-            
+
             <div className="p-5 flex-1 overflow-y-auto min-h-[300px]">
               {(() => {
-                const displayedFriends = friendsModalTab === "all" 
-                  ? friendProfiles 
+                const displayedFriends = friendsModalTab === "all"
+                  ? friendProfiles
                   : friendProfiles.filter(f => profile?.closeFriends?.includes(f.uid));
 
                 if (displayedFriends.length > 0) {
                   return (
                     <div className="space-y-4">
                       {displayedFriends.map((friend, idx) => (
-                        <div 
-                          key={idx} 
+                        <div
+                          key={idx}
                           className="flex items-center justify-between p-2 hover:bg-bg-alt rounded-2xl transition-colors cursor-pointer group"
                           onClick={() => {
                             setIsFriendsModalOpen(false);
@@ -573,12 +572,12 @@ export default function ProfilePage() {
                         >
                           <div className="flex items-center space-x-3">
                             <div className="relative h-10 w-10 rounded-full overflow-hidden bg-bg-alt border border-border-base flex items-center justify-center text-text-sub">
-                              <Image 
-                                src={friend.avatarUrl || DEFAULT_AVATAR} 
-                                alt={friend.nickname} 
+                              <Image
+                                src={friend.avatarUrl || DEFAULT_AVATAR}
+                                alt={friend.nickname}
                                 fill
                                 sizes="40px"
-                                className="object-cover" 
+                                className="object-cover"
                               />
                             </div>
                             <div className="flex flex-col text-left">
@@ -591,7 +590,7 @@ export default function ProfilePage() {
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 toggleCloseFriend(friend.uid);
@@ -606,7 +605,7 @@ export default function ProfilePage() {
                             >
                               <Star size={16} className={cn(profile?.closeFriends?.includes(friend.uid) && "fill-current")} />
                             </button>
-                            <button 
+                            <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 showConfirm({
@@ -647,9 +646,9 @@ export default function ProfilePage() {
       )}
 
       {/* Account Switcher Modal */}
-      <AccountSwitcher 
-        isOpen={isAccountSwitcherOpen} 
-        onClose={() => setIsAccountSwitcherOpen(false)} 
+      <AccountSwitcher
+        isOpen={isAccountSwitcherOpen}
+        onClose={() => setIsAccountSwitcherOpen(false)}
         currentUid={user.uid}
       />
 
@@ -664,8 +663,8 @@ export default function ProfilePage() {
         {bookmarkedPosts.length > 0 ? (
           <div className="grid grid-cols-3 gap-4">
             {bookmarkedPosts.map((post) => (
-              <div 
-                key={post.id} 
+              <div
+                key={post.id}
                 className="aspect-square relative group cursor-pointer overflow-hidden rounded-[20px] bg-bg-alt border border-border-base shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1"
                 onClick={() => {
                   setIsBookmarkPopupOpen(false);
@@ -673,12 +672,12 @@ export default function ProfilePage() {
                 }}
               >
                 {post.images && post.images.length > 0 ? (
-                  <Image 
-                    src={post.images[0]} 
-                    alt="" 
+                  <Image
+                    src={post.images[0]}
+                    alt=""
                     fill
                     sizes="100px"
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-gray-300">
@@ -732,17 +731,17 @@ export default function ProfilePage() {
         ) : archivedStories.length > 0 ? (
           <div className="grid grid-cols-3 gap-4">
             {archivedStories.map((story) => (
-              <div 
-                key={story.id} 
+              <div
+                key={story.id}
                 className="group relative aspect-[9/16] rounded-[20px] overflow-hidden bg-bg-alt border border-border-base cursor-pointer shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1"
               >
                 {story.mediaUrl ? (
-                  <Image 
-                    src={story.mediaUrl} 
-                    alt="" 
+                  <Image
+                    src={story.mediaUrl}
+                    alt=""
                     fill
                     sizes="150px"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                   />
                 ) : (
                   <div className="h-full w-full flex items-center justify-center text-text-sub/50">
